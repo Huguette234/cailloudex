@@ -1618,7 +1618,7 @@ async function analyzeWithAI(dataUrl){
       try{
         const body=await error.context.json();
         console.error('analyzeWithAI error',body);
-        if(body?.error==='limit_reached') showToast(`⏱️ Limite de ${body.limit||20} scans IA/jour atteinte. Réessaie demain !`);
+        if(body?.error==='limit_reached') showToast(`⏱️ Limite de ${body.limit||10} scans IA/jour atteinte. Réessaie demain !`);
         else showToast('⚠️ IA indisponible ('+(body?.error||'erreur')+') — mode aléatoire pour cette fois.');
       }catch(e2){ showToast('⚠️ IA indisponible — mode aléatoire pour cette fois.'); }
       return null;
@@ -2384,7 +2384,7 @@ function accountScreen(){
     <p class="setup-sub">
       🤖 IA active pour tout le monde — noms personnalisés<br>
       et détection anti-triche, sans clé à configurer.<br><br>
-      Limite : 20 scans IA par jour et par compte.
+      Limite : 10 scans IA par jour et par compte.
     </p>
     <div class="btn-row" style="margin-top:12px;">
       <button class="btn btn-ghost" data-action="cancelSetup">Fermer</button>
