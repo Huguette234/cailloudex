@@ -31,6 +31,9 @@
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;touch-action:manipulation;}
 html,body{height:100%;overflow:hidden;}
+/* Fond de l'element html : evite la bande blanche dans la zone "safe area"
+   du bas sur iPhone (home indicator). Recolore selon l'heure via applyTimeTheme. */
+html{background:#0A1A0A;}
 body{
   margin:0;font-family:'Nunito',sans-serif;
   overflow-x:hidden;transition:background 2s ease;
@@ -1387,6 +1390,8 @@ function applyTimeTheme(){
   const mc = mountainColors[key];
   const gc = grassColors[key];
   const wc = waterColors[key];
+  // Fond de la zone "safe area" du bas (iPhone) accorde a la couleur du sol.
+  document.documentElement.style.backgroundColor = gc.bot;
   const pine=(x,b,h,col)=>{const w=h*0.62;return `<path d="M${x-w},${b} L${x},${b-h} L${x+w},${b} Z M${x-w*0.8},${b-h*0.42} L${x},${b-h*1.05} L${x+w*0.8},${b-h*0.42} Z" fill="${col}"/><rect x="${x-h*0.07}" y="${b}" width="${h*0.14}" height="${h*0.16}" fill="${col}"/>`;};
   const tree=(x,b,s,fol,trk)=>`<rect x="${x-s*0.11}" y="${b-s*0.5}" width="${s*0.22}" height="${s*0.55}" rx="${s*0.05}" fill="${trk}"/><circle cx="${x}" cy="${b-s*0.72}" r="${s*0.5}" fill="${fol}"/><circle cx="${x-s*0.36}" cy="${b-s*0.54}" r="${s*0.33}" fill="${fol}"/><circle cx="${x+s*0.36}" cy="${b-s*0.54}" r="${s*0.33}" fill="${fol}"/><circle cx="${x-s*0.14}" cy="${b-s*0.9}" r="${s*0.28}" fill="${fol}"/>`;
   const rock=(x,y,r)=>`<ellipse cx="${x}" cy="${y}" rx="${r}" ry="${r*0.62}" fill="${gc.stone}" stroke="${gc.stroke}" stroke-width="0.5"/><path d="M${x-r*0.8},${y-r*0.1} Q${x},${y-r*0.7} ${x+r*0.8},${y-r*0.1}" fill="none" stroke="${gc.rim}" stroke-width="0.4" opacity="0.5"/>`;
