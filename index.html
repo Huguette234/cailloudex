@@ -3416,9 +3416,13 @@ function removeWhiteBackground(dataUrl){
       const w=c.width, h=c.height, n=w*h;
       const mask=new Uint8Array(n); // 1 = fond (a supprimer)
 
-      const BG=222;      // au-dessus = "clairement le fond blanc"
-      const LO=196, HI=246; // bande de transition pour attenuer le halo blanc
       const bright=(pos)=>{ const d=pos*4; return (data[d]+data[d+1]+data[d+2])/3; };
+      // Seuil adaptatif : on regarde les 4 coins pour estimer la teinte du fond.
+      // Fond clair (blanc ou gris clair) -> on l'enleve ; fond sombre -> on ne
+      // touche a rien (impossible de decouper un perso sombre sur fond sombre).
+      const cAvg=(bright(0)+bright(w-1)+bright((h-1)*w)+bright(n-1))/4;
+      const BG=cAvg>=185?Math.max(172,Math.min(222,cAvg-18)):222;
+      const LO=Math.max(150,BG-26), HI=BG+24; // bande de transition (anti-halo)
 
       // 1) Remplissage depuis les bords : seuls les pixels clairs relies au bord
       //    sont consideres comme fond (les zones claires du perso sont preservees).
@@ -3607,7 +3611,7 @@ function buildCharacterPrompt(rock){
     :HEROES.includes(type)
     ?`friendly hero chibi anime rock character ${name}, big cute eyes, happy smile`
     :`fierce chibi anime rock character ${name}, determined eyes, battle stance`;
-  return `${base}, ${pose}, ${sizeDesc}, ${rarityDesc}, ${typeStyle}, ${atkDesc}, ${defDesc}, ${vitDesc}, ${personality}, full body, white background, manga art style`;
+  return `${base}, ${pose}, ${sizeDesc}, ${rarityDesc}, ${typeStyle}, ${atkDesc}, ${defDesc}, ${vitDesc}, ${personality}, full body, centered, highly detailed manga art style, cut-out sticker, isolated on plain solid pure white background, pure #ffffff empty backdrop, absolutely no floor, no ground, no cast shadow, no scenery, no environment, nothing behind the character`;
 }
 
 function stopCharGenTimer(){
