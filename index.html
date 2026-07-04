@@ -1367,10 +1367,10 @@ function applyTimeTheme(){
   /* ----- SOL ----- */
   const g = document.getElementById('groundSvg');
   const grassColors = {
-    nuit:  {top:'#1A3A1A', bot:'#0A1A0A', stone:'#0F280F', stroke:'#0A1E0A', hillA:'rgba(20,50,20,.5)', haze:'rgba(120,140,210,.14)', rim:'rgba(150,170,230,.18)'},
-    matin: {top:'#3A7A1A', bot:'#1E4A08', stone:'#2A5010', stroke:'#1A3A06', hillA:'rgba(50,100,20,.5)', haze:'rgba(255,220,160,.38)', rim:'rgba(255,235,180,.4)'},
-    aprem: {top:'#4A9A20', bot:'#2A6A0A', stone:'#2E6012', stroke:'#1A4206', hillA:'rgba(60,130,20,.5)', haze:'rgba(200,235,255,.34)', rim:'rgba(230,250,255,.4)'},
-    soir:  {top:'#5A3010', bot:'#1A0A02', stone:'#3A1A08', stroke:'#1A0A02', hillA:'rgba(70,30,10,.5)', haze:'rgba(255,150,80,.32)', rim:'rgba(255,180,110,.42)'},
+    nuit:  {top:'#1A3A1A', bot:'#0A1A0A', stone:'#0F280F', stroke:'#0A1E0A', hillA:'rgba(20,50,20,.5)', haze:'rgba(120,140,210,.14)', rim:'rgba(150,170,230,.18)', foliage:'#1C4420', trunk:'#12240E'},
+    matin: {top:'#3A7A1A', bot:'#1E4A08', stone:'#2A5010', stroke:'#1A3A06', hillA:'rgba(50,100,20,.5)', haze:'rgba(255,220,160,.38)', rim:'rgba(255,235,180,.4)', foliage:'#2E6A18', trunk:'#3A2410'},
+    aprem: {top:'#4A9A20', bot:'#2A6A0A', stone:'#2E6012', stroke:'#1A4206', hillA:'rgba(60,130,20,.5)', haze:'rgba(200,235,255,.34)', rim:'rgba(230,250,255,.4)', foliage:'#35801A', trunk:'#3E2A12'},
+    soir:  {top:'#5A3010', bot:'#1A0A02', stone:'#3A1A08', stroke:'#1A0A02', hillA:'rgba(70,30,10,.5)', haze:'rgba(255,150,80,.32)', rim:'rgba(255,180,110,.42)', foliage:'#2C2410', trunk:'#241206'},
   };
   const mountainColors = {
     nuit:  { far:'rgba(58,66,86,.55)',  mid:'rgba(42,49,64,.8)',  near:'#262C3A' },
@@ -1388,6 +1388,8 @@ function applyTimeTheme(){
   const gc = grassColors[key];
   const wc = waterColors[key];
   const pine=(x,b,h,col)=>{const w=h*0.62;return `<path d="M${x-w},${b} L${x},${b-h} L${x+w},${b} Z M${x-w*0.8},${b-h*0.42} L${x},${b-h*1.05} L${x+w*0.8},${b-h*0.42} Z" fill="${col}"/><rect x="${x-h*0.07}" y="${b}" width="${h*0.14}" height="${h*0.16}" fill="${col}"/>`;};
+  const tree=(x,b,s,fol,trk)=>`<rect x="${x-s*0.11}" y="${b-s*0.5}" width="${s*0.22}" height="${s*0.55}" rx="${s*0.05}" fill="${trk}"/><circle cx="${x}" cy="${b-s*0.72}" r="${s*0.5}" fill="${fol}"/><circle cx="${x-s*0.36}" cy="${b-s*0.54}" r="${s*0.33}" fill="${fol}"/><circle cx="${x+s*0.36}" cy="${b-s*0.54}" r="${s*0.33}" fill="${fol}"/><circle cx="${x-s*0.14}" cy="${b-s*0.9}" r="${s*0.28}" fill="${fol}"/>`;
+  const rock=(x,y,r)=>`<ellipse cx="${x}" cy="${y}" rx="${r}" ry="${r*0.62}" fill="${gc.stone}" stroke="${gc.stroke}" stroke-width="0.5"/><path d="M${x-r*0.8},${y-r*0.1} Q${x},${y-r*0.7} ${x+r*0.8},${y-r*0.1}" fill="none" stroke="${gc.rim}" stroke-width="0.4" opacity="0.5"/>`;
   g.innerHTML = `
     <defs>
       <linearGradient id="gG2" x1="0" y1="0" x2="0" y2="1">
@@ -1410,6 +1412,7 @@ function applyTimeTheme(){
     <path d="M0,92 C70,80 130,90 200,80 C265,71 325,88 385,79 C392,78 400,80 400,82 L400,130 L0,130 Z" fill="${mc.near}"/>
     <path d="M0,92 C70,80 130,90 200,80 C265,71 325,88 385,79 C392,78 400,80 400,82" fill="none" stroke="${gc.rim}" stroke-width="1.2" opacity="0.9"/>
     ${pine(110,90,14,gc.stroke)}${pine(128,90,10,gc.stroke)}${pine(255,88,13,gc.stroke)}
+    ${tree(180,84,11,gc.foliage,gc.trunk)}${tree(348,85,10,gc.foliage,gc.trunk)}
     <path d="M0,105 C60,97 120,109 200,101 C270,94 330,107 400,99 L400,130 L0,130 Z" fill="url(#gG2)"/>
     <path d="M0,105 C60,97 120,109 200,101 C270,94 330,107 400,99" fill="none" stroke="${gc.rim}" stroke-width="1" opacity="0.7"/>
     <!-- Lac -->
@@ -1421,13 +1424,14 @@ function applyTimeTheme(){
       <line x1="255" y1="114" x2="292" y2="114" stroke="${wc.glint}" stroke-width="0.7" stroke-linecap="round" opacity="0.55"/>
       <line x1="225" y1="115.5" x2="248" y2="115.5" stroke="${wc.glint}" stroke-width="0.6" stroke-linecap="round" opacity="0.4"/>
     </g>
-    <g opacity="0.9">
-      <ellipse cx="150" cy="110" rx="5" ry="3" fill="${gc.stone}" stroke="${gc.stroke}" stroke-width="0.6"/>
-      <path d="M145,110 Q150,107 155,110" fill="none" stroke="${gc.top}" stroke-width="0.7" opacity="0.5"/>
+    <!-- Arbres de la prairie (premier plan) -->
+    ${tree(42,114,17,gc.foliage,gc.trunk)}${tree(372,113,15,gc.foliage,gc.trunk)}
+    <!-- Petits cailloux eparpilles (tailles proportionnelles) -->
+    <g opacity="0.92">
+      ${rock(30,118,3.4)}${rock(96,120,2.6)}${rock(140,116,2.2)}${rock(350,119,3)}${rock(378,121,2.4)}${rock(115,113,2)}${rock(72,89,1.8)}
       <path d="M64,108 Q65,101 66,108 M67,108 Q68.5,100 70,108 M71,108 Q72,102.5 73,108" stroke="${gc.top}" stroke-width="1" fill="none" stroke-linecap="round"/>
-      <ellipse cx="322" cy="108" rx="6" ry="3.6" fill="${gc.stone}" stroke="${gc.stroke}" stroke-width="0.7"/>
-      <path d="M316,108 Q322,104.7 328,108" fill="none" stroke="${gc.top}" stroke-width="0.8" opacity="0.5"/>
-      <path d="M232,112 Q233,105 234,112 M235,112 Q236.5,104 238,112 M239,112 Q240,106.5 241,112" stroke="${gc.top}" stroke-width="1" fill="none" stroke-linecap="round"/>
+      <path d="M158,118 Q159,112 160,118 M161,118 Q162.5,111 164,118" stroke="${gc.top}" stroke-width="0.9" fill="none" stroke-linecap="round"/>
+      <path d="M338,116 Q339,109 340,116 M341,116 Q342.5,108 344,116 M345,116 Q346,110.5 347,116" stroke="${gc.top}" stroke-width="1" fill="none" stroke-linecap="round"/>
     </g>`;
 
   /* ----- DÉCO CIEL ----- */
