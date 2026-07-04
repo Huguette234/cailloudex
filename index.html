@@ -2397,11 +2397,22 @@ function genRoomCode(){
 
 // Config WebRTC : STUN + TURN (indispensable pour connecter 2 telephones
 // sur des reseaux differents ; sans TURN la connexion directe echoue souvent).
-const PEER_CONFIG={ debug:0, config:{ iceServers:[
+// Les identifiants TURN fiables sont recuperes au besoin depuis metered.
+let ICE_SERVERS=[
   { urls:['stun:stun.l.google.com:19302','stun:stun1.l.google.com:19302'] },
-  { urls:['turn:openrelay.metered.ca:80','turn:openrelay.metered.ca:443'], username:'openrelayproject', credential:'openrelayproject' },
-  { urls:'turn:openrelay.metered.ca:443?transport=tcp', username:'openrelayproject', credential:'openrelayproject' },
-] } };
+];
+let _iceLoaded=false;
+async function loadIceServers(){
+  if(_iceLoaded) return;
+  try{
+    const res=await fetch('https://cailloudex.metered.live/api/v1/turn/credentials?apiKey=ttbeidI02RYa3Ah9wotie9-Fhrlbtb7bWxP6JVzRBXO0MHDT',{signal:AbortSignal.timeout(6000)});
+    if(res.ok){
+      const list=await res.json();
+      if(Array.isArray(list)&&list.length){ ICE_SERVERS=list; _iceLoaded=true; }
+    }
+  }catch(e){ console.warn('TURN metered indisponible, STUN seul:',e); }
+}
+function getPeerConfig(){ return { debug:0, config:{ iceServers:ICE_SERVERS } }; }
 
 function loadPeerJS(){
   return new Promise((res,rej)=>{
@@ -2463,11 +2474,12 @@ function handleOnlineMsg(msg){
 async function createOnlineSalle(){
   try{ showToast('Chargement réseau...'); await loadPeerJS(); }
   catch(e){ showToast('❌ Module réseau indisponible'); return; }
+  await loadIceServers();
   const code=genRoomCode();
   onlineState={ isHost:true, roomCode:code, peer:null, conn:null,
     myRock:null, opponentRock:null, cd:30, botTimer:null, cdTimer:null };
   screen='online-wait'; render();
-  const peer=new Peer(code,PEER_CONFIG);
+  const peer=new Peer(code,getPeerConfig());
   onlineState.peer=peer;
   peer.on('open',()=>{
     onlineState.cdTimer=setInterval(()=>{
@@ -2492,6 +2504,7 @@ async function sendChallenge(friendId,friendUsername){
   if(!session||!sb) return;
   try{ await loadPeerJS(); }
   catch(e){ showToast('❌ Module réseau indisponible'); return; }
+  await loadIceServers();
   const code=genRoomCode();
   try{
     const { error } = await sb.from('challenges').insert({
@@ -2504,7 +2517,7 @@ async function sendChallenge(friendId,friendUsername){
   onlineState={ isHost:true, isChallenge:true, targetUsername:friendUsername, roomCode:code,
     peer:null, conn:null, myRock:null, opponentRock:null, cd:0, botTimer:null, cdTimer:null };
   screen='online-wait'; render();
-  const peer=new Peer(code,PEER_CONFIG);
+  const peer=new Peer(code,getPeerConfig());
   onlineState.peer=peer;
   peer.on('connection',conn=>{ setupOnlineConn(conn); });
   peer.on('error',e=>{ showToast('Erreur: '+e.type); cancelOnline(); });
@@ -2601,10 +2614,11 @@ function dismissChallenge(){
 async function joinOnlineSalle(code){
   try{ await loadPeerJS(); }
   catch(e){ showToast('❌ Module réseau indisponible'); return; }
+  await loadIceServers();
   onlineState={ isHost:false, roomCode:code, peer:null, conn:null,
     myRock:null, opponentRock:null, cd:0, botTimer:null, cdTimer:null };
   screen='online-wait'; render();
-  const peer=new Peer(PEER_CONFIG);
+  const peer=new Peer(getPeerConfig());
   onlineState.peer=peer;
   peer.on('open',()=>{
     const conn=peer.connect(code,{reliable:true,serialization:'json'});
