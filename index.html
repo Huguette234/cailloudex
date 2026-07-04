@@ -3468,17 +3468,113 @@ function buildCharacterPrompt(rock){
   const defDesc=def>=75?'massively wide tank body, thick armor plates everywhere':def>=50?'stocky body, chest armor':def>=25?'slim build, small armor chips':'paper-thin cracked shell, no armor';
   const vit=rock.vit||1;
   const vitDesc=vit>=20?'extreme speed blur, lightning trails':vit>=8?'dynamic sprint pose, speed lines':vit>=5?'alert ready stance':vit>=3?'slow heavy footing':'frozen statue pose, zero movement';
-  const TYPE_STYLE={
-    chaos:'hot pink magenta rock body, pink lightning aura, neon cracks, chaotic sparks',
-    ombre:'deep purple dark violet rock body, shadow tendrils, eerie purple mist',
-    feu:'bright orange red rock body, flames bursting out, fire aura',
-    metal:'shiny silver chrome rock body, blue circuit lines, metallic armor plating',
-    nature:'vivid green rock body, moss and flowers, leaves, earthy green aura',
-    lumiere:'bright golden yellow rock body, sunlight beams, golden sparkles, halo',
-    glace:'icy blue cyan rock body, ice crystals, snowflakes, frozen spikes',
-    neutre:'plain grey stone body, minimal decoration',
+  const TYPE_STYLES={
+    chaos:[
+      'hot pink magenta rock body, pink lightning aura, neon cracks, chaotic sparks',
+      'glitchy magenta rock body, digital distortion, pixelated pink shards, static aura',
+      'punk rocker pink rock body, spiky mohawk of shards, torn straps, rebellious magenta energy',
+      'cosmic chaos rock body, swirling pink galaxy patterns, warping reality, purple-pink nebula',
+      'jester trickster pink rock body, harlequin diamond patterns, mischievous magenta glow',
+      'molten pink rock body, cracked glowing fissures, unstable erupting pink energy',
+      'neon graffiti pink rock body, spray-paint splatters, wild street-art magenta tags',
+      'shattered mirror pink rock body, fractured crystalline shards, prismatic pink reflections',
+      'electric storm pink rock body, crackling plasma tendrils, vibrant magenta discharge',
+      'voidcore pink rock body, reality-tearing rifts, chaotic pink-and-black swirls',
+    ],
+    ombre:[
+      'deep purple dark violet rock body, shadow tendrils, eerie purple mist',
+      'wraith-like purple rock body, tattered ghostly cloak, hollow glowing eyes',
+      'midnight purple rock body, swirling dark smoke, floating shadow wisps',
+      'gothic purple rock body, spiky obsidian armor, violet flame accents',
+      'eclipse purple rock body, dark crescent halo, dim violet starlight',
+      'nightmare purple rock body, dripping shadow ooze, menacing dark aura',
+      'arcane sorcerer purple rock body, glowing violet runes, mystical dark energy',
+      'abyssal purple rock body, deep-void cracks, cold violet glow from within',
+      'phantom purple rock body, semi-transparent misty edges, spectral violet trails',
+      'cursed purple rock body, chained dark shackles, ominous violet sigils',
+    ],
+    feu:[
+      'bright orange red rock body, flames bursting out, fire aura',
+      'volcanic rock body, cracked lava veins, molten orange glow, smoke',
+      'blazing samurai rock body, flaming armor, trailing ember sparks',
+      'infernal demon rock body, horns of fire, red-hot cracks, hellfire aura',
+      'phoenix rock body, fiery wings, radiant orange feathers of flame',
+      'charcoal rock body with glowing ember cracks, wisps of smoke, dark red heat',
+      'fireworks rock body, bursting colorful sparks, festive flame trails',
+      'molten metal rock body, dripping liquid fire, intense orange furnace glow',
+      'cozy campfire rock body, warm gentle flames, crackling embers',
+      'meteor rock body, blazing atmospheric trail, scorched fiery surface',
+    ],
+    metal:[
+      'shiny silver chrome rock body, blue circuit lines, metallic armor plating',
+      'heavy robot rock body, bolted steel plates, glowing blue core, hydraulic joints',
+      'golden brass steampunk rock body, gears and rivets, copper pipes',
+      'sleek futuristic rock body, chrome finish, neon blue energy seams',
+      'rusty scrap-metal rock body, patchwork plates, exposed wires, worn bolts',
+      'knight-armor rock body, polished silver plate mail, metallic helmet crest',
+      'magnetic rock body, floating metal shards orbiting, electric blue field',
+      'diamond-plated rock body, reflective chrome facets, sharp metallic edges',
+      'cyborg rock body, mechanical arm, glowing red sensor eye, tech panels',
+      'liquid-metal rock body, smooth mercury surface, shifting chrome reflections',
+    ],
+    nature:[
+      'vivid green rock body, moss and flowers, leaves, earthy green aura',
+      'forest guardian rock body, bark-like skin, sprouting branches and leaves',
+      'flower-crowned rock body, blooming colorful petals, tiny buzzing bees',
+      'mushroom rock body, glowing bioluminescent fungi, soft green spores',
+      'vine-wrapped rock body, twisting green vines, dangling ivy leaves',
+      'mossy zen rock body, tiny bonsai tree on top, peaceful green glow',
+      'autumn rock body, warm orange and red falling leaves, cozy woodland vibe',
+      'crystal-cave rock body, green emerald growths, glowing verdant gems',
+      'swamp rock body, dripping algae, lily pads, gentle green mist',
+      'spring-meadow rock body, fresh grass tufts, blooming daisies, butterflies',
+    ],
+    lumiere:[
+      'bright golden yellow rock body, sunlight beams, golden sparkles, halo',
+      'angelic rock body, radiant feathered wings, glowing golden halo',
+      'sun-deity rock body, blazing solar corona, warm golden rays',
+      'starlight rock body, twinkling constellations, soft golden shimmer',
+      'holy paladin rock body, gleaming golden armor, radiant light shield',
+      'lantern rock body, warm glowing core, floating golden fireflies',
+      'prism rock body, refracting rainbow light, brilliant golden facets',
+      'dawn rock body, gentle sunrise gradient, hopeful golden glow',
+      'crystal-of-light rock body, luminous golden crystals, dazzling beams',
+      'firefly-swarm rock body, surrounded by glowing golden motes, magical light',
+    ],
+    glace:[
+      'icy blue cyan rock body, ice crystals, snowflakes, frozen spikes',
+      'frost-knight rock body, jagged ice armor, cold cyan breath',
+      'glacier rock body, deep blue ice layers, cracks of glowing frost',
+      'snowman-style rock body, soft snowy surface, cute frozen cheeks',
+      'crystal-ice rock body, transparent blue gem facets, sparkling frost',
+      'blizzard rock body, swirling snow flurries, chilling cyan aura',
+      'aurora rock body, shimmering northern-lights glow, icy pastel hues',
+      'frozen-lake rock body, smooth mirror ice surface, delicate frost patterns',
+      'icicle rock body, hanging sharp ice spikes, dripping cold cyan glow',
+      'winter-spirit rock body, gentle falling snow, serene frosty shimmer',
+    ],
+    neutre:[
+      'plain grey stone body, minimal decoration',
+      'classic pebble rock body, smooth rounded grey surface, simple face',
+      'cobblestone rock body, weathered grey texture, small chips',
+      'granite rock body, speckled grey-and-white grain, sturdy look',
+      'zen rock body, balanced smooth grey stones, calm neutral vibe',
+      'concrete rock body, industrial grey surface, faint cracks',
+      'river-stone rock body, polished smooth grey, wet sheen',
+      'slate rock body, flat layered grey plates, clean edges',
+      'rugged boulder rock body, massive grey mass, moss patches',
+      'moonstone-grey rock body, soft pale sheen, subtle silver glow',
+    ],
   };
-  const typeStyle=TYPE_STYLE[type]||TYPE_STYLE['neutre'];
+  const POSES=[
+    'dynamic action pose','heroic power stance with clenched fists','crouching ready-to-pounce pose',
+    'mid-air leaping attack pose','arms crossed confident pose','dramatic swirling cape pose',
+    'victorious arms-raised pose','sneaky crouched pose looking over shoulder','charging forward running pose',
+    'relaxed cool leaning pose','spinning attack pose with motion blur','defensive guard pose with arms up',
+  ];
+  const pick=arr=>arr[Math.floor(Math.random()*arr.length)];
+  const typeStyle=pick(TYPE_STYLES[type]||TYPE_STYLES['neutre']);
+  const pose=pick(POSES);
   const VILLAINS=['chaos','ombre','feu','metal'];
   const HEROES=['nature','lumiere','glace'];
   const base=VILLAINS.includes(type)
@@ -3486,7 +3582,7 @@ function buildCharacterPrompt(rock){
     :HEROES.includes(type)
     ?`friendly hero chibi anime rock character ${name}, big cute eyes, happy smile`
     :`fierce chibi anime rock character ${name}, determined eyes, battle stance`;
-  return `${base}, ${sizeDesc}, ${rarityDesc}, ${typeStyle}, ${atkDesc}, ${defDesc}, ${vitDesc}, ${personality}, full body, white background, manga art style`;
+  return `${base}, ${pose}, ${sizeDesc}, ${rarityDesc}, ${typeStyle}, ${atkDesc}, ${defDesc}, ${vitDesc}, ${personality}, full body, white background, manga art style`;
 }
 
 function stopCharGenTimer(){
