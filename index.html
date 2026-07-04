@@ -2540,6 +2540,28 @@ function showChallengeNotif(ch){
 function hideChallengeNotif(){
   const e=document.getElementById('challengeNotif'); if(e) e.remove();
 }
+function handleIncomingChallenge(ch){
+  if(!ch||ch.status&&ch.status!=='pending') return;
+  if(pendingChallenge&&pendingChallenge.id===ch.id) return; // deja affiche
+  pendingChallenge=ch;
+  const busy=onlineState||['loading','login','scanning','anime','combat-fight'].includes(screen);
+  if(!busy){ showChallengeNotif(ch); render(); }
+}
+// Temps reel : ecoute directe des defis via Supabase Realtime (instantane).
+let _challengeChannel=null;
+function startChallengeRealtime(){
+  if(!session||!sb||_challengeChannel) return;
+  try{
+    _challengeChannel=sb.channel('challenges-'+session.user.id)
+      .on('postgres_changes',
+        { event:'INSERT', schema:'public', table:'challenges', filter:'target_id=eq.'+session.user.id },
+        payload=>{ handleIncomingChallenge(payload.new); })
+      .subscribe();
+  }catch(e){ console.warn('Realtime defis indisponible:',e); }
+}
+function stopChallengeRealtime(){
+  if(_challengeChannel){ try{ sb.removeChannel(_challengeChannel); }catch(e){} _challengeChannel=null; }
+}
 let _challengePollTimer=null;
 function startChallengePolling(){
   if(_challengePollTimer) return;
@@ -3919,11 +3941,11 @@ if('serviceWorker' in navigator) window.addEventListener('load',()=>{
     sb.auth.onAuthStateChange((event,sess)=>{
       const wasLoggedOut=!session;
       session=sess;
-      if(event==='SIGNED_IN'&&wasLoggedOut){ migrateLocalDexIfNeeded().then(loadCloudData).then(()=>{ screen='home'; render(); startChallengePolling(); }); }
-      else if(event==='SIGNED_OUT'){ dex=[]; meta={ streak:0, lastCaptureDate:null, badges:[], shared:0, todayChallenge:null, challengeDate:null, challengeCompletedDate:null, wins:0, losses:0, xp:0,
+      if(event==='SIGNED_IN'&&wasLoggedOut){ migrateLocalDexIfNeeded().then(loadCloudData).then(()=>{ screen='home'; render(); startChallengePolling(); startChallengeRealtime(); }); }
+      else if(event==='SIGNED_OUT'){ stopChallengeRealtime(); dex=[]; meta={ streak:0, lastCaptureDate:null, badges:[], shared:0, todayChallenge:null, challengeDate:null, challengeCompletedDate:null, wins:0, losses:0, xp:0,
     gravillons:0, gems:0, inventory:{}, food:{}, luckyBoostUntil:null, streakFreezeCount:0, ownedFrames:[], equippedFrame:null, customTitle:null, username:null }; screen='login'; render(); }
     });
-    if(session){ await migrateLocalDexIfNeeded(); await loadCloudData(); await checkPendingChallenge(); startChallengePolling(); }
+    if(session){ await migrateLocalDexIfNeeded(); await loadCloudData(); await checkPendingChallenge(); startChallengePolling(); startChallengeRealtime(); }
   }catch(e){ showToast('❌ Connexion au serveur impossible. Réessaie.'); }
   getDailyChallenge();
   screen=session?'home':'login';
