@@ -2427,18 +2427,40 @@ function genRoomCode(){
 let ICE_SERVERS=[
   { urls:['stun:stun.l.google.com:19302','stun:stun1.l.google.com:19302'] },
 ];
-let _iceLoaded=false;
+let _iceLoaded=false, _iceStatus='non tenté';
 async function loadIceServers(){
   if(_iceLoaded) return;
   try{
     const res=await fetch('https://cailloudex.metered.live/api/v1/turn/credentials?apiKey=ttbeidI02RYa3Ah9wotie9-Fhrlbtb7bWxP6JVzRBXO0MHDT',{signal:AbortSignal.timeout(6000)});
-    if(res.ok){
-      const list=await res.json();
-      if(Array.isArray(list)&&list.length){ ICE_SERVERS=list; _iceLoaded=true; }
-    }
-  }catch(e){ console.warn('TURN metered indisponible, STUN seul:',e); }
+    if(!res.ok){ _iceStatus='HTTP '+res.status; return; }
+    const data=await res.json();
+    const list=Array.isArray(data)?data:(data&&Array.isArray(data.iceServers)?data.iceServers:null);
+    if(list&&list.length){ ICE_SERVERS=list; _iceLoaded=true; _iceStatus='ok'; }
+    else{ _iceStatus='format inattendu'; }
+  }catch(e){ _iceStatus='échec fetch'; console.warn('TURN metered indisponible, STUN seul:',e); }
 }
 function getPeerConfig(){ return { debug:0, config:{ iceServers:ICE_SERVERS } }; }
+function turnCount(){ try{ return ICE_SERVERS.filter(s=>{const u=s.urls;const j=Array.isArray(u)?u.join(','):(u||'');return j.indexOf('turn')>=0;}).length; }catch(e){ return 0; } }
+function onlineDiagLine(){
+  if(!onlineState) return '';
+  const turn=_iceLoaded?('TURN ✅ ×'+turnCount()):('TURN ⚠️ '+_iceStatus);
+  const st=onlineState.iceState?(' · réseau: '+onlineState.iceState):'';
+  const ph=onlineState.diag||'';
+  return `<p style="font-family:'Nunito',sans-serif;font-size:10px;color:rgba(255,255,255,.35);margin-top:16px;line-height:1.6;">${ph?ph+'<br>':''}<span style="opacity:.65;">${turn}${st}</span></p>`;
+}
+function attachIceDiag(conn){
+  let tries=0;
+  const tryAttach=()=>{
+    let pc=null; try{ pc=conn&&conn.peerConnection; }catch(e){}
+    if(pc){
+      const upd=()=>{ if(onlineState){ onlineState.iceState=pc.iceConnectionState; if(screen==='online-wait') render(); } };
+      try{ pc.addEventListener('iceconnectionstatechange',upd); }catch(e){}
+      upd(); return;
+    }
+    if(tries++<25) setTimeout(tryAttach,300);
+  };
+  tryAttach();
+}
 
 function loadPeerJS(){
   return new Promise((res,rej)=>{
@@ -2469,8 +2491,10 @@ function onlineConnReady(){
 
 function setupOnlineConn(conn){
   onlineState.conn=conn;
+  if(onlineState){ onlineState.diag='③ Négociation réseau (WebRTC)…'; if(screen==='online-wait') render(); }
+  attachIceDiag(conn);
   if(conn.open){ onlineConnReady(); }
-  else { conn.on('open',onlineConnReady); }
+  else { conn.on('open',()=>{ if(onlineState){ onlineState.diag='④ Canal ouvert ✅'; } onlineConnReady(); }); }
   conn.on('data',handleOnlineMsg);
   conn.on('close',()=>{
     if(!battleState||battleState.turn==='end') return;
@@ -2655,12 +2679,13 @@ async function joinOnlineSalle(code){
   try{ await loadPeerJS(); }
   catch(e){ showToast('❌ Module réseau indisponible'); return; }
   await loadIceServers();
-  onlineState={ isHost:false, roomCode:code, peer:null, conn:null,
+  onlineState={ isHost:false, roomCode:code, peer:null, conn:null, diag:'① Recherche du serveur…',
     myRock:null, opponentRock:null, cd:0, botTimer:null, cdTimer:null };
   screen='online-wait'; render();
   const peer=new Peer(getPeerConfig());
   onlineState.peer=peer;
   peer.on('open',()=>{
+    if(onlineState){ onlineState.diag='② Connexion à l\'adversaire…'; if(screen==='online-wait') render(); }
     const conn=peer.connect(code,{reliable:true,serialization:'json'});
     setupOnlineConn(conn);
     // Filet de securite : si la connexion n'aboutit pas (reseau bloquant),
@@ -2673,8 +2698,10 @@ async function joinOnlineSalle(code){
     },20000);
   });
   peer.on('error',e=>{
+    if(onlineState){ onlineState.diag='⚠️ Erreur: '+e.type; }
     showToast(e.type==='peer-unavailable'?'❌ Salle introuvable':'Erreur: '+e.type);
-    cancelOnline();
+    if(e.type==='peer-unavailable') cancelOnline();
+    else if(screen==='online-wait') render();
   });
 }
 
@@ -2859,6 +2886,7 @@ function onlineWaitScreen(){
         :`<div class="room-code">${onlineState.roomCode}</div>
       <p style="font-family:'Nunito',sans-serif;font-size:12px;color:rgba(255,255,255,.4);margin:4px 0 2px;">Partage ce code à ton ami.</p>
       <p style="font-family:'Nunito',sans-serif;font-size:11px;color:rgba(255,255,255,.25);">Bot de secours dans ${onlineState.cd||30}s.</p>`}
+      ${onlineDiagLine()}
       <button class="btn btn-ghost" style="margin-top:18px;" data-action="onlineCancel">Annuler</button>
     </div>`;
   }
@@ -2866,6 +2894,7 @@ function onlineWaitScreen(){
     <div style="font-size:48px;margin-bottom:12px;animation:ringPulse 1s ease-in-out infinite;">🔌</div>
     <div style="font-family:'Baloo 2',sans-serif;font-weight:800;font-size:14px;color:rgba(255,255,255,.6);">CONNEXION À</div>
     <div class="room-code">${onlineState.roomCode}</div>
+    ${onlineDiagLine()}
     <button class="btn btn-ghost" style="margin-top:18px;" data-action="onlineCancel">Annuler</button>
   </div>`;
 }
