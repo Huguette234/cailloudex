@@ -1633,7 +1633,7 @@ async function renderShareCard(rock){
   ctx.fillStyle='#fff'; ctx.textAlign='center'; ctx.font="800 24px 'Baloo 2'";
   ctx.fillText(rock.rarityLabel,px+pw-40-tw/2,py+62);
   const ps=pw-160,pi=px+80,piY=py+110;
-  const photoSrc = (rock.animePhoto||rock.photo);
+  const photoSrc = (rock.characterPhoto||rock.animePhoto||rock.photo);
   await new Promise(r=>{
     const im=new Image();
     im.onload=()=>{
@@ -1644,7 +1644,9 @@ async function renderShareCard(rock){
     };
     im.onerror=r; im.src=photoSrc;
   });
-  ctx.fillStyle='#fff'; ctx.font="700 60px 'Bungee'"; ctx.textAlign='center';
+  ctx.fillStyle='#fff'; ctx.textAlign='center';
+  let nameSize=60; const nameMaxW=pw-80;
+  do{ ctx.font="700 "+nameSize+"px 'Bungee'"; if(ctx.measureText(rock.name).width<=nameMaxW) break; nameSize-=3; }while(nameSize>26);
   ctx.fillText(rock.name,W/2,piY+ps+76);
   if(rock.typeLabel){
     ctx.fillStyle=rock.typeColor||'#fff'; ctx.font="700 28px 'Baloo 2'";
