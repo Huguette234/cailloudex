@@ -1,4 +1,4 @@
-const CACHE = 'cailloudex-v19';
+const CACHE = 'cailloudex-v20';
 const ASSETS = ['./', './index.html'];
 
 self.addEventListener('install', e => {
