@@ -1,0 +1,8 @@
+[{
+  "relation": ["delegate_permission/common.handle_all_urls"],
+  "target": {
+    "namespace": "android_app",
+    "package_name": "com.cailloudex.app",
+    "sha256_cert_fingerprints": ["F5:B1:EF:76:92:DB:78:4D:D9:AF:9D:0A:CA:EC:F5:01:04:EC:35:E9:C6:A6:E2:AC:B2:FD:A1:B8:F0:2E:3F:20"]
+  }
+}]

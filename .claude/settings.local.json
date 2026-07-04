@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python -m pip install --quiet Pillow)",
+      "Bash(python -c \"import PIL; print\\('PIL OK', PIL.__version__\\)\")",
+      "Bash(python gen_icons.py)",
+      "Bash(rm gen_icons.py)",
+      "Read(//c/c/Users/Dalaine-CastetsHugo/OneDrive - Conseil Régional des Pays de La Loire - Direction des Lycées/Bureau/**)",
+      "Read(//tmp/**)",
+      "Bash(curl -sL \"https://api.github.com/repos/google/fonts/contents/ofl/baloo2\")",
+      "Bash(curl -sL -o /tmp/Baloo2-Variable.ttf \"https://raw.githubusercontent.com/google/fonts/main/ofl/baloo2/Baloo2%5Bwght%5D.ttf\")",
+      "Bash(python gen_feature_graphic.py)",
+      "Bash(cygpath -w /tmp/Bungee-Regular.ttf)",
+      "Bash(curl -sL -o Bungee-Regular.ttf \"https://raw.githubusercontent.com/google/fonts/main/ofl/bungee/Bungee-Regular.ttf\")",
+      "Bash(curl -sL -o Baloo2-Variable.ttf \"https://raw.githubusercontent.com/google/fonts/main/ofl/baloo2/Baloo2%5Bwght%5D.ttf\")",
+      "Bash(rm -f Bungee-Regular.ttf Baloo2-Variable.ttf gen_feature_graphic.py)",
+      "Bash(rm -f /tmp/Bungee-Regular.ttf /tmp/Baloo2-Variable.ttf /tmp/Baloo2-Bold.ttf)",
+      "mcp__Claude_Preview__preview_start"
+    ]
+  }
+}

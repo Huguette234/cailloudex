@@ -1,0 +1,17 @@
+{
+  "id": "/",
+  "name": "CaillouDEX — Les Cailloux des Z'Hommes",
+  "short_name": "CaillouDEX",
+  "description": "Le Pokédex des cailloux. L'histoire d'amour entre les hommes et les roches.",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#0D1B2A",
+  "theme_color": "#0D1B2A",
+  "orientation": "portrait",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ],
+  "categories": ["games", "entertainment"],
+  "lang": "fr"
+}
