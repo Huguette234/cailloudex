@@ -2371,6 +2371,14 @@ function genRoomCode(){
   return code;
 }
 
+// Config WebRTC : STUN + TURN (indispensable pour connecter 2 telephones
+// sur des reseaux differents ; sans TURN la connexion directe echoue souvent).
+const PEER_CONFIG={ debug:0, config:{ iceServers:[
+  { urls:['stun:stun.l.google.com:19302','stun:stun1.l.google.com:19302'] },
+  { urls:['turn:openrelay.metered.ca:80','turn:openrelay.metered.ca:443'], username:'openrelayproject', credential:'openrelayproject' },
+  { urls:'turn:openrelay.metered.ca:443?transport=tcp', username:'openrelayproject', credential:'openrelayproject' },
+] } };
+
 function loadPeerJS(){
   return new Promise((res,rej)=>{
     if(window.Peer){res();return;}
@@ -2385,6 +2393,7 @@ function cancelOnline(){
   if(onlineState){
     clearTimeout(onlineState.botTimer);
     clearInterval(onlineState.cdTimer);
+    clearTimeout(onlineState.connTimeout);
     try{ if(onlineState.conn) onlineState.conn.close(); }catch(e){}
     try{ if(onlineState.peer) onlineState.peer.destroy(); }catch(e){}
     onlineState=null;
@@ -2415,6 +2424,7 @@ function handleOnlineMsg(msg){
   if(msg.type==='hello'){
     clearTimeout(onlineState.botTimer);
     clearInterval(onlineState.cdTimer);
+    clearTimeout(onlineState.connTimeout);
     showToast('🎉 Adversaire connecté ! Choisis ton caillou.');
     screen='online-pick'; render();
   }
@@ -2433,7 +2443,7 @@ async function createOnlineSalle(){
   onlineState={ isHost:true, roomCode:code, peer:null, conn:null,
     myRock:null, opponentRock:null, cd:30, botTimer:null, cdTimer:null };
   screen='online-wait'; render();
-  const peer=new Peer(code,{debug:0});
+  const peer=new Peer(code,PEER_CONFIG);
   onlineState.peer=peer;
   peer.on('open',()=>{
     onlineState.cdTimer=setInterval(()=>{
@@ -2470,7 +2480,7 @@ async function sendChallenge(friendId,friendUsername){
   onlineState={ isHost:true, isChallenge:true, targetUsername:friendUsername, roomCode:code,
     peer:null, conn:null, myRock:null, opponentRock:null, cd:0, botTimer:null, cdTimer:null };
   screen='online-wait'; render();
-  const peer=new Peer(code,{debug:0});
+  const peer=new Peer(code,PEER_CONFIG);
   onlineState.peer=peer;
   peer.on('connection',conn=>{ setupOnlineConn(conn); });
   peer.on('error',e=>{ showToast('Erreur: '+e.type); cancelOnline(); });
@@ -2519,11 +2529,19 @@ async function joinOnlineSalle(code){
   onlineState={ isHost:false, roomCode:code, peer:null, conn:null,
     myRock:null, opponentRock:null, cd:0, botTimer:null, cdTimer:null };
   screen='online-wait'; render();
-  const peer=new Peer({debug:0});
+  const peer=new Peer(PEER_CONFIG);
   onlineState.peer=peer;
   peer.on('open',()=>{
     const conn=peer.connect(code,{reliable:true,serialization:'json'});
     setupOnlineConn(conn);
+    // Filet de securite : si la connexion n'aboutit pas (reseau bloquant),
+    // on ne reste pas bloque a l'attente indefiniment.
+    onlineState.connTimeout=setTimeout(()=>{
+      if(onlineState&&!battleState&&screen==='online-wait'){
+        showToast('❌ Connexion impossible (réseau). Réessaie ou passe en Wi-Fi.');
+        cancelOnline();
+      }
+    },20000);
   });
   peer.on('error',e=>{
     showToast(e.type==='peer-unavailable'?'❌ Salle introuvable':'Erreur: '+e.type);
