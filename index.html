@@ -3414,35 +3414,60 @@ function removeWhiteBackground(dataUrl){
       const imageData=ctx.getImageData(0,0,c.width,c.height);
       const data=imageData.data;
       const w=c.width, h=c.height, n=w*h;
-      const mask=new Uint8Array(n);
+      const mask=new Uint8Array(n); // 1 = fond (a supprimer)
 
-      const isLight=(pos)=>{
-        const d=pos*4;
-        return (data[d]+data[d+1]+data[d+2])/3 > 210;
-      };
+      const BG=222;      // au-dessus = "clairement le fond blanc"
+      const LO=196, HI=246; // bande de transition pour attenuer le halo blanc
+      const bright=(pos)=>{ const d=pos*4; return (data[d]+data[d+1]+data[d+2])/3; };
 
+      // 1) Remplissage depuis les bords : seuls les pixels clairs relies au bord
+      //    sont consideres comme fond (les zones claires du perso sont preservees).
       const queue=[];
       const visit=(pos)=>{
         if(pos<0||pos>=n||mask[pos]) return;
-        if(!isLight(pos)){ mask[pos]=2; return; }
+        if(bright(pos)<=BG){ mask[pos]=2; return; }
         mask[pos]=1; queue.push(pos);
       };
-
       for(let x=0;x<w;x++){ visit(x); visit((h-1)*w+x); }
       for(let y=0;y<h;y++){ visit(y*w); visit(y*w+w-1); }
-
       let qi=0;
       while(qi<queue.length){
         const pos=queue[qi++];
-        const x=pos%w, y=Math.floor(pos/w);
+        const x=pos%w, y=(pos/w)|0;
         if(x>0) visit(pos-1);
         if(x<w-1) visit(pos+1);
         if(y>0) visit(pos-w);
         if(y<h-1) visit(pos+w);
       }
 
+      // 2) Alpha de base + de-fringe : sur le contour du perso qui touche le fond,
+      //    on attenue les pixels quasi-blancs (le halo) proportionnellement.
+      const alpha=new Uint8ClampedArray(n);
+      for(let i=0;i<n;i++) alpha[i]=(mask[i]===1)?0:255;
       for(let i=0;i<n;i++){
-        if(mask[i]===1) data[i*4+3]=0;
+        if(!alpha[i]) continue;
+        const x=i%w, y=(i/w)|0;
+        const edge=(x>0&&mask[i-1]===1)||(x<w-1&&mask[i+1]===1)||(y>0&&mask[i-w]===1)||(y<h-1&&mask[i+w]===1);
+        if(edge){
+          const t=Math.max(0,Math.min(1,(bright(i)-LO)/(HI-LO)));
+          alpha[i]=Math.round(255*(1-t));
+        }
+      }
+
+      // 3) Leger lissage 3x3 de l'alpha : bords doux, anti-creneles.
+      for(let y=0;y<h;y++){
+        for(let x=0;x<w;x++){
+          const i=y*w+x;
+          let s=0,cnt=0;
+          for(let dy=-1;dy<=1;dy++){
+            const yy=y+dy; if(yy<0||yy>=h) continue;
+            for(let dx=-1;dx<=1;dx++){
+              const xx=x+dx; if(xx<0||xx>=w) continue;
+              s+=alpha[yy*w+xx]; cnt++;
+            }
+          }
+          data[i*4+3]=Math.round(s/cnt);
+        }
       }
 
       ctx.putImageData(imageData,0,0);
