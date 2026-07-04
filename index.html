@@ -3586,7 +3586,24 @@ document.getElementById('fileInput').addEventListener('change',(e)=>{
   const file=e.target.files[0]; e.target.value=''; handleFile(file);
 });
 
-if('serviceWorker' in navigator) window.addEventListener('load',()=>{ navigator.serviceWorker.register('./sw.js').catch(()=>{}); });
+if('serviceWorker' in navigator) window.addEventListener('load',()=>{
+  // L'app avait-elle deja un service worker actif au chargement ?
+  // Si oui, un changement de controleur = nouvelle version deployee -> on recharge.
+  // Si non (toute premiere visite), on ne recharge pas inutilement.
+  const hadController = !!navigator.serviceWorker.controller;
+  let refreshing = false;
+  navigator.serviceWorker.addEventListener('controllerchange',()=>{
+    if(refreshing || !hadController) return;
+    refreshing = true;
+    window.location.reload();
+  });
+  navigator.serviceWorker.register('./sw.js').then(reg=>{
+    // Verifie s'il existe une nouvelle version a chaque fois que l'app revient au premier plan...
+    document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible') reg.update(); });
+    // ...et periodiquement tant qu'elle reste ouverte.
+    setInterval(()=>{ reg.update(); }, 30*60*1000);
+  }).catch(()=>{});
+});
 
 (async function init(){
   applyTimeTheme();
