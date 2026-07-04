@@ -299,6 +299,11 @@ nav{display:flex;gap:8px;padding:8px 16px max(12px,env(safe-area-inset-bottom));
 .cn-decline{background:rgba(255,255,255,.1);color:rgba(255,255,255,.7);}
 .cn-close{position:absolute;top:7px;right:11px;font-size:13px;color:rgba(255,255,255,.45);cursor:pointer;line-height:1;}
 
+/* --- ECRAN DE CONSENTEMENT (1er lancement) --- */
+.consent-gate{position:fixed;inset:0;z-index:700;background:rgba(5,10,20,.88);display:flex;align-items:center;justify-content:center;padding:20px;}
+.consent-card{max-width:420px;width:100%;background:linear-gradient(160deg,#16273c,#0e1b2b);border:2px solid rgba(247,220,111,.35);border-radius:20px;padding:22px 20px;color:#fff;text-align:center;box-shadow:0 20px 50px rgba(0,0,0,.6);}
+.consent-card a{color:#74B9FF;}
+
 /* --- BADGE CARDS --- */
 .badge-card{display:flex;align-items:center;gap:12px;padding:13px;margin-bottom:8px;border-radius:16px;background:rgba(255,255,255,.05);border:1.5px solid rgba(255,255,255,.1);}
 .badge-medal{width:48px;height:48px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:22px;border:3px solid rgba(255,255,255,.2);}
@@ -929,11 +934,20 @@ function addGems(amount){
 }
 
 /* ===== PSEUDO ===== */
+const BLOCKED_WORDS=['connard','conard','salope','pute','putain','encule','enculé','ntm','nique','fdp','pd','pede','pédé','tapette','bougnoul','negre','nègre','youpin','feuj','pedophile','pédophile','viol','hitler','nazi','kkk','fuck','shit','bitch','nigger','nigga','cunt','faggot','rape','nazi','pedo','porn','sexe','bite','couille','merde'];
+function containsBlockedWord(name){
+  const n=(name||'').toLowerCase().replace(/[^a-z]/g,'');
+  return BLOCKED_WORDS.some(w=>n.includes(w));
+}
 async function setUsername(name){
   if(!session||!sb) return;
   const clean=(name||'').trim();
   if(!/^[A-Za-z0-9_]{3,20}$/.test(clean)){
     showToast('❌ 3 à 20 caractères, lettres/chiffres/underscore uniquement');
+    return;
+  }
+  if(containsBlockedWord(clean)){
+    showToast('❌ Ce pseudo contient un mot interdit. Choisis-en un autre.');
     return;
   }
   try{
@@ -1001,6 +1015,15 @@ async function removeFriend(friendId){
     render();
   }catch(e){ showToast('❌ Erreur: '+(e?.message||e)); }
 }
+async function reportUser(userId,username){
+  if(!session||!sb||!userId) return;
+  const reason=prompt('Signaler @'+username+' ?\nDécris brièvement le problème (facultatif) :');
+  if(reason===null) return; // annulé
+  try{
+    await sb.from('reports').insert({ reporter_id:session.user.id, reported_id:userId, reported_username:username||null, reason:(reason||'').slice(0,300) });
+    showToast('⚑ Signalement envoyé. Merci !');
+  }catch(e){ showToast('❌ Erreur: '+(e?.message||e)); }
+}
 
 function friendsScreen(){
   return `<div class="combat-pick-wrap">
@@ -1017,7 +1040,8 @@ function friendsScreen(){
             <div class="combat-pick-name">@${f.username} <span style="font-size:10px;color:rgba(255,255,255,.4);">ℹ️ voir profil</span></div>
           </div>
           <button class="btn-feed" style="width:auto;padding:8px 14px;font-size:11px;" data-action="challengeFriendBtn" data-id="${f.user_id}" data-name="${f.username}">⚔️ Défier</button>
-          <span data-action="removeFriendBtn" data-id="${f.user_id}" style="font-size:11px;color:rgba(255,100,100,.6);cursor:pointer;margin-left:8px;">✕</span>
+          <span data-action="reportFriendBtn" data-id="${f.user_id}" data-name="${f.username}" title="Signaler" style="font-size:12px;color:rgba(255,180,80,.6);cursor:pointer;margin-left:8px;">⚑</span>
+          <span data-action="removeFriendBtn" data-id="${f.user_id}" style="font-size:11px;color:rgba(255,100,100,.6);cursor:pointer;margin-left:6px;">✕</span>
           ${incoming?`<div style="width:100%;margin-top:8px;padding-top:8px;border-top:1px solid rgba(196,92,255,.25);display:flex;align-items:center;justify-content:space-between;">
             <span style="font-family:'Baloo 2',sans-serif;font-weight:800;font-size:12px;color:#C45CFF;">⚔️ ${f.username} te défie !</span>
             <button class="btn-feed" style="width:auto;padding:6px 12px;font-size:11px;background:linear-gradient(135deg,#C45CFF,#8020C0);" data-action="acceptChallengeBtn">Accepter</button>
@@ -2369,6 +2393,8 @@ function accountScreen(){
     <button class="btn btn-ghost" style="margin-top:18px;font-size:11px;color:rgba(255,255,255,.3);border-color:rgba(255,255,255,.1);" data-action="deleteAccount">🗑️ Supprimer mon compte et mes données</button>
     <p style="font-family:'Nunito',sans-serif;font-size:10px;color:rgba(255,255,255,.25);text-align:center;margin-top:8px;">
       <a href="privacy.html" target="_blank" style="color:rgba(255,255,255,.35);">Politique de confidentialité</a>
+      &nbsp;·&nbsp;
+      <a href="terms.html" target="_blank" style="color:rgba(255,255,255,.35);">Conditions d'utilisation</a>
     </p>
   </div>`;
 }
@@ -3237,6 +3263,25 @@ function combatResultScreen(){
 }
 
 /* ===== RENDER ===== */
+const LEGAL_VERSION='2026-07';
+function hasConsent(){ try{ return localStorage.getItem('cdx_consent')===LEGAL_VERSION; }catch(e){ return true; } }
+function maybeShowConsent(){
+  if(typeof session==='undefined'||!session||hasConsent()) return;
+  if(document.getElementById('consentGate')) return;
+  const el=document.createElement('div');
+  el.className='consent-gate'; el.id='consentGate';
+  el.innerHTML=`<div class="consent-card">
+    <div style="font-size:34px;">🪨</div>
+    <div style="font-family:'Bungee',cursive;font-size:18px;color:var(--accent);margin:6px 0 10px;">Bienvenue sur CaillouDEX</div>
+    <p style="font-family:'Baloo 2',sans-serif;font-size:13px;color:rgba(255,255,255,.82);line-height:1.5;">
+      Avant de jouer : en continuant, tu confirmes avoir <b>13 ans ou plus</b> et tu acceptes nos
+      <a href="terms.html" target="_blank">Conditions d'utilisation</a>
+      et notre <a href="privacy.html" target="_blank">Politique de confidentialité</a>.
+    </p>
+    <button class="btn btn-gold" style="margin-top:14px;" data-action="acceptConsent">✅ J'accepte et je joue</button>
+  </div>`;
+  document.body.appendChild(el);
+}
 function render(){
   const app=document.getElementById('app');
   let mainHtml='';
@@ -3281,6 +3326,7 @@ function render(){
   }
 
   document.querySelectorAll('.overlay').forEach(o=>o.remove());
+  maybeShowConsent();
 
   if(generatingCharacter){
     const ESTIMATED_MS=10000;
@@ -3841,7 +3887,9 @@ document.addEventListener('click',(e)=>{
   else if(action==='removeFriendBtn'){
     if(confirm('Retirer cet ami de ta liste ?')) removeFriend(t.dataset.id);
   }
+  else if(action==='reportFriendBtn'){ reportUser(t.dataset.id,t.dataset.name); }
   else if(action==='challengeFriendBtn'){ sendChallenge(t.dataset.id,t.dataset.name); }
+  else if(action==='acceptConsent'){ try{localStorage.setItem('cdx_consent',LEGAL_VERSION);}catch(e){} const g=document.getElementById('consentGate'); if(g) g.remove(); }
   else if(action==='acceptChallengeBtn'){ acceptChallenge(); }
   else if(action==='dismissChallengeBtn'){ dismissChallenge(); }
   else if(action==='viewFriendStats'){ viewFriendStats(t.dataset.id,t.dataset.name); }
@@ -3924,6 +3972,26 @@ document.addEventListener('click',(e)=>{
 document.getElementById('fileInput').addEventListener('change',(e)=>{
   const file=e.target.files[0]; e.target.value=''; handleFile(file);
 });
+
+// --- Suivi d'erreurs (best-effort, anti-spam) : pour voir ce qui casse en prod ---
+let _errCount=0, _errWindow=0;
+function logError(kind,message,stack){
+  try{
+    const now=Date.now();
+    if(now-_errWindow>60000){ _errWindow=now; _errCount=0; }
+    if(_errCount++>=6) return;
+    console.warn('[app-error]',kind,message);
+    if(typeof sb!=='undefined'&&sb){
+      sb.from('app_errors').insert({
+        user_id: (typeof session!=='undefined'&&session)?session.user.id:null,
+        kind, message:String(message||'').slice(0,500), stack:String(stack||'').slice(0,2000),
+        url:location.href, ua:(navigator.userAgent||'').slice(0,300),
+      }).then(()=>{},()=>{});
+    }
+  }catch(e){}
+}
+window.addEventListener('error',e=>{ logError('error', e.message, e.error&&e.error.stack); });
+window.addEventListener('unhandledrejection',e=>{ const r=e&&e.reason; logError('promise', (r&&r.message)||r, r&&r.stack); });
 
 if('serviceWorker' in navigator) window.addEventListener('load',()=>{
   // L'app avait-elle deja un service worker actif au chargement ?
