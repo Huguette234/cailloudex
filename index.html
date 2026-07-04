@@ -1367,10 +1367,10 @@ function applyTimeTheme(){
   /* ----- SOL ----- */
   const g = document.getElementById('groundSvg');
   const grassColors = {
-    nuit:  {top:'#1A3A1A', bot:'#0A1A0A', stone:'#0F280F', stroke:'#0A1E0A', hillA:'rgba(20,50,20,.5)'},
-    matin: {top:'#3A7A1A', bot:'#1E4A08', stone:'#2A5010', stroke:'#1A3A06', hillA:'rgba(50,100,20,.5)'},
-    aprem: {top:'#4A9A20', bot:'#2A6A0A', stone:'#2E6012', stroke:'#1A4206', hillA:'rgba(60,130,20,.5)'},
-    soir:  {top:'#5A3010', bot:'#1A0A02', stone:'#3A1A08', stroke:'#1A0A02', hillA:'rgba(70,30,10,.5)'},
+    nuit:  {top:'#1A3A1A', bot:'#0A1A0A', stone:'#0F280F', stroke:'#0A1E0A', hillA:'rgba(20,50,20,.5)', haze:'rgba(120,140,210,.14)', rim:'rgba(150,170,230,.18)'},
+    matin: {top:'#3A7A1A', bot:'#1E4A08', stone:'#2A5010', stroke:'#1A3A06', hillA:'rgba(50,100,20,.5)', haze:'rgba(255,220,160,.38)', rim:'rgba(255,235,180,.4)'},
+    aprem: {top:'#4A9A20', bot:'#2A6A0A', stone:'#2E6012', stroke:'#1A4206', hillA:'rgba(60,130,20,.5)', haze:'rgba(200,235,255,.34)', rim:'rgba(230,250,255,.4)'},
+    soir:  {top:'#5A3010', bot:'#1A0A02', stone:'#3A1A08', stroke:'#1A0A02', hillA:'rgba(70,30,10,.5)', haze:'rgba(255,150,80,.32)', rim:'rgba(255,180,110,.42)'},
   };
   const mountainColors = {
     nuit:  { far:'rgba(58,66,86,.55)',  mid:'rgba(42,49,64,.8)',  near:'#262C3A' },
@@ -1380,34 +1380,34 @@ function applyTimeTheme(){
   };
   const mc = mountainColors[key];
   const gc = grassColors[key];
+  const pine=(x,b,h,col)=>{const w=h*0.62;return `<path d="M${x-w},${b} L${x},${b-h} L${x+w},${b} Z M${x-w*0.8},${b-h*0.42} L${x},${b-h*1.05} L${x+w*0.8},${b-h*0.42} Z" fill="${col}"/><rect x="${x-h*0.07}" y="${b}" width="${h*0.14}" height="${h*0.16}" fill="${col}"/>`;};
   g.innerHTML = `
     <defs>
       <linearGradient id="gG2" x1="0" y1="0" x2="0" y2="1">
         <stop offset="0%" stop-color="${gc.top}"/>
         <stop offset="100%" stop-color="${gc.bot}"/>
       </linearGradient>
+      <linearGradient id="hazeG" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="${gc.haze}"/>
+        <stop offset="100%" stop-color="transparent"/>
+      </linearGradient>
     </defs>
-    <path d="M0,98 L22,38 L42,62 L65,18 L88,55 L112,10 L132,48 L155,25 L178,58 L196,5 L218,46 L238,22 L260,56 L278,12 L300,50 L320,28 L342,60 L360,15 L382,52 L400,32 L400,100 L0,100 Z" fill="${mc.far}"/>
-    <path d="M0,100 L18,55 L38,78 L58,40 L80,72 L104,30 L126,64 L150,46 L172,76 L192,24 L214,58 L236,38 L258,68 L278,20 L300,54 L322,80 L344,36 L364,64 L384,44 L400,58 L400,108 L0,108 Z" fill="${mc.mid}"/>
-    <path d="M0,108 L20,68 L40,92 L62,52 L84,86 L108,44 L130,78 L154,60 L176,90 L198,40 L220,72 L242,54 L264,84 L284,36 L306,68 L328,94 L350,50 L370,78 L390,58 L400,72 L400,118 L0,118 Z" fill="${mc.near}"/>
-    <path d="M0,100 C50,90 90,105 140,96 C190,87 230,103 280,94 C320,86 360,97 400,92 L400,130 L0,130 Z" fill="url(#gG2)"/>
-    <g>
-      <ellipse cx="36" cy="97.5" rx="6.5" ry="4" fill="${gc.stone}" stroke="${gc.stroke}" stroke-width="0.7"/>
-      <path d="M31,97.5 Q36,94.5 41,97.5" fill="none" stroke="${gc.top}" stroke-width="0.8" opacity="0.5"/>
-      <path d="M64,101 Q65,94 66,101 M67,101 Q68.5,93 70,101 M71,101 Q72,95.5 73,101" stroke="${gc.top}" stroke-width="1" fill="none" stroke-linecap="round"/>
-      <ellipse cx="118" cy="88.5" rx="8" ry="4.8" fill="${gc.stone}" stroke="${gc.stroke}" stroke-width="0.7"/>
-      <path d="M112,88.5 Q118,85 124,88.5" fill="none" stroke="${gc.top}" stroke-width="0.8" opacity="0.5"/>
-      <ellipse cx="155" cy="103" rx="4.5" ry="2.8" fill="${gc.stone}" stroke="${gc.stroke}" stroke-width="0.6"/>
-      <path d="M196,105 Q197,98 198,105 M199,105 Q200.5,97 202,105" stroke="${gc.top}" stroke-width="1" fill="none" stroke-linecap="round"/>
-      <ellipse cx="219" cy="96" rx="7" ry="4.3" fill="${gc.stone}" stroke="${gc.stroke}" stroke-width="0.7"/>
-      <path d="M213.5,96 Q219,92.8 224.5,96" fill="none" stroke="${gc.top}" stroke-width="0.8" opacity="0.5"/>
-      <path d="M255,103 Q256,96 257,103 M258,103 Q259.5,95 261,103 M262,103 Q263,97.5 264,103" stroke="${gc.top}" stroke-width="1" fill="none" stroke-linecap="round"/>
-      <ellipse cx="302" cy="87" rx="9" ry="5.2" fill="${gc.stone}" stroke="${gc.stroke}" stroke-width="0.7"/>
-      <path d="M295,87 Q302,83.3 309,87" fill="none" stroke="${gc.top}" stroke-width="0.9" opacity="0.5"/>
-      <ellipse cx="334" cy="102" rx="5" ry="3" fill="${gc.stone}" stroke="${gc.stroke}" stroke-width="0.6"/>
-      <path d="M358,105 Q359,98 360,105 M361,105 Q362.5,97 364,105 M365,105 Q366,99 367,105" stroke="${gc.top}" stroke-width="1" fill="none" stroke-linecap="round"/>
-      <ellipse cx="382" cy="93" rx="6" ry="3.7" fill="${gc.stone}" stroke="${gc.stroke}" stroke-width="0.7"/>
-      <path d="M377,93 Q382,90 387,93" fill="none" stroke="${gc.top}" stroke-width="0.8" opacity="0.5"/>
+    <rect x="0" y="30" width="400" height="52" fill="url(#hazeG)"/>
+    <path d="M0,60 C55,50 110,57 165,50 C225,42 285,55 345,48 C370,45 400,50 400,52 L400,130 L0,130 Z" fill="${mc.far}"/>
+    <path d="M0,76 C50,65 105,73 165,63 C230,53 290,70 350,61 C375,57 400,64 400,66 L400,130 L0,130 Z" fill="${mc.mid}"/>
+    ${pine(60,79,11,mc.far)}${pine(300,74,10,mc.far)}
+    <path d="M0,92 C70,80 130,90 200,80 C265,71 325,88 385,79 C392,78 400,80 400,82 L400,130 L0,130 Z" fill="${mc.near}"/>
+    <path d="M0,92 C70,80 130,90 200,80 C265,71 325,88 385,79 C392,78 400,80 400,82" fill="none" stroke="${gc.rim}" stroke-width="1.2" opacity="0.9"/>
+    ${pine(110,90,14,gc.stroke)}${pine(128,90,10,gc.stroke)}${pine(255,88,13,gc.stroke)}
+    <path d="M0,105 C60,97 120,109 200,101 C270,94 330,107 400,99 L400,130 L0,130 Z" fill="url(#gG2)"/>
+    <path d="M0,105 C60,97 120,109 200,101 C270,94 330,107 400,99" fill="none" stroke="${gc.rim}" stroke-width="1" opacity="0.7"/>
+    <g opacity="0.9">
+      <ellipse cx="150" cy="110" rx="5" ry="3" fill="${gc.stone}" stroke="${gc.stroke}" stroke-width="0.6"/>
+      <path d="M145,110 Q150,107 155,110" fill="none" stroke="${gc.top}" stroke-width="0.7" opacity="0.5"/>
+      <path d="M64,108 Q65,101 66,108 M67,108 Q68.5,100 70,108 M71,108 Q72,102.5 73,108" stroke="${gc.top}" stroke-width="1" fill="none" stroke-linecap="round"/>
+      <ellipse cx="322" cy="108" rx="6" ry="3.6" fill="${gc.stone}" stroke="${gc.stroke}" stroke-width="0.7"/>
+      <path d="M316,108 Q322,104.7 328,108" fill="none" stroke="${gc.top}" stroke-width="0.8" opacity="0.5"/>
+      <path d="M232,112 Q233,105 234,112 M235,112 Q236.5,104 238,112 M239,112 Q240,106.5 241,112" stroke="${gc.top}" stroke-width="1" fill="none" stroke-linecap="round"/>
     </g>`;
 
   /* ----- DÉCO CIEL ----- */
@@ -1418,13 +1418,17 @@ function applyTimeTheme(){
     stars.classList.remove('hidden');
     sky.innerHTML = `
       <!-- Lune -->
-      <svg style="position:absolute;top:8%;right:12%;width:64px;height:64px;" viewBox="0 0 64 64">
-        <circle cx="32" cy="32" r="28" fill="#FFF8DC" opacity=".92"/>
-        <circle cx="32" cy="32" r="32" fill="none" stroke="#FFF8DC" stroke-width="3" opacity=".2"/>
-        <circle cx="32" cy="32" r="38" fill="none" stroke="#FFF8DC" stroke-width="2" opacity=".08"/>
-        <circle cx="22" cy="24" r="4" fill="rgba(200,180,120,.3)"/>
-        <circle cx="40" cy="36" r="3" fill="rgba(200,180,120,.25)"/>
-        <circle cx="28" cy="42" r="2" fill="rgba(200,180,120,.2)"/>
+      <svg style="position:absolute;top:7%;right:11%;width:116px;height:116px;" viewBox="0 0 116 116">
+        <defs><radialGradient id="moonGlow" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="rgba(255,248,220,.5)"/>
+          <stop offset="38%" stop-color="rgba(230,238,255,.16)"/>
+          <stop offset="100%" stop-color="transparent"/>
+        </radialGradient></defs>
+        <circle cx="58" cy="58" r="55" fill="url(#moonGlow)"/>
+        <circle cx="58" cy="58" r="27" fill="#FFF8DC" opacity=".95"/>
+        <circle cx="48" cy="49" r="4" fill="rgba(200,180,120,.3)"/>
+        <circle cx="66" cy="62" r="3" fill="rgba(200,180,120,.25)"/>
+        <circle cx="53" cy="68" r="2" fill="rgba(200,180,120,.2)"/>
       </svg>
       <!-- Étoiles filantes -->
       <div class="shooting-star" style="top:12%;left:20%;animation-duration:6s;animation-delay:2s;"></div>
