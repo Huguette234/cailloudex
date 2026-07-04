@@ -1854,11 +1854,16 @@ function pickSpecialMove(){ return SPECIAL_MOVES[Math.floor(Math.random()*SPECIA
 function pickType(){ return ROCK_TYPES[Math.floor(Math.random()*ROCK_TYPES.length)]; }
 function getDailyChallenge(){
   const t=todayStr();
-  if(meta.challengeDate!==t){
-    const prevId=meta.todayChallenge?.id;
-    const pool=CHALLENGE_TYPES.filter(c=>c.id!==prevId);
+  // Defi DETERMINISTE : la meme date donne toujours le meme defi, quel que soit
+  // le rechargement / l'appareil, sans dependre de la sauvegarde du meta.
+  // On parcourt la liste dans l'ordre selon le numero du jour -> deux jours
+  // consecutifs ont toujours un defi different.
+  const dayNum=Math.floor(Date.parse(t+'T00:00:00Z')/86400000);
+  const idx=((dayNum%CHALLENGE_TYPES.length)+CHALLENGE_TYPES.length)%CHALLENGE_TYPES.length;
+  const chosen=CHALLENGE_TYPES[idx];
+  if(meta.challengeDate!==t||meta.todayChallenge?.id!==chosen.id){
     meta.challengeDate=t;
-    meta.todayChallenge=pool[Math.floor(Math.random()*pool.length)];
+    meta.todayChallenge=chosen;
     saveMeta();
   }
   return meta.todayChallenge;

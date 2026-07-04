@@ -18,8 +18,15 @@ create table public.rocks (
   def int,
   vit int,
   ai_generated boolean default false,
+  size_cm numeric,
   photo text,
   anime_photo text,
+  character_photo text,
+  char_gen_count int default 0,
+  upgrade_level int default 0,
+  evolved boolean default false,
+  color_category text,
+  shiny boolean default false,
   created_at timestamptz default now()
 );
 
@@ -39,8 +46,20 @@ create table public.player_meta (
   shared int default 0,
   today_challenge jsonb,
   challenge_date date,
+  challenge_completed_date date,
   wins int default 0,
   losses int default 0,
+  xp int default 0,
+  gravillons int default 0,
+  gems int default 0,
+  inventory jsonb default '{}'::jsonb,
+  food jsonb default '{}'::jsonb,
+  lucky_boost_until timestamptz,
+  streak_freeze_count int default 0,
+  owned_frames jsonb default '[]'::jsonb,
+  equipped_frame text,
+  custom_title text,
+  username text,
   updated_at timestamptz default now()
 );
 
