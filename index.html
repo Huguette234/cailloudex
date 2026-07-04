@@ -2494,6 +2494,20 @@ function handleOnlineMsg(msg){
     if(onlineState.myRock) startOnlineBattle();
     else showToast('Adversaire a choisi. Fais vite !');
   }
+  if(msg.type==='rock-media'){
+    // Images de l'adversaire recues separement (le combat a deja pu demarrer).
+    if(onlineState.opponentRock){
+      if(msg.photo) onlineState.opponentRock.photo=msg.photo;
+      if(msg.characterPhoto) onlineState.opponentRock.characterPhoto=msg.characterPhoto;
+    }
+    if(battleState&&battleState.botRock){
+      if(msg.characterPhoto) battleState.botRock.characterPhoto=msg.characterPhoto;
+      if(msg.photo){
+        battleState.botRock.photo=msg.photo;
+        makeRockSprite(msg.photo,battleState.botRock.name||'opponent').then(url=>{ if(battleState){ battleState.botSpriteUrl=url; render(); } });
+      } else render();
+    }
+  }
   if(msg.type==='action') applyOnlineOpponentAction(msg);
 }
 
@@ -2692,16 +2706,23 @@ async function pickOnlineRock(rock){
   }
   onlineState.myRock=effRock;
   render();
-  const [smallPhoto,smallChar]=await Promise.all([
-    shrinkForNetwork(effRock.photo),
-    shrinkForNetwork(effRock.characterPhoto||null,160,0.7),
-  ]);
-  const payload={name:effRock.name,atk:effRock.atk,def:effRock.def,vit:effRock.vit,
+  // 1) On envoie d'ABORD uniquement les stats (message minuscule) : le combat
+  //    se lance de facon fiable meme sur Safari/iPhone, sans dependre des images
+  //    (un gros message WebRTC pouvait echouer en silence et tout bloquer).
+  const stats={name:effRock.name,atk:effRock.atk,def:effRock.def,vit:effRock.vit,
     specialMove:effRock.specialMove,rarityLabel:effRock.rarityLabel,hex:effRock.hex,
-    rarity:effRock.rarity,rockType:effRock.rockType,photo:smallPhoto,characterPhoto:smallChar||null,emoji:'⬜'};
-  try{ onlineState.conn.send({type:'rock-pick',rock:payload}); }catch(e){}
+    rarity:effRock.rarity,rockType:effRock.rockType,emoji:'⬜'};
+  try{ onlineState.conn.send({type:'rock-pick',rock:stats}); }catch(e){}
   if(onlineState.opponentRock) startOnlineBattle();
   else{ showToast('En attente du choix adverse...'); }
+  // 2) Puis les images, en petit et separement (best-effort ; le duel n'en depend pas).
+  try{
+    const [smallPhoto,smallChar]=await Promise.all([
+      shrinkForNetwork(effRock.photo,128,0.5),
+      shrinkForNetwork(effRock.characterPhoto||null,128,0.55),
+    ]);
+    if(onlineState&&onlineState.conn) onlineState.conn.send({type:'rock-media',photo:smallPhoto||null,characterPhoto:smallChar||null});
+  }catch(e){}
 }
 
 async function startOnlineBattle(){
