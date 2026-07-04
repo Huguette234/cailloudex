@@ -1,6 +1,6 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
-const DAILY_LIMIT = 20;
+const DAILY_LIMIT = 10;
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY')!;
