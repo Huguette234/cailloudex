@@ -118,6 +118,18 @@ header{
 .count-pill{font-family:'Baloo 2',sans-serif;font-weight:800;font-size:16px;color:var(--ink);background:var(--accent);border:3px solid var(--ink);border-radius:12px;padding:4px 10px;box-shadow:0 4px 0 var(--accent2);}
 .count-pill span{display:block;font-size:8px;font-weight:700;color:#5A3B00;text-align:center;letter-spacing:.04em;}
 .flame-pill{font-family:'Baloo 2',sans-serif;font-weight:800;font-size:14px;color:#fff;background:#E8623C;border:3px solid #9A3A1A;border-radius:12px;padding:5px 9px;box-shadow:0 4px 0 #9A3A1A;}
+/* --- Pouvoirs actifs --- */
+.flame-pill.frozen{background:linear-gradient(135deg,#8FD4FF,#2A6FB0);border-color:#1A4E80;box-shadow:0 4px 0 #1A4E80,inset 0 0 8px rgba(255,255,255,.55);color:#eaf6ff;position:relative;overflow:hidden;}
+.flame-pill.frozen::after{content:'';position:absolute;top:0;left:0;width:60%;height:100%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.7),transparent);animation:frostShine 3.2s ease-in-out infinite;}
+@keyframes frostShine{0%{transform:translateX(-180%);}55%,100%{transform:translateX(320%);}}
+.lucky-pill{font-size:14px;background:rgba(80,220,120,.18);border:2px solid rgba(80,220,120,.55);border-radius:12px;padding:4px 8px;cursor:pointer;animation:luckyGlow 1.8s ease-in-out infinite;}
+@keyframes luckyGlow{0%,100%{box-shadow:0 0 7px rgba(80,220,120,.4);}50%{box-shadow:0 0 18px rgba(80,220,120,.8);}}
+.stat-tile.frozen-tile{background:linear-gradient(160deg,rgba(143,212,255,.24),rgba(42,111,176,.12));border-color:rgba(143,212,255,.45);box-shadow:inset 0 0 12px rgba(143,212,255,.15);}
+.guaranteed-badge{font-family:'Baloo 2',sans-serif;font-weight:800;font-size:12px;border:2px solid;border-radius:12px;padding:8px 12px;margin-bottom:12px;text-align:center;background:rgba(0,0,0,.22);animation:guarPulse 1.6s ease-in-out infinite;}
+@keyframes guarPulse{0%,100%{filter:brightness(1);}50%{filter:brightness(1.28);}}
+.viewfinder.vf-guaranteed{box-shadow:0 0 22px -2px currentColor;}
+.buff-row{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin-bottom:12px;}
+.buff-pill{font-family:'Baloo 2',sans-serif;font-weight:800;font-size:11px;color:#fff;background:linear-gradient(135deg,rgba(255,215,0,.25),rgba(255,140,0,.14));border:1.5px solid rgba(255,215,0,.5);border-radius:999px;padding:4px 10px;}
 .ai-pill{font-family:'Baloo 2',sans-serif;font-weight:800;font-size:12px;color:#fff;background:var(--epique-d);border:3px solid var(--ink);border-radius:12px;padding:4px 9px;box-shadow:0 4px 0 var(--ink);cursor:pointer;}
 .no-ai-pill{font-family:'Baloo 2',sans-serif;font-weight:700;font-size:10px;color:rgba(255,255,255,.6);background:rgba(255,255,255,.1);border:2px solid rgba(255,255,255,.2);border-radius:12px;padding:4px 9px;cursor:pointer;}
 .friends-pill{font-family:'Baloo 2',sans-serif;font-weight:800;font-size:13px;color:#fff;background:rgba(196,92,255,.22);border:2px solid rgba(196,92,255,.55);border-radius:12px;padding:4px 9px;cursor:pointer;}
@@ -2056,17 +2068,25 @@ function statBlock(label,val,color){
   </div>`;
 }
 
+function isFreezeActive(){ return (meta.streakFreezeCount||0)>0; }
+function isLuckyActive(){ return meta.luckyBoostUntil&&new Date(meta.luckyBoostUntil).getTime()>Date.now(); }
+function guaranteedRarityKey(){ return (meta.inventory?.sacred||0)>0?'legendaire':(meta.inventory?.blessed||0)>0?'epique':(meta.inventory?.lucky||0)>0?'rare':null; }
 function header(){
   const ai=hasApiKey()
     ?`<div class="ai-pill" data-action="account">🤖 IA</div>`
     :`<div class="no-ai-pill" data-action="account">⚙️ Compte</div>`;
+  const frozen=isFreezeActive();
+  const flame=meta.streak>0
+    ?`<div class="flame-pill${frozen?' frozen':''}" title="${frozen?'Série gelée (protégée)':'Série'}">${frozen?'❄️':'🔥'}${meta.streak}</div>`
+    :'';
   return `<header>
     <div data-action="goto" data-screen="home" style="cursor:pointer;">
       <div class="logo">CAILLOUDEX</div>
       <span class="v-badge" style="font-size:11px;padding:3px 10px;">🏠 ACCUEIL</span>
     </div>
     <div class="pill-row">
-      ${meta.streak>0?`<div class="flame-pill">🔥${meta.streak}</div>`:''}
+      ${flame}
+      ${isLuckyActive()?`<div class="lucky-pill" data-action="goto" data-screen="shop" title="Porte-Bonheur actif">🍀</div>`:''}
       <div class="count-pill">${String(dex.length).padStart(3,'0')}<span>TROUVÉS</span></div>
       <div class="friends-pill${screen==='friends'?' active':''}" data-action="goto" data-screen="friends">👥</div>
       ${ai}
@@ -2107,7 +2127,7 @@ function homeScreen(){
       </div>
       <div class="stat-grid">
         <div class="stat-tile" data-action="goto" data-screen="dex"><div class="stat-val">${dex.length}</div><div class="stat-lbl">🪨 CAILLOUX</div></div>
-        <div class="stat-tile" data-action="goto" data-screen="scanner"><div class="stat-val">${meta.streak||0}</div><div class="stat-lbl">🔥 SÉRIE</div></div>
+        <div class="stat-tile${isFreezeActive()?' frozen-tile':''}" data-action="goto" data-screen="scanner"><div class="stat-val">${meta.streak||0}</div><div class="stat-lbl">${isFreezeActive()?'❄️ SÉRIE':'🔥 SÉRIE'}</div></div>
         <div class="stat-tile" data-action="goto" data-screen="combat-pick"><div class="stat-val">${meta.wins||0}</div><div class="stat-lbl">⚔️ VICTOIRES</div></div>
         <div class="stat-tile" data-action="goto" data-screen="badges"><div class="stat-val">${badgeCount}</div><div class="stat-lbl">🏆 BADGES</div></div>
       </div>
@@ -2183,8 +2203,13 @@ function scannerScreen(){
   const aiLine=hasApiKey()
     ?`<div class="hint-soft" style="color:rgba(196,92,255,.6);">🤖 IA active — noms personnalisés + détection anti-triche</div>`
     :`<div class="hint-soft">Active l'IA pour des noms personnalisés et bloquer les fausses photos → <span style="color:rgba(255,215,0,.7);cursor:pointer;" data-action="account">⚙️ IA</span></div>`;
+  const gKey=guaranteedRarityKey();
+  const gTier=gKey?RARITY_TIERS.find(x=>x.key===gKey):null;
+  const guaranteedBadge=gTier?`<div class="guaranteed-badge" style="border-color:${gTier.hex};color:${gTier.hex};box-shadow:0 0 16px ${gTier.hex}55;">✨ Prochaine capture : <b>${gTier.label}</b> garantie</div>`:'';
+  const luckyBadge=isLuckyActive()?`<div class="hint-soft" style="color:rgba(90,220,130,.85);">🍀 Porte-Bonheur actif — chances de rareté boostées</div>`:'';
   return `<div class="panel">
-    <div class="viewfinder" data-action="capture">
+    ${guaranteedBadge}
+    <div class="viewfinder${gTier?' vf-guaranteed':''}" data-action="capture" ${gTier?`style="border-color:${gTier.hex};color:${gTier.hex};"`:''}>
       <div class="corner c-tl"></div><div class="corner c-tr"></div>
       <div class="corner c-bl"></div><div class="corner c-br"></div>
       ${mascotSvg()}
@@ -2193,6 +2218,7 @@ function scannerScreen(){
     <button class="btn btn-gold" style="margin-top:14px;" data-action="capture">CAPTURER UN CAILLOU 🪨</button>
     <div class="legend">${legend}</div>
     ${streakLine}
+    ${luckyBadge}
     ${aiLine}
   </div>`;
 }
@@ -3232,6 +3258,7 @@ function combatPickScreen(){
       <span style="font-family:'Baloo 2',sans-serif;font-weight:800;font-size:11px;color:rgba(255,215,0,.6);cursor:pointer;border:1px solid rgba(255,215,0,.25);border-radius:20px;padding:4px 10px;" data-action="goto" data-screen="online-menu">🌐 EN LIGNE</span>
     </div>
     <div class="combat-pick-sub">Lequel vas-tu envoyer au combat ?</div>
+    ${(()=>{ const b=[]; if((meta.inventory?.shield||0)>0)b.push('🛡️ Bouclier'); if((meta.inventory?.crit||0)>0)b.push('💥 Crit ×2'); if((meta.inventory?.mighty||0)>0)b.push('💪 Costaud'); return b.length?`<div class="buff-row">${b.map(x=>`<span class="buff-pill">${x} <span style="opacity:.6;">prêt</span></span>`).join('')}</div>`:''; })()}
     <div class="combat-pick-grid">
       ${dex.map(r=>`<div class="combat-pick-card" data-action="startBattle" data-id="${r.id}">
         <img class="combat-pick-img" src="${r.characterPhoto||r.animePhoto||r.photo}" alt="${r.name}">
