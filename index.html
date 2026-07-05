@@ -2532,6 +2532,15 @@ function handleOnlineMsg(msg){
       } else render();
     }
   }
+  if(msg.type==='rematch-request'){
+    if(onlineState){ onlineState.rematchIncoming=true; if(navigator.vibrate) navigator.vibrate([60,50,60]); if(screen==='combat-result') render(); else showToast('🔄 Ton adversaire veut une revanche !'); }
+  }
+  if(msg.type==='rematch-accept'){ startRematch(); }
+  if(msg.type==='rematch-decline'){
+    if(onlineState) onlineState.rematchRequested=false;
+    showToast('❌ Revanche refusée par ton adversaire');
+    if(screen==='combat-result') render();
+  }
   if(msg.type==='action') applyOnlineOpponentAction(msg);
 }
 
@@ -2769,6 +2778,15 @@ async function startOnlineBattle(){
     playerSpriteUrl, botSpriteUrl,
   };
   screen='combat-fight'; render();
+}
+
+function startRematch(){
+  if(!onlineState) return;
+  onlineState.myRock=null; onlineState.opponentRock=null;
+  onlineState.rematchRequested=false; onlineState.rematchIncoming=false;
+  battleState=null;
+  showToast('🔄 Revanche ! Choisis ton caillou.');
+  screen='online-pick'; render();
 }
 
 async function playerOnlineAction(moveId){
@@ -3307,7 +3325,19 @@ function combatResultScreen(){
       <div class="result-stat-item"><div class="result-stat-val">${meta.wins||0}</div><div class="result-stat-lbl">VICTOIRES</div></div>
       <div class="result-stat-item"><div class="result-stat-val">${meta.losses||0}</div><div class="result-stat-lbl">DÉFAITES</div></div>
     </div>
-    <button class="btn btn-gold" data-action="combatRematch">🔄 REVANCHE</button>
+    ${(()=>{
+      if(s.online&&onlineState&&onlineState.rematchIncoming){
+        return `<div style="font-family:'Baloo 2',sans-serif;font-weight:800;font-size:13px;color:#C45CFF;margin-bottom:8px;">⚔️ Ton adversaire veut une revanche !</div>
+          <div class="btn-row">
+            <button class="btn btn-ghost" data-action="rematchDecline">Refuser</button>
+            <button class="btn btn-gold" data-action="rematchAccept">✅ Accepter</button>
+          </div>`;
+      }
+      if(s.online&&onlineState&&onlineState.rematchRequested){
+        return `<button class="btn btn-ghost" disabled style="opacity:.6;">⏳ Revanche demandée — en attente...</button>`;
+      }
+      return `<button class="btn btn-gold" data-action="combatRematch">🔄 REVANCHE</button>`;
+    })()}
     <button class="btn btn-ghost" style="margin-top:8px;" data-action="goto" data-screen="home">🏠 Accueil</button>
   </div>`;
 }
@@ -3993,9 +4023,27 @@ document.addEventListener('click',(e)=>{
     else playerAction(moveId);
   }
   else if(action==='combatRematch'){
-    if(battleState&&battleState.online){ battleState=null; screen='online-menu'; render(); }
+    if(battleState&&battleState.online){
+      if(onlineState&&onlineState.conn&&onlineState.conn.open){
+        try{ onlineState.conn.send({type:'rematch-request'}); }catch(e){}
+        onlineState.rematchRequested=true; showToast('🔄 Demande de revanche envoyée...'); render();
+      } else {
+        showToast('Adversaire déconnecté.');
+        battleState=null; try{ if(onlineState&&onlineState.peer) onlineState.peer.destroy(); }catch(e){} onlineState=null;
+        screen='online-menu'; render();
+      }
+    }
     else if(battleState){ initBattle(battleState.playerRock); }
     else { screen='combat-pick'; render(); }
+  }
+  else if(action==='rematchAccept'){
+    if(onlineState&&onlineState.conn&&onlineState.conn.open){ try{ onlineState.conn.send({type:'rematch-accept'}); }catch(e){} startRematch(); }
+    else { showToast('Adversaire déconnecté.'); battleState=null; onlineState=null; screen='online-menu'; render(); }
+  }
+  else if(action==='rematchDecline'){
+    if(onlineState&&onlineState.conn&&onlineState.conn.open){ try{ onlineState.conn.send({type:'rematch-decline'}); }catch(e){} }
+    if(onlineState) onlineState.rematchIncoming=false;
+    battleState=null; screen='online-menu'; render();
   }
   else if(action==='onlineCreate'){ createOnlineSalle(); }
   else if(action==='onlineJoin'){
