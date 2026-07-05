@@ -884,11 +884,19 @@ async function signOut(){
 async function deleteAccount(){
   if(!session||!sb) return;
   showToast('Suppression en cours...');
-  try{
-    const { data, error } = await sb.functions.invoke('rapid-worker', { body:{} });
-    if(error) throw error;
-    if(!data?.ok) throw new Error('échec');
-  }catch(e){ showToast('❌ Erreur lors de la suppression: '+(e?.message||e)); return; }
+  // On tente les deux noms de fonction possibles (selon le deploiement Supabase).
+  async function tryDelete(){
+    for(const fn of ['rapid-worker','delete-account']){
+      try{
+        const { data, error } = await sb.functions.invoke(fn, { body:{} });
+        if(error) continue;
+        if(data?.ok) return true;
+      }catch(e){}
+    }
+    return false;
+  }
+  const ok=await tryDelete();
+  if(!ok){ showToast('❌ Suppression impossible pour le moment. Réessaie plus tard.'); return; }
   session=null; dex=[]; meta={ streak:0, lastCaptureDate:null, badges:[], shared:0, todayChallenge:null, challengeDate:null, challengeCompletedDate:null, wins:0, losses:0, xp:0,
     gravillons:0, gems:0, inventory:{}, food:{}, luckyBoostUntil:null, streakFreezeCount:0, ownedFrames:[], equippedFrame:null, customTitle:null, username:null };
   screen='login'; render();
@@ -2468,11 +2476,10 @@ async function loadIceServers(){
 function getPeerConfig(){ return { debug:0, config:{ iceServers:ICE_SERVERS } }; }
 function turnCount(){ try{ return ICE_SERVERS.filter(s=>{const u=s.urls;const j=Array.isArray(u)?u.join(','):(u||'');return j.indexOf('turn')>=0;}).length; }catch(e){ return 0; } }
 function onlineDiagLine(){
-  if(!onlineState) return '';
-  const turn=_iceLoaded?('TURN ✅ ×'+turnCount()):('TURN ⚠️ '+_iceStatus);
-  const st=onlineState.iceState?(' · réseau: '+onlineState.iceState):'';
-  const ph=onlineState.diag||'';
-  return `<p style="font-family:'Nunito',sans-serif;font-size:10px;color:rgba(255,255,255,.35);margin-top:16px;line-height:1.6;">${ph?ph+'<br>':''}<span style="opacity:.65;">${turn}${st}</span></p>`;
+  if(!onlineState||!onlineState.diag) return '';
+  // Etape en cours, en clair (le detail technique reste dans la console).
+  const friendly=String(onlineState.diag).replace(/^[①②③④⑤]\s*/,'');
+  return `<p style="font-family:'Nunito',sans-serif;font-size:11px;color:rgba(255,255,255,.4);margin-top:14px;">${friendly}</p>`;
 }
 function attachIceDiag(conn){
   let tries=0;
