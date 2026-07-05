@@ -571,27 +571,31 @@ nav{display:flex;gap:8px;padding:8px 16px max(12px,env(safe-area-inset-bottom));
 .dex-type-count{font-family:'Baloo 2',sans-serif;font-weight:800;font-size:12px;color:rgba(255,255,255,.75);background:rgba(255,255,255,.08);border-radius:999px;padding:2px 11px;}
 /* Dex — menu des types (carres) */
 .dextype-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
-.dextype-tile{aspect-ratio:1;border:2.5px solid rgba(255,255,255,.12);border-radius:18px;background:linear-gradient(180deg,var(--ink2),#14243a);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;cursor:pointer;transition:transform .1s;box-shadow:0 5px 16px rgba(0,0,0,.3);}
+.dextype-tile{aspect-ratio:1.5;border:2.5px solid rgba(255,255,255,.12);border-radius:16px;background:linear-gradient(180deg,var(--ink2),#14243a);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:8px;cursor:pointer;transition:transform .1s;box-shadow:0 5px 16px rgba(0,0,0,.3);}
 .dextype-tile:active{transform:scale(.96);}
 .dextype-tile.empty{opacity:.32;filter:grayscale(.6);cursor:default;box-shadow:none;}
 .dextype-emoji{font-size:42px;line-height:1;}
-.dextype-icon{width:54px;height:54px;display:flex;align-items:center;justify-content:center;filter:drop-shadow(0 3px 4px rgba(0,0,0,.45));}
+.dextype-icon{width:42px;height:42px;display:flex;align-items:center;justify-content:center;filter:drop-shadow(0 3px 4px rgba(0,0,0,.45));}
+.dextype-icon .tico{width:42px;height:42px;}
 .dextype-icon .tico{display:block;}
-.dextype-name{font-family:'Bungee',cursive;font-size:14px;color:rgba(255,255,255,.85);text-align:center;}
+.dextype-name{font-family:'Bungee',cursive;font-size:13px;color:rgba(255,255,255,.85);text-align:center;}
 .dextype-count{font-family:'Baloo 2',sans-serif;font-weight:700;font-size:11px;color:rgba(255,255,255,.5);}
 .dex-back{font-family:'Baloo 2',sans-serif;font-weight:800;font-size:12px;color:rgba(255,255,255,.6);cursor:pointer;margin-bottom:12px;display:inline-block;}
 .dex-back:active{opacity:.6;}
 /* Cartes en 2 colonnes, resserrees */
-.dexgrid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start;}
-.dexgrid2 .dexc-body{padding:10px 11px 12px;}
-.dexgrid2 .dexc-name{font-size:14px;}
+.dexgrid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:stretch;}
+.dexgrid2 .dexc{display:flex;flex-direction:column;}
+.dexgrid2 .dexc-body{padding:10px 11px 12px;flex:1;display:flex;flex-direction:column;}
+.dexgrid2 .dexc-name{font-size:14px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:2.2em;}
 .dexgrid2 .dexc-chip{font-size:9px;padding:2px 7px;}
 .dexgrid2 .dexc-stat b{font-size:14px;}
 .dexgrid2 .dexc-stat span{font-size:8px;}
 .dexgrid2 .dexc-pv{font-size:13px;padding:2px 8px;}
-.dexgrid2 .dexc-move-name{font-size:11.5px;}
+.dexgrid2 .dexc-moves{margin-top:auto;}
+.dexgrid2 .dexc-move-head{gap:6px;}
+.dexgrid2 .dexc-move-name{font-size:11.5px;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .dexgrid2 .dexc-move-pow{font-size:12px;}
-.dexgrid2 .dexc-move-desc{font-size:10.5px;}
+.dexgrid2 .dexc-move-desc{font-size:10.5px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
 
 /* Home screen amélioré */
 .hero-ring{
@@ -2405,11 +2409,15 @@ function revealScreen(){
 function rockAttacks(r){
   const typeInfo=ROCK_TYPES.find(t=>t.key===r.rockType);
   const atk=r.atk||10;
+  // Nom de l'attaque speciale sans la longue parenthese (qui sert de description).
+  const sm=(r.specialMove||'Coup Spécial').trim();
+  const smName=sm.split('(')[0].trim();
+  const smParen=(sm.match(/\(([^)]*)\)/)||[])[1];
   return [
     { name: typeInfo?typeInfo.label:'⬜ FRAPPE', pow: atk,
       desc: typeInfo?typeInfo.desc:'Un bon vieux coup de caillou brut.' },
-    { name: '⚡ '+(r.specialMove||'Coup Spécial'), pow: Math.round(atk*1.6),
-      desc: r.quip || r.personality || 'Une attaque spéciale imprévisible et dévastatrice.' },
+    { name: '⚡ '+smName, pow: Math.round(atk*1.6),
+      desc: smParen || r.quip || r.personality || 'Une attaque spéciale imprévisible et dévastatrice.' },
   ];
 }
 function dexCard(r){
