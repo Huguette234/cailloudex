@@ -541,6 +541,32 @@ nav{display:flex;gap:8px;padding:8px 16px max(12px,env(safe-area-inset-bottom));
   box-shadow:0 0 6px currentColor;
 }
 
+/* Dex — cartes style "carte à collectionner" */
+.dexlist{display:flex;flex-direction:column;gap:14px;}
+.dexc{background:linear-gradient(180deg,var(--ink2),#14243a);border:2.5px solid;border-radius:18px;overflow:hidden;cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,.32);transition:transform .1s;}
+.dexc:active{transform:scale(.99);}
+.dexc-imgwrap{position:relative;width:100%;aspect-ratio:16/10;overflow:hidden;background:#0d1b2a;}
+.dexc-img{width:100%;height:100%;object-fit:cover;display:block;}
+.dexc-imgwrap::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,transparent 62%,rgba(10,18,30,.55));pointer-events:none;}
+.dexc-pv{position:absolute;top:9px;right:9px;font-family:'Bungee',cursive;font-size:15px;color:#fff;background:linear-gradient(135deg,#E8384F,#B01030);border:2px solid rgba(255,255,255,.85);border-radius:12px;padding:3px 10px;box-shadow:0 2px 8px rgba(0,0,0,.5);z-index:2;}
+.dexc-pv span{font-size:9px;opacity:.9;margin-left:1px;}
+.dexc-no{position:absolute;top:9px;left:9px;font-family:'Baloo 2',sans-serif;font-weight:800;font-size:11px;color:#fff;background:rgba(0,0,0,.5);border-radius:8px;padding:2px 8px;z-index:2;}
+.dexc-lvl{position:absolute;bottom:9px;right:9px;font-family:'Bungee',cursive;font-size:11px;color:#0d1b2a;background:var(--accent);border-radius:8px;padding:2px 8px;z-index:2;}
+.dexc-body{padding:12px 14px 14px;}
+.dexc-name{font-family:'Bungee',cursive;font-size:17px;color:#fff;line-height:1.1;margin-bottom:7px;}
+.dexc-chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:11px;}
+.dexc-chip{font-family:'Baloo 2',sans-serif;font-weight:800;font-size:10px;border:1.5px solid;border-radius:999px;padding:2px 9px;}
+.dexc-stats{display:flex;gap:8px;margin-bottom:12px;}
+.dexc-stat{flex:1;background:rgba(0,0,0,.26);border-radius:10px;padding:7px 4px 6px;text-align:center;}
+.dexc-stat span{display:block;font-family:'Baloo 2',sans-serif;font-weight:700;font-size:9px;color:rgba(255,255,255,.5);letter-spacing:.03em;}
+.dexc-stat b{font-family:'Bungee',cursive;font-size:16px;color:#fff;}
+.dexc-moves{display:flex;flex-direction:column;gap:9px;border-top:1px solid rgba(255,255,255,.12);padding-top:11px;}
+.dexc-move-head{display:flex;justify-content:space-between;align-items:baseline;gap:8px;}
+.dexc-move-name{font-family:'Baloo 2',sans-serif;font-weight:800;font-size:13px;color:var(--accent);}
+.dexc-move-pow{font-family:'Bungee',cursive;font-size:14px;color:#fff;flex-shrink:0;}
+.dexc-move-pow span{font-size:8px;color:rgba(255,255,255,.5);}
+.dexc-move-desc{font-family:'Nunito',sans-serif;font-size:11.5px;color:rgba(255,255,255,.62);margin-top:2px;font-style:italic;line-height:1.4;}
+
 /* Home screen amélioré */
 .hero-ring{
   position:relative;display:flex;align-items:center;justify-content:center;
@@ -2349,21 +2375,54 @@ function revealScreen(){
   </div>`;
 }
 
+function rockAttacks(r){
+  const typeInfo=ROCK_TYPES.find(t=>t.key===r.rockType);
+  const atk=r.atk||10;
+  return [
+    { name: typeInfo?typeInfo.label:'⬜ FRAPPE', pow: atk,
+      desc: typeInfo?typeInfo.desc:'Un bon vieux coup de caillou brut.' },
+    { name: '⚡ '+(r.specialMove||'Coup Spécial'), pow: Math.round(atk*1.6),
+      desc: r.quip || r.personality || 'Une attaque spéciale imprévisible et dévastatrice.' },
+  ];
+}
+function dexCard(r){
+  const typeInfo=ROCK_TYPES.find(t=>t.key===r.rockType);
+  const pv=combatMaxHP(r.def||10);
+  const img=r.characterPhoto||r.animePhoto||r.photo;
+  const atts=rockAttacks(r);
+  return `<div class="dexc" style="border-color:${r.hex}77;" data-action="detail" data-id="${r.id}">
+    <div class="dexc-imgwrap">
+      <img class="dexc-img" src="${img}" alt="${r.name}">
+      <div class="dexc-no">N°${String(r.catalogNumber).padStart(4,'0')}</div>
+      <div class="dexc-pv">❤️ ${pv}<span>PV</span></div>
+      ${r.upgradeLevel?`<div class="dexc-lvl">NIV.${r.upgradeLevel}</div>`:''}
+    </div>
+    <div class="dexc-body">
+      <div class="dexc-name">${r.name}${r.evolved?' ✨':''}</div>
+      <div class="dexc-chips">
+        ${typeInfo?`<span class="dexc-chip" style="background:${typeInfo.color}22;border-color:${typeInfo.color};color:${typeInfo.color};">${typeInfo.label}</span>`:''}
+        <span class="dexc-chip" style="background:${r.hex}22;border-color:${r.hex};color:${r.hex};">${r.rarityLabel}</span>
+      </div>
+      <div class="dexc-stats">
+        <div class="dexc-stat"><span>⚔️ ATK</span><b>${r.atk||0}</b></div>
+        <div class="dexc-stat"><span>🛡️ DEF</span><b>${r.def||0}</b></div>
+        <div class="dexc-stat"><span>💨 VIT</span><b>${r.vit||0}</b></div>
+      </div>
+      <div class="dexc-moves">
+        ${atts.map(a=>`<div class="dexc-move">
+          <div class="dexc-move-head"><span class="dexc-move-name">${a.name}</span><span class="dexc-move-pow">${a.pow}<span> PUI</span></span></div>
+          <div class="dexc-move-desc">${a.desc}</div>
+        </div>`).join('')}
+      </div>
+    </div>
+  </div>`;
+}
 function dexScreen(){
   if(dex.length===0) return `<div class="empty">${mascotSvg('happy')}<p>Ton Dex est vide.<br>Va scanner ton premier caillou ! 🪨<br><span style="font-size:11px;opacity:.6;">${hasApiKey()?'IA active — chaque capture est unique !':'Active l\'IA pour des noms personnalisés'}</span></p></div>`;
-  const items=dex.slice().reverse().map(r=>{
-    const typeInfo=ROCK_TYPES.find(t=>t.key===r.rockType);
-    return `<div class="dex-item" style="border:2.5px solid ${r.hex}80;box-shadow:0 4px 14px ${r.hex}25;" data-action="detail" data-id="${r.id}">
-      <img src="${r.characterPhoto||r.animePhoto||r.photo}" alt="${r.name}">
-      <div class="dex-item-overlay"></div>
-      ${typeInfo?`<div class="dex-item-type" style="background:${typeInfo.color};"></div>`:''}
-      <div class="dex-item-rar" style="background:${r.hex};color:${r.hex};"></div>
-      <span class="dex-item-num">${String(r.catalogNumber).padStart(4,'0')}</span>
-    </div>`;
-  }).join('');
+  const items=dex.slice().reverse().map(dexCard).join('');
   return `<div>
     <div style="font-family:'Baloo 2',sans-serif;font-weight:700;font-size:11px;color:rgba(255,255,255,.4);text-align:center;margin-bottom:12px;letter-spacing:.06em;">${dex.length} CAILLOU${dex.length>1?'X':''} CAPTURÉ${dex.length>1?'S':''}</div>
-    <div class="grid">${items}</div>
+    <div class="dexlist">${items}</div>
   </div>`;
 }
 
