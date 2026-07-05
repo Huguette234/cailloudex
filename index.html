@@ -569,6 +569,27 @@ nav{display:flex;gap:8px;padding:8px 16px max(12px,env(safe-area-inset-bottom));
 .dex-type-section{margin-bottom:24px;}
 .dex-type-head{display:flex;justify-content:space-between;align-items:center;font-family:'Bungee',cursive;font-size:14px;letter-spacing:.03em;padding:4px 2px 8px;margin-bottom:12px;border-bottom:2px solid;}
 .dex-type-count{font-family:'Baloo 2',sans-serif;font-weight:800;font-size:12px;color:rgba(255,255,255,.75);background:rgba(255,255,255,.08);border-radius:999px;padding:2px 11px;}
+/* Dex — menu des types (carres) */
+.dextype-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.dextype-tile{aspect-ratio:1;border:2.5px solid rgba(255,255,255,.12);border-radius:18px;background:linear-gradient(180deg,var(--ink2),#14243a);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;cursor:pointer;transition:transform .1s;box-shadow:0 5px 16px rgba(0,0,0,.3);}
+.dextype-tile:active{transform:scale(.96);}
+.dextype-tile.empty{opacity:.32;filter:grayscale(.6);cursor:default;box-shadow:none;}
+.dextype-emoji{font-size:42px;line-height:1;}
+.dextype-name{font-family:'Bungee',cursive;font-size:14px;color:rgba(255,255,255,.85);text-align:center;}
+.dextype-count{font-family:'Baloo 2',sans-serif;font-weight:700;font-size:11px;color:rgba(255,255,255,.5);}
+.dex-back{font-family:'Baloo 2',sans-serif;font-weight:800;font-size:12px;color:rgba(255,255,255,.6);cursor:pointer;margin-bottom:12px;display:inline-block;}
+.dex-back:active{opacity:.6;}
+/* Cartes en 2 colonnes, resserrees */
+.dexgrid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start;}
+.dexgrid2 .dexc-body{padding:10px 11px 12px;}
+.dexgrid2 .dexc-name{font-size:14px;}
+.dexgrid2 .dexc-chip{font-size:9px;padding:2px 7px;}
+.dexgrid2 .dexc-stat b{font-size:14px;}
+.dexgrid2 .dexc-stat span{font-size:8px;}
+.dexgrid2 .dexc-pv{font-size:13px;padding:2px 8px;}
+.dexgrid2 .dexc-move-name{font-size:11.5px;}
+.dexgrid2 .dexc-move-pow{font-size:12px;}
+.dexgrid2 .dexc-move-desc{font-size:10.5px;}
 
 /* Home screen amélioré */
 .hero-ring{
@@ -873,6 +894,7 @@ let pendingPhoto = null;
 let animePhoto = null;
 let revealRock = null;
 let detailRock = null;
+let dexType = null;
 let characterResult = null;
 let generatingCharacter = false;
 let charGenStartTime = null;
@@ -2422,26 +2444,34 @@ function dexCard(r){
 }
 function dexScreen(){
   if(dex.length===0) return `<div class="empty">${mascotSvg('happy')}<p>Ton Dex est vide.<br>Va scanner ton premier caillou ! 🪨<br><span style="font-size:11px;opacity:.6;">${hasApiKey()?'IA active — chaque capture est unique !':'Active l\'IA pour des noms personnalisés'}</span></p></div>`;
-  // Regroupement par type
   const byType={};
   dex.forEach(r=>{ const k=r.rockType||'neutre'; (byType[k]=byType[k]||[]).push(r); });
-  const knownKeys=ROCK_TYPES.map(t=>t.key);
-  const sectionFor=(label,color,rocks)=>`<div class="dex-type-section">
-      <div class="dex-type-head" style="color:${color};border-color:${color}55;">
-        <span>${label}</span><span class="dex-type-count">${rocks.length}</span>
-      </div>
-      <div class="dexlist">${rocks.slice().reverse().map(dexCard).join('')}</div>
+
+  // NIVEAU 2 — cartes d'un type choisi, par deux
+  if(dexType){
+    const t=ROCK_TYPES.find(x=>x.key===dexType)||{label:'❔ AUTRES',color:'#9E9E9E'};
+    const rocks=(byType[dexType]||[]).slice().reverse();
+    return `<div>
+      <div class="dex-back" data-action="dexBack">← Tous les types</div>
+      <div class="dex-type-head" style="color:${t.color};border-color:${t.color}55;"><span>${t.label}</span><span class="dex-type-count">${rocks.length}</span></div>
+      <div class="dexgrid2">${rocks.map(dexCard).join('')}</div>
     </div>`;
-  let sections=ROCK_TYPES.map(t=>{
-    const rocks=byType[t.key]; if(!rocks||!rocks.length) return '';
-    return sectionFor(t.label,t.color,rocks);
+  }
+
+  // NIVEAU 1 — menu des types (carrés)
+  const tiles=ROCK_TYPES.map(t=>{
+    const n=(byType[t.key]||[]).length;
+    const emoji=t.label.split(' ')[0];
+    const nm=t.label.replace(/^\S+\s/,'');
+    return `<div class="dextype-tile${n?'':' empty'}" ${n?`style="border-color:${t.color};" data-action="dexType" data-type="${t.key}"`:''}>
+      <div class="dextype-emoji">${emoji}</div>
+      <div class="dextype-name" ${n?`style="color:${t.color};"`:''}>${nm}</div>
+      <div class="dextype-count">${n} caillou${n>1?'x':''}</div>
+    </div>`;
   }).join('');
-  // Types inconnus eventuels regroupes a la fin
-  const others=Object.keys(byType).filter(k=>!knownKeys.includes(k)).reduce((acc,k)=>acc.concat(byType[k]),[]);
-  if(others.length) sections+=sectionFor('❔ AUTRES','#9E9E9E',others);
   return `<div>
-    <div style="font-family:'Baloo 2',sans-serif;font-weight:700;font-size:11px;color:rgba(255,255,255,.4);text-align:center;margin-bottom:16px;letter-spacing:.06em;">${dex.length} CAILLOU${dex.length>1?'X':''} · RANGÉ${dex.length>1?'S':''} PAR TYPE</div>
-    ${sections}
+    <div style="font-family:'Baloo 2',sans-serif;font-weight:700;font-size:11px;color:rgba(255,255,255,.4);text-align:center;margin-bottom:16px;letter-spacing:.06em;">${dex.length} CAILLOU${dex.length>1?'X':''} · CHOISIS UN TYPE</div>
+    <div class="dextype-grid">${tiles}</div>
   </div>`;
 }
 
@@ -4016,10 +4046,14 @@ document.addEventListener('click',(e)=>{
   const action=t.dataset.action;
   if(action==='capture'){ document.getElementById('fileInput').click(); }
   else if(action==='goto'){
-    screen=t.dataset.screen; detailRock=null; render();
+    screen=t.dataset.screen; detailRock=null;
+    if(screen==='dex') dexType=null; // on entre par le menu des types
+    render();
     if(screen==='friends'){ Promise.all([loadFriendsList(),checkPendingChallenge()]).then(render); }
     if(screen==='home') checkPendingChallenge().then(render);
   }
+  else if(action==='dexType'){ dexType=t.dataset.type; render(); }
+  else if(action==='dexBack'){ dexType=null; render(); }
   else if(action==='addFriendBtn'){
     const v=(document.getElementById('addFriendInput')||{}).value||'';
     addFriend(v);
