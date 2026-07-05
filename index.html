@@ -3080,7 +3080,7 @@ async function generateBotCharacter(botRock){
       atk:botRock.atk||10, def:botRock.def||10, vit:botRock.vit||1, rarity:'commun',
     }));
     if(!rawUrl) return;
-    const cleanUrl=await removeWhiteBackground(rawUrl);
+    const cleanUrl=rawUrl;
     BOT_CHARACTER_CACHE[key]=cleanUrl;
     if(battleState&&battleState.botRock.name===key){
       battleState.botRock.characterPhoto=cleanUrl; render();
@@ -3670,84 +3670,6 @@ async function confirmAdd(){
   screen='scanner'; render();
 }
 
-function removeWhiteBackground(dataUrl){
-  return new Promise(resolve=>{
-    const img=new Image();
-    img.onload=()=>{
-      const c=document.createElement('canvas');
-      c.width=img.width; c.height=img.height;
-      const ctx=c.getContext('2d');
-      ctx.drawImage(img,0,0);
-      const imageData=ctx.getImageData(0,0,c.width,c.height);
-      const data=imageData.data;
-      const w=c.width, h=c.height, n=w*h;
-      const mask=new Uint8Array(n); // 1 = fond (a supprimer)
-
-      const bright=(pos)=>{ const d=pos*4; return (data[d]+data[d+1]+data[d+2])/3; };
-      // Seuil adaptatif : on regarde les 4 coins pour estimer la teinte du fond.
-      // Fond clair (blanc ou gris clair) -> on l'enleve ; fond sombre -> on ne
-      // touche a rien (impossible de decouper un perso sombre sur fond sombre).
-      const cAvg=(bright(0)+bright(w-1)+bright((h-1)*w)+bright(n-1))/4;
-      const BG=cAvg>=185?Math.max(172,Math.min(222,cAvg-18)):222;
-      const LO=Math.max(150,BG-26), HI=BG+24; // bande de transition (anti-halo)
-
-      // 1) Remplissage depuis les bords : seuls les pixels clairs relies au bord
-      //    sont consideres comme fond (les zones claires du perso sont preservees).
-      const queue=[];
-      const visit=(pos)=>{
-        if(pos<0||pos>=n||mask[pos]) return;
-        if(bright(pos)<=BG){ mask[pos]=2; return; }
-        mask[pos]=1; queue.push(pos);
-      };
-      for(let x=0;x<w;x++){ visit(x); visit((h-1)*w+x); }
-      for(let y=0;y<h;y++){ visit(y*w); visit(y*w+w-1); }
-      let qi=0;
-      while(qi<queue.length){
-        const pos=queue[qi++];
-        const x=pos%w, y=(pos/w)|0;
-        if(x>0) visit(pos-1);
-        if(x<w-1) visit(pos+1);
-        if(y>0) visit(pos-w);
-        if(y<h-1) visit(pos+w);
-      }
-
-      // 2) Alpha de base + de-fringe : sur le contour du perso qui touche le fond,
-      //    on attenue les pixels quasi-blancs (le halo) proportionnellement.
-      const alpha=new Uint8ClampedArray(n);
-      for(let i=0;i<n;i++) alpha[i]=(mask[i]===1)?0:255;
-      for(let i=0;i<n;i++){
-        if(!alpha[i]) continue;
-        const x=i%w, y=(i/w)|0;
-        const edge=(x>0&&mask[i-1]===1)||(x<w-1&&mask[i+1]===1)||(y>0&&mask[i-w]===1)||(y<h-1&&mask[i+w]===1);
-        if(edge){
-          const t=Math.max(0,Math.min(1,(bright(i)-LO)/(HI-LO)));
-          alpha[i]=Math.round(255*(1-t));
-        }
-      }
-
-      // 3) Leger lissage 3x3 de l'alpha : bords doux, anti-creneles.
-      for(let y=0;y<h;y++){
-        for(let x=0;x<w;x++){
-          const i=y*w+x;
-          let s=0,cnt=0;
-          for(let dy=-1;dy<=1;dy++){
-            const yy=y+dy; if(yy<0||yy>=h) continue;
-            for(let dx=-1;dx<=1;dx++){
-              const xx=x+dx; if(xx<0||xx>=w) continue;
-              s+=alpha[yy*w+xx]; cnt++;
-            }
-          }
-          data[i*4+3]=Math.round(s/cnt);
-        }
-      }
-
-      ctx.putImageData(imageData,0,0);
-      resolve(c.toDataURL('image/png'));
-    };
-    img.onerror=()=>resolve(dataUrl);
-    img.src=dataUrl;
-  });
-}
 
 const CHAR_GEN_MAX=3;
 
@@ -3868,8 +3790,19 @@ function buildCharacterPrompt(rock){
     'victorious arms-raised pose','sneaky crouched pose looking over shoulder','charging forward running pose',
     'relaxed cool leaning pose','spinning attack pose with motion blur','defensive guard pose with arms up',
   ];
+  const TYPE_BG={
+    chaos:['chaotic glitch dimension, swirling pink and black energy, cracked reality, neon sparks','vaporwave void, floating pink geometric shards, warping space'],
+    ombre:['haunted graveyard at night, purple mist, eerie moonlight, dead trees','dark gothic cathedral ruins, violet fog, floating shadows'],
+    feu:['erupting volcano, rivers of lava and flames, glowing embers, ash sky','burning battlefield at dusk, fire and smoke, orange glow'],
+    metal:['futuristic neon factory, blue machinery and pipes, flying sparks','sci-fi metal hangar, chrome walls, electric blue lights'],
+    nature:['lush enchanted forest, sunbeams through leaves, flowers and vines','peaceful mossy clearing, waterfalls, glowing fireflies'],
+    lumiere:['radiant heavenly sky, golden light rays, soft glowing clouds','sunrise over golden hills, warm divine light, sparkles'],
+    glace:['frozen ice cavern, blue crystals, falling snow, aurora glow','snowy mountain peak, icy wind, pale blue sky'],
+    neutre:['rocky canyon at golden hour, dramatic sky, distant mountains','pebble riverbank, soft daylight, smooth stones and water'],
+  };
   const pick=arr=>arr[Math.floor(Math.random()*arr.length)];
   const typeStyle=pick(TYPE_STYLES[type]||TYPE_STYLES['neutre']);
+  const bg=pick(TYPE_BG[type]||TYPE_BG['neutre']);
   const pose=pick(POSES);
   const VILLAINS=['chaos','ombre','feu','metal'];
   const HEROES=['nature','lumiere','glace'];
@@ -3878,7 +3811,7 @@ function buildCharacterPrompt(rock){
     :HEROES.includes(type)
     ?`friendly hero chibi anime rock character ${name}, big cute eyes, happy smile`
     :`fierce chibi anime rock character ${name}, determined eyes, battle stance`;
-  return `${base}, ${pose}, ${sizeDesc}, ${rarityDesc}, ${typeStyle}, ${atkDesc}, ${defDesc}, ${vitDesc}, ${personality}, full body, centered, highly detailed manga art style, cut-out sticker, isolated on plain solid pure white background, pure #ffffff empty backdrop, absolutely no floor, no ground, no cast shadow, no scenery, no environment, nothing behind the character`;
+  return `${base}, ${pose}, ${sizeDesc}, ${rarityDesc}, ${typeStyle}, ${atkDesc}, ${defDesc}, ${vitDesc}, ${personality}, full body character in the foreground, set against a ${bg} background, cinematic dramatic lighting, highly detailed manga art style, vibrant colors`;
 }
 
 function stopCharGenTimer(){
@@ -3915,8 +3848,9 @@ async function generateCharacterForRock(rock){
     if(dex.find(r=>r.id===rock.id)&&session&&sb){
       sb.from('rocks').update({ char_gen_count: rock.charGenCount }).eq('id',rock.id).eq('user_id',session.user.id).then(()=>{});
     }
-    const cleanUrl=await removeWhiteBackground(rawUrl);
-    characterResult={ image: cleanUrl.split(',')[1], mimeType: 'image/png', rockId: rock.id };
+    const cleanUrl=rawUrl;
+    const mime=(cleanUrl.match(/^data:([^;]+);/)||[])[1]||'image/png';
+    characterResult={ image: cleanUrl.split(',')[1], mimeType: mime, rockId: rock.id };
     stopCharGenTimer(); render();
   }catch(e){
     showToast('❌ Erreur: '+e.message);
