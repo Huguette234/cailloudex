@@ -337,8 +337,9 @@ nav{display:flex;gap:8px;padding:8px 16px max(12px,env(safe-area-inset-bottom));
 .food-title{color:#27AE60;}
 .food-pack{border-color:rgba(39,174,96,.3);background:rgba(39,174,96,.06);}
 .food-price{color:#27AE60;background:rgba(39,174,96,.12);}
-.evolved-glow{position:relative;}
-.evolved-glow::before{content:'';position:absolute;inset:-5px;border-radius:inherit;background:conic-gradient(from 0deg,#FFD700,#C45CFF,#74B9FF,#FFD700);animation:evolveSpin 3s linear infinite;z-index:-1;filter:blur(3px);}
+.evolved-glow{position:relative;padding:5px;overflow:hidden;}
+.evolved-glow::before{content:'';position:absolute;inset:-40%;background:conic-gradient(from 0deg,#FFD700,#C45CFF,#74B9FF,#FFD700);animation:evolveSpin 3s linear infinite;z-index:0;filter:blur(3px);}
+.evolved-glow>*{position:relative;z-index:1;}
 @keyframes evolveSpin{0%{transform:rotate(0deg);}100%{transform:rotate(360deg);}}
 .upgrade-panel{background:rgba(196,92,255,.06);border:1.5px solid rgba(196,92,255,.25);border-radius:14px;padding:12px 14px;margin-top:10px;text-align:center;}
 .upgrade-panel-title{font-family:'Baloo 2',sans-serif;font-weight:800;font-size:12px;color:#fff;margin-bottom:8px;}
@@ -359,15 +360,16 @@ nav{display:flex;gap:8px;padding:8px 16px max(12px,env(safe-area-inset-bottom));
 .shop-item-owned{font-family:'Nunito',sans-serif;font-size:10px;color:rgba(120,255,150,.8);margin-bottom:2px;}
 .shop-item-price{font-family:'Baloo 2',sans-serif;font-weight:800;font-size:12px;color:var(--accent);background:rgba(255,215,0,.1);border-radius:10px;padding:4px 6px;}
 .shop-item-owned-tag{color:#78FF9C;background:rgba(120,255,150,.1);}
-.frame-holo{position:relative;}
-.frame-holo::before{content:'';position:absolute;inset:-4px;border-radius:inherit;background:linear-gradient(115deg,#ff6ec4,#7873f5,#4adede,#ffd86b,#ff6ec4);background-size:300% 300%;animation:holoShift 4s linear infinite;z-index:-1;}
+.frame-holo{position:relative;padding:4px;overflow:hidden;}
+.frame-holo::before{content:'';position:absolute;inset:0;background:linear-gradient(115deg,#ff6ec4,#7873f5,#4adede,#ffd86b,#ff6ec4);background-size:300% 300%;animation:holoShift 4s linear infinite;z-index:0;}
+.frame-holo>*{position:relative;z-index:1;}
 @keyframes holoShift{0%{background-position:0% 50%;}100%{background-position:300% 50%;}}
 
 /* --- TOAST --- */
 .toast{position:fixed;left:16px;right:16px;top:80px;max-width:448px;margin:0 auto;z-index:70;background:var(--ink2);border:2px solid rgba(255,255,255,.2);border-radius:13px;padding:10px 14px;font-family:'Baloo 2',sans-serif;font-weight:700;font-size:13px;color:#fff;box-shadow:0 6px 0 rgba(0,0,0,.4);animation:fadeup .2s ease both;}
 
 /* --- OVERLAY --- */
-.overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:60;display:flex;align-items:flex-start;justify-content:center;padding:20px 20px 50px;backdrop-filter:blur(4px);overflow-y:auto;-webkit-overflow-scrolling:touch;}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:60;display:flex;align-items:flex-start;justify-content:center;padding:20px 20px 50px;backdrop-filter:blur(4px);overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;}
 .overlay-inner{max-width:420px;width:100%;margin:auto 0;}
 
 /* --- SETUP SCREEN --- */
