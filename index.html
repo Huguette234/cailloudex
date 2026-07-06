@@ -684,6 +684,27 @@ nav{display:flex;gap:8px;padding:8px 16px max(12px,env(safe-area-inset-bottom));
 .btn-ultimate:active{transform:translateY(3px);box-shadow:0 3px 0 rgba(0,0,0,.4);}
 .btn-feed{font-family:'Baloo 2',sans-serif;font-weight:800;font-size:12px;border:3px solid var(--ink);border-radius:16px;padding:10px 4px;cursor:pointer;text-align:center;background:linear-gradient(135deg,#27AE60,#1E8449);color:#fff;box-shadow:0 6px 0 rgba(0,0,0,.4);}
 .btn-feed:active{transform:translateY(3px);box-shadow:0 3px 0 rgba(0,0,0,.4);}
+/* Cartes de combat facon Dex */
+.bfield{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:7px;margin:2px 0 4px;}
+.bcard{background:linear-gradient(180deg,var(--ink2),#14243a);border:2.5px solid;border-radius:18px;padding:8px 8px 11px;box-shadow:0 6px 18px rgba(0,0,0,.32);position:relative;overflow:hidden;}
+.bcard-role{font-family:'Nunito',sans-serif;font-weight:800;font-size:9px;letter-spacing:.08em;text-align:center;margin-bottom:6px;}
+.bcard-foe .bcard-role{color:#FF7878;}
+.bcard-mine .bcard-role{color:#78FF9C;}
+.bcard-img{position:relative;height:116px;border-radius:12px;overflow:hidden;margin-bottom:9px;display:flex;align-items:center;justify-content:center;
+  background:radial-gradient(ellipse 72% 52% at 50% 80%,rgba(255,255,255,.09),transparent 70%),linear-gradient(180deg,#16304a,#0a1822);}
+.bzone{display:flex;align-items:center;justify-content:center;}
+.bcard-img .combatant-visual{width:94px;height:94px;}
+.bcard-img .arena2-emoji-badge{width:80px;height:80px;font-size:40px;}
+.bcard-typechip{position:absolute;top:6px;left:6px;font-family:'Nunito',sans-serif;font-weight:800;font-size:9px;border:1.5px solid;border-radius:999px;padding:1px 7px;z-index:3;background:rgba(10,18,30,.62);}
+.bcard-name{font-family:'Baloo 2',sans-serif;font-weight:800;font-size:12.5px;color:#fff;text-align:center;line-height:1.14;margin-bottom:7px;height:2.28em;display:flex;align-items:center;justify-content:center;overflow:hidden;}
+.bcard-hprow{display:flex;justify-content:center;align-items:baseline;gap:3px;margin-bottom:5px;}
+.bcard-hprow b{font-family:'Baloo 2',sans-serif;font-weight:800;font-size:14px;color:#fff;}
+.bcard-hprow span,.bcard-hprow{font-family:'Nunito',sans-serif;font-size:10px;color:rgba(255,255,255,.45);}
+.bvs{font-family:'Bungee',cursive;font-size:15px;color:rgba(255,255,255,.55);text-shadow:0 2px 6px rgba(0,0,0,.5);}
+@keyframes lungeFoe{0%{transform:translate(0,0) scale(1);}45%{transform:translate(24px,6px) scale(1.12);}100%{transform:translate(0,0) scale(1);}}
+@keyframes lungeMine{0%{transform:translate(0,0) scale(1);}45%{transform:translate(-24px,6px) scale(1.12);}100%{transform:translate(0,0) scale(1);}}
+.bcard-foe .lunge{animation:lungeFoe .55s ease-in-out;}
+.bcard-mine .lunge{animation:lungeMine .55s ease-in-out;}
 .result-wrap{display:flex;flex-direction:column;align-items:center;padding:24px 16px;gap:12px;}
 .result-banner{font-family:'Bungee',cursive;font-size:40px;text-align:center;animation:resultBounce .5s cubic-bezier(.34,1.56,.64,1);}
 @keyframes resultBounce{from{transform:scale(0);opacity:0;}to{transform:scale(1);opacity:1;}}
@@ -3482,28 +3503,30 @@ function combatFightScreen(){
     ?`<img class="combatant-visual ${enterCls}" id="playerSprite" src="${s.playerSpriteUrl}" alt="${s.playerRock.name}">`
     :`<img class="combatant-visual ${enterCls}" id="playerSprite" src="${s.playerRock.animePhoto||s.playerRock.photo}" alt="${s.playerRock.name}">`;
 
-  const dust=Array.from({length:7},()=>`<div class="arena2-dust" style="left:${10+Math.random()*80}%;bottom:${5+Math.random()*15}%;animation-duration:${3+Math.random()*3}s;animation-delay:${(Math.random()*3).toFixed(2)}s;"></div>`).join('');
+  const typeChip=(r)=>{ const t=ROCK_TYPES.find(x=>x.key===r.rockType); return t?`<div class="bcard-typechip" style="border-color:${t.color};color:${t.color};">${t.label}</div>`:''; };
+  const botHex=s.botRock.hex||'#9E9E9E', playerHex=s.playerRock.hex||'#9E9E9E';
 
   return `<div class="arena2-wrap">
-    <div class="arena2-stage">
-      <div class="arena2-ring"></div>
-      ${dust}
-      <div class="arena2-zone bot-zone">
-        ${botVisual}
-        <div class="arena2-shadow"></div>
-      </div>
-      <div class="arena2-zone player-zone">
-        ${playerVisual}
-        <div class="arena2-shadow"></div>
-      </div>
-    </div>
-    <div class="arena2-hud">
-      <div class="arena2-nameplate bot">
-        <div class="arena2-nameplate-row"><span class="arena2-nameplate-name">${s.botRock.name}</span><span class="arena2-nameplate-hp">${s.botHP}/${s.botMaxHP} PV</span></div>
+    <div class="bfield">
+      <div class="bcard bcard-foe" style="border-color:${botHex}88;">
+        <div class="bcard-role">🎯 ADVERSAIRE</div>
+        <div class="bcard-img">
+          <div class="bot-zone bzone">${botVisual}</div>
+          ${typeChip(s.botRock)}
+        </div>
+        <div class="bcard-name">${s.botRock.name}</div>
+        <div class="bcard-hprow"><b>${s.botHP}</b>/<span>${s.botMaxHP} PV</span></div>
         <div class="arena-bar-bg"><div class="arena-bar-fill" style="width:${bPct*100}%;background:${hpBarColor(bPct)};"></div></div>
       </div>
-      <div class="arena2-nameplate player">
-        <div class="arena2-nameplate-row"><span class="arena2-nameplate-name">${s.playerRock.name}</span><span class="arena2-nameplate-hp">${s.playerHP}/${s.playerMaxHP} PV</span></div>
+      <div class="bvs">VS</div>
+      <div class="bcard bcard-mine" style="border-color:${playerHex}88;">
+        <div class="bcard-role">💪 TOI</div>
+        <div class="bcard-img">
+          <div class="player-zone bzone">${playerVisual}</div>
+          ${typeChip(s.playerRock)}
+        </div>
+        <div class="bcard-name">${s.playerRock.name}</div>
+        <div class="bcard-hprow"><b>${s.playerHP}</b>/<span>${s.playerMaxHP} PV</span></div>
         <div class="arena-bar-bg"><div class="arena-bar-fill" style="width:${pPct*100}%;background:${hpBarColor(pPct)};"></div></div>
       </div>
     </div>
@@ -3614,12 +3637,12 @@ function render(){
     else if(screen==='shop'){ mainHtml=shopScreen(); showNav=true; }
     else if(screen==='friends'){ mainHtml=friendsScreen(); showNav=true; }
     else if(screen==='combat-pick'){ mainHtml=combatPickScreen(); showNav=true; }
-    else if(screen==='combat-fight'){ mainHtml=combatFightScreen(); showNav=true; }
+    else if(screen==='combat-fight'){ mainHtml=combatFightScreen(); showNav=false; showHeader=false; }
     else if(screen==='combat-result'){ mainHtml=combatResultScreen(); showNav=true; }
     else if(screen==='online-menu'){ mainHtml=onlineMenuScreen(); showNav=true; }
     else if(screen==='online-wait'){ mainHtml=onlineWaitScreen(); showNav=false; }
     else if(screen==='online-pick'){ mainHtml=onlinePickScreen(); showNav=true; }
-    app.innerHTML=`${header()}<main style="overflow-y:auto;">${mainHtml}</main>${showNav?nav():''}`;
+    app.innerHTML=`${showHeader?header():''}<main style="overflow-y:auto;">${mainHtml}</main>${showNav?nav():''}`;
   }
 
   document.querySelectorAll('.overlay').forEach(o=>o.remove());
