@@ -1155,7 +1155,7 @@ async function setUsername(name){
       if(error.code==='23505'){ showToast('❌ Ce pseudo est déjà pris !'); return; }
       throw error;
     }
-    await sb.from('profiles').upsert({ user_id:session.user.id, username:clean });
+    try{ await sb.from('profiles').upsert({ user_id:session.user.id, username:clean }); }catch(pe){ console.error('profiles upsert',pe); }
     meta.username=clean;
     showToast('✅ Pseudo défini : '+clean);
     screen='account'; render();
@@ -1193,9 +1193,10 @@ async function addFriend(username){
   const clean=(username||'').trim();
   if(!clean) return;
   try{
-    const { data:prof, error:profErr } = await sb.from('profiles').select('user_id').eq('username',clean).maybeSingle();
+    const { data:profs, error:profErr } = await sb.from('profiles').select('user_id,username').ilike('username',clean).limit(1);
     if(profErr) throw profErr;
-    if(!prof){ showToast('❌ Pseudo introuvable'); return; }
+    const prof=(profs&&profs[0])||null;
+    if(!prof){ showToast('❌ Pseudo introuvable. Ton ami doit ouvrir l\'appli (mise à jour) et avoir défini un pseudo.'); return; }
     if(prof.user_id===session.user.id){ showToast('Tu ne peux pas t\'ajouter toi-même !'); return; }
     const { error } = await sb.from('friends').insert({ user_id:session.user.id, friend_id:prof.user_id });
     if(error){
@@ -1573,6 +1574,9 @@ async function loadCloudData(){
         luckyBoostUntil:row.lucky_boost_until||null, streakFreezeCount:row.streak_freeze_count||0,
         ownedFrames:row.owned_frames||[], equippedFrame:row.equipped_frame||null, customTitle:row.custom_title||null,
         username:row.username||null };
+      // Auto-synchronise le pseudo dans la table publique "profiles" pour que les
+      // amis puissent nous retrouver (les anciens comptes n'y avaient jamais été inscrits).
+      if(meta.username){ try{ sb.from('profiles').upsert({ user_id:session.user.id, username:meta.username }).then(()=>{},()=>{}); }catch(e){} }
     } else { await saveMeta(); }
   }catch(e){ console.error('loadCloudData meta',e); }
 }
