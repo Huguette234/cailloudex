@@ -4255,105 +4255,91 @@ function buildCharacterPrompt(rock){
   const atk=rock.atk||10;
   const atkDesc=atk>=75?'hyper-muscular giant arms, colossal fists':atk>=50?'muscular arms, large fists':atk>=25?'average arms':'tiny twig arms';
   const def=rock.def||10;
-  const defDesc=def>=75?'massively wide tank body, thick armor plates everywhere':def>=50?'stocky body, chest armor':def>=25?'slim build, small armor chips':'paper-thin cracked shell, no armor';
+  const defDesc=def>=75?'massively wide bulky stone body, thick rocky armor plating':def>=50?'stocky sturdy stone body, rough rocky plating':def>=25?'slim stone build, small mineral chips':'thin cracked stone shell';
   const vit=rock.vit||1;
   const vitDesc=vit>=20?'extreme speed blur, lightning trails':vit>=8?'dynamic sprint pose, speed lines':vit>=5?'alert ready stance':vit>=3?'slow heavy footing':'frozen statue pose, zero movement';
+  // Chaque style garde le CAILLOU comme corps : une pierre/galet arrondi avec
+  // texture minérale et fissures, le type n'étant qu'un accent de surface.
   const TYPE_STYLES={
     chaos:[
-      'hot pink magenta rock body, pink lightning aura, neon cracks, chaotic sparks',
-      'glitchy magenta rock body, digital distortion, pixelated pink shards, static aura',
-      'punk rocker pink rock body, spiky mohawk of shards, torn straps, rebellious magenta energy',
-      'cosmic chaos rock body, swirling pink galaxy patterns, warping reality, purple-pink nebula',
-      'jester trickster pink rock body, harlequin diamond patterns, mischievous magenta glow',
-      'molten pink rock body, cracked glowing fissures, unstable erupting pink energy',
-      'neon graffiti pink rock body, spray-paint splatters, wild street-art magenta tags',
-      'shattered mirror pink rock body, fractured crystalline shards, prismatic pink reflections',
-      'electric storm pink rock body, crackling plasma tendrils, vibrant magenta discharge',
-      'voidcore pink rock body, reality-tearing rifts, chaotic pink-and-black swirls',
+      'rounded grey stone pebble with glowing hot-pink cracks and tiny magenta sparks',
+      'chunky boulder body streaked with neon-pink mineral veins and little pink lightning arcs',
+      'smooth stone body with cracked magenta fissures leaking faint pink energy',
+      'rocky pebble with prismatic pink crystal chips poking out of the stone, soft magenta glow',
+      'grey rock body with swirling pink-and-black mineral patterns and drifting sparks',
+      'stone pebble with jagged pink crystal growths on top and a faint magenta aura',
+      'weathered rock with unstable glowing pink seams and a couple of floating stone shards',
+      'granite pebble splashed with wild pink mineral streaks, glowing cracks',
     ],
     ombre:[
-      'deep purple dark violet rock body, shadow tendrils, eerie purple mist',
-      'wraith-like purple rock body, tattered ghostly cloak, hollow glowing eyes',
-      'midnight purple rock body, swirling dark smoke, floating shadow wisps',
-      'gothic purple rock body, spiky obsidian armor, violet flame accents',
-      'eclipse purple rock body, dark crescent halo, dim violet starlight',
-      'nightmare purple rock body, dripping shadow ooze, menacing dark aura',
-      'arcane sorcerer purple rock body, glowing violet runes, mystical dark energy',
-      'abyssal purple rock body, deep-void cracks, cold violet glow from within',
-      'phantom purple rock body, semi-transparent misty edges, spectral violet trails',
-      'cursed purple rock body, chained dark shackles, ominous violet sigils',
+      'dark grey stone pebble wrapped in a faint wisp of purple shadow mist',
+      'smooth violet-tinged stone body with softly glowing purple cracks',
+      'chunky obsidian-black pebble with a subtle purple sheen and shadow trails',
+      'grey boulder with carved glowing violet runes on its stony surface',
+      'stone body with deep cracks leaking cold violet light, tiny dark shards floating nearby',
+      'weathered purple-grey rock with a small crescent stone shard on top and a misty aura',
+      'rounded dark pebble with dim glowing violet eye-hollows in the stone',
+      'matte black stone body flecked with faint violet mineral glimmer',
     ],
     feu:[
-      'bright orange red rock body, flames bursting out, fire aura',
-      'volcanic rock body, cracked lava veins, molten orange glow, smoke',
-      'blazing samurai rock body, flaming armor, trailing ember sparks',
-      'infernal demon rock body, horns of fire, red-hot cracks, hellfire aura',
-      'phoenix rock body, fiery wings, radiant orange feathers of flame',
-      'charcoal rock body with glowing ember cracks, wisps of smoke, dark red heat',
-      'fireworks rock body, bursting colorful sparks, festive flame trails',
-      'molten metal rock body, dripping liquid fire, intense orange furnace glow',
-      'cozy campfire rock body, warm gentle flames, crackling embers',
-      'meteor rock body, blazing atmospheric trail, scorched fiery surface',
+      'grey stone pebble with glowing orange lava cracks and little flames flickering from the seams',
+      'charcoal-black rock body with ember-glowing cracks and thin wisps of smoke',
+      'reddish volcanic stone pebble with molten glowing fissures and heat shimmer',
+      'rounded boulder with small warm campfire flames dancing along its top edge',
+      'scorched basalt pebble glowing hot orange inside the cracks, tiny rising sparks',
+      'cracked stone body with bright magma veins running through the rock',
+      'burnt meteor-like stone with glowing orange seams and a faint ember trail',
+      'dark stone pebble with lava-glow cracks and a couple of small flame tufts',
     ],
     metal:[
-      'shiny silver chrome rock body, blue circuit lines, metallic armor plating',
-      'heavy robot rock body, bolted steel plates, glowing blue core, hydraulic joints',
-      'golden brass steampunk rock body, gears and rivets, copper pipes',
-      'sleek futuristic rock body, chrome finish, neon blue energy seams',
-      'rusty scrap-metal rock body, patchwork plates, exposed wires, worn bolts',
-      'knight-armor rock body, polished silver plate mail, metallic helmet crest',
-      'magnetic rock body, floating metal shards orbiting, electric blue field',
-      'diamond-plated rock body, reflective chrome facets, sharp metallic edges',
-      'cyborg rock body, mechanical arm, glowing red sensor eye, tech panels',
-      'liquid-metal rock body, smooth mercury surface, shifting chrome reflections',
+      'grey stone pebble with a few riveted iron plates bolted onto the rock and glowing blue cracks',
+      'rocky body embedded with shiny chrome ore chunks and blue circuit-like mineral veins',
+      'stone pebble reinforced with a couple of rusty metal bands and bolts',
+      'boulder body flecked with silver metallic ore and reflective mineral chips',
+      'grey rock with small magnetic metal shards orbiting it and a faint blue field',
+      'stone body with a couple of steel scraps riveted on, glowing bolt-heads',
+      'iron-ore speckled rock pebble with a brushed-metal sheen along the cracks',
+      'stone with a small embedded glowing tech-crystal and thin blue seams',
     ],
     nature:[
-      'vivid green rock body, moss and flowers, leaves, earthy green aura',
-      'forest guardian rock body, bark-like skin, sprouting branches and leaves',
-      'flower-crowned rock body, blooming colorful petals, tiny buzzing bees',
-      'mushroom rock body, glowing bioluminescent fungi, soft green spores',
-      'vine-wrapped rock body, twisting green vines, dangling ivy leaves',
-      'mossy zen rock body, tiny bonsai tree on top, peaceful green glow',
-      'autumn rock body, warm orange and red falling leaves, cozy woodland vibe',
-      'crystal-cave rock body, green emerald growths, glowing verdant gems',
-      'swamp rock body, dripping algae, lily pads, gentle green mist',
-      'spring-meadow rock body, fresh grass tufts, blooming daisies, butterflies',
+      'grey stone pebble covered in soft green moss and tiny sprouting leaves',
+      'rounded rock with little flowers and grass tufts growing on top of the stone',
+      'mossy boulder with a tiny bonsai sprout and a bit of dangling ivy',
+      'stone pebble with glowing green mushroom caps and soft drifting spores',
+      'rock body loosely wrapped in twisting green vines and small buds',
+      'weathered stone with emerald moss patches and a curious little ladybug',
+      'grey pebble with fresh grass, tiny daisies and a fluttering butterfly',
+      'stone body dusted with autumn leaves and warm green mossy patches',
     ],
     lumiere:[
-      'bright golden yellow rock body, sunlight beams, golden sparkles, halo',
-      'angelic rock body, radiant feathered wings, glowing golden halo',
-      'sun-deity rock body, blazing solar corona, warm golden rays',
-      'starlight rock body, twinkling constellations, soft golden shimmer',
-      'holy paladin rock body, gleaming golden armor, radiant light shield',
-      'lantern rock body, warm glowing core, floating golden fireflies',
-      'prism rock body, refracting rainbow light, brilliant golden facets',
-      'dawn rock body, gentle sunrise gradient, hopeful golden glow',
-      'crystal-of-light rock body, luminous golden crystals, dazzling beams',
-      'firefly-swarm rock body, surrounded by glowing golden motes, magical light',
+      'pale stone pebble glowing warm golden from its cracks, soft floating sparkles',
+      'smooth cream-colored rock with a small soft golden halo of light above it',
+      'stone body with glowing golden crystal chips embedded and gentle light rays',
+      'rounded quartz-like pebble radiating soft sunlight, tiny golden motes drifting',
+      'warm sandstone pebble with sunrise-gold glow inside the cracks',
+      'grey stone surrounded by a few glowing golden fireflies',
+      'pale pebble with luminous golden facets and a faint rainbow-gold shimmer',
+      'bright smooth stone with a gentle divine golden glow along its edges',
     ],
     glace:[
-      'icy blue cyan rock body, ice crystals, snowflakes, frozen spikes',
-      'frost-knight rock body, jagged ice armor, cold cyan breath',
-      'glacier rock body, deep blue ice layers, cracks of glowing frost',
-      'snowman-style rock body, soft snowy surface, cute frozen cheeks',
-      'crystal-ice rock body, transparent blue gem facets, sparkling frost',
-      'blizzard rock body, swirling snow flurries, chilling cyan aura',
-      'aurora rock body, shimmering northern-lights glow, icy pastel hues',
-      'frozen-lake rock body, smooth mirror ice surface, delicate frost patterns',
-      'icicle rock body, hanging sharp ice spikes, dripping cold cyan glow',
-      'winter-spirit rock body, gentle falling snow, serene frosty shimmer',
+      'pale blue stone pebble coated in frost and tiny sparkling ice crystals',
+      'grey rock with glowing cyan ice cracks and a few small frozen spikes',
+      'smooth icy-blue stone pebble with a light dusting of snow on top',
+      'boulder partly encased in translucent blue ice facets, sparkling frost',
+      'stone pebble with a couple of little hanging icicles and a cold cyan glow',
+      'frost-covered rock with delicate snowflake patterns on the stone',
+      'blue-tinged pebble with a soft flurry of snow drifting around it',
+      'chilly grey stone with a shimmering pale-blue frosty sheen',
     ],
     neutre:[
-      'plain grey stone body, minimal decoration',
-      'classic pebble rock body, smooth rounded grey surface, simple face',
-      'cobblestone rock body, weathered grey texture, small chips',
-      'granite rock body, speckled grey-and-white grain, sturdy look',
-      'zen rock body, balanced smooth grey stones, calm neutral vibe',
-      'concrete rock body, industrial grey surface, faint cracks',
-      'river-stone rock body, polished smooth grey, wet sheen',
-      'slate rock body, flat layered grey plates, clean edges',
-      'rugged boulder rock body, massive grey mass, moss patches',
-      'moonstone-grey rock body, soft pale sheen, subtle silver glow',
+      'plain smooth grey pebble, simple, round and cute',
+      'classic rounded river stone with a polished grey surface',
+      'speckled granite pebble with a sturdy grey-and-white grain',
+      'weathered cobblestone pebble with small chips and hairline cracks',
+      'flat slate-grey stone with clean layered edges',
+      'rugged little boulder with faint green moss patches',
+      'pale moonstone-grey pebble with a subtle silver sheen',
+      'sandy-beige stone pebble with a soft matte texture',
     ],
   };
   const POSES=[
@@ -4379,11 +4365,11 @@ function buildCharacterPrompt(rock){
   const VILLAINS=['chaos','ombre','feu','metal'];
   const HEROES=['nature','lumiere','glace'];
   const base=VILLAINS.includes(type)
-    ?`evil villain chibi anime rock character ${name}, sinister grin, menacing eyes, claws`
+    ?`a mischievous evil chibi rock monster named ${name}, its whole body is a single rounded stone pebble with a sinister little grin and glowing menacing eyes carved into the stone, short stubby stone arms and legs`
     :HEROES.includes(type)
-    ?`friendly hero chibi anime rock character ${name}, big cute eyes, happy smile`
-    :`fierce chibi anime rock character ${name}, determined eyes, battle stance`;
-  return `${base}, ${pose}, ${sizeDesc}, ${rarityDesc}, ${typeStyle}, ${atkDesc}, ${defDesc}, ${vitDesc}, ${personality}, full body character in the foreground, set against a ${bg} background, cinematic dramatic lighting, highly detailed manga art style, vibrant colors`;
+    ?`an adorable heroic chibi rock monster named ${name}, its whole body is a single rounded stone pebble with big cute eyes and a happy smile on the stone, short stubby stone arms and legs`
+    :`a brave chibi rock monster named ${name}, its whole body is a single rounded stone pebble with determined eyes on the stone, short stubby stone arms and legs`;
+  return `${base}, ${pose}, ${sizeDesc}, ${rarityDesc}, the stone body is ${typeStyle}, ${atkDesc}, ${defDesc}, ${vitDesc}, ${personality}, it is unmistakably a chunky solid living rock / pebble creature made of stone with rough grainy mineral texture and cracks, like a cute rock-type Pokémon mascot, full body in the foreground, set against a ${bg} background, cinematic dramatic lighting, adorable chibi mascot, highly detailed manga art style, vibrant colors, it is NOT a human, NOT wearing a costume or armor suit, NOT an animal — it is a rock`;
 }
 
 function stopCharGenTimer(){
