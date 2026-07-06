@@ -726,6 +726,41 @@ nav{display:flex;gap:8px;padding:8px 16px max(12px,env(safe-area-inset-bottom));
 .bcard .arena-bar-bg{height:11px;border:1px solid rgba(0,0,0,.35);box-shadow:inset 0 1px 3px rgba(0,0,0,.5);}
 .hp-shine{position:relative;overflow:hidden;}
 .hp-shine::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(255,255,255,.45),transparent 55%);}
+/* Jauge d'energie */
+.nrg-wrap{display:flex;align-items:center;gap:5px;margin-top:6px;}
+.nrg-bg{flex:1;height:7px;background:rgba(0,0,0,.4);border-radius:999px;overflow:hidden;border:1px solid rgba(0,0,0,.3);}
+.nrg-fill{height:100%;border-radius:999px;background:linear-gradient(90deg,#4aa3ff,#7be0ff);transition:width .4s ease;box-shadow:0 0 6px rgba(120,200,255,.5);}
+.nrg-fill.full{background:linear-gradient(90deg,#FFD700,#FFB300);box-shadow:0 0 10px #FFD70099;animation:nrgPulse .9s ease-in-out infinite;}
+@keyframes nrgPulse{0%,100%{filter:brightness(1);}50%{filter:brightness(1.35);}}
+.nrg-lbl{font-family:'Baloo 2',sans-serif;font-weight:800;font-size:9px;color:#8FD8FF;min-width:26px;text-align:right;}
+.nrg-lbl.full{color:#FFD700;}
+/* Badges de statut */
+.stbadges{display:flex;gap:4px;justify-content:center;flex-wrap:wrap;margin-top:6px;min-height:16px;}
+.stbadge{font-size:10px;font-weight:800;font-family:'Baloo 2',sans-serif;border:1.5px solid;border-radius:999px;padding:0 6px;line-height:15px;background:rgba(8,14,24,.6);}
+.stbadge i{font-style:normal;opacity:.7;font-size:8px;margin-left:1px;}
+/* Cout d'energie sur les boutons */
+.mv-btn{position:relative;}
+.mv-cost{position:absolute;top:3px;right:6px;font-family:'Baloo 2',sans-serif;font-weight:800;font-size:9px;color:#0D1B2A;background:rgba(255,255,255,.55);border-radius:999px;padding:0 5px;line-height:14px;}
+.mv-cost.ready{background:#FFD700;box-shadow:0 0 6px #FFD70088;}
+/* Mini-jeu de timing */
+.timing-ov{position:fixed;inset:0;z-index:70;background:rgba(4,8,16,.55);backdrop-filter:blur(2px);display:flex;align-items:center;justify-content:center;animation:timingIn .18s ease;}
+@keyframes timingIn{from{opacity:0;}to{opacity:1;}}
+.timing-card{width:min(340px,86vw);background:linear-gradient(180deg,#1a2c46,#0e1c30);border:2px solid rgba(255,255,255,.14);border-radius:20px;padding:20px 18px;text-align:center;box-shadow:0 18px 50px rgba(0,0,0,.6);}
+.timing-title{font-family:'Bungee',cursive;font-size:22px;margin-bottom:14px;}
+.timing-title.atk{color:#FFD35A;text-shadow:0 0 14px #FFB30066;}
+.timing-title.def{color:#8FD8FF;text-shadow:0 0 14px #4aa3ff66;}
+.timing-track{position:relative;height:26px;border-radius:999px;background:rgba(0,0,0,.5);border:1px solid rgba(255,255,255,.1);overflow:hidden;}
+.timing-good{position:absolute;top:0;bottom:0;left:33%;right:33%;background:rgba(111,207,83,.32);}
+.timing-perfect{position:absolute;top:0;bottom:0;left:43%;right:43%;background:rgba(111,207,83,.9);box-shadow:0 0 12px #6FCF53;}
+.timing-marker{position:absolute;top:-3px;bottom:-3px;width:5px;left:0;background:#fff;border-radius:3px;box-shadow:0 0 10px #fff,0 0 4px #fff;transform:translateX(-50%);}
+.timing-marker.perfect{background:#6FCF53;box-shadow:0 0 14px #6FCF53;}
+.timing-marker.good{background:#FFD35A;}
+.timing-marker.miss{background:#FF5A5A;}
+.timing-hint{font-family:'Nunito',sans-serif;font-size:11px;color:rgba(255,255,255,.5);margin-top:12px;}
+.timing-result{font-family:'Bungee',cursive;font-size:16px;min-height:20px;margin-top:8px;}
+.timing-result.perfect{color:#6FCF53;text-shadow:0 0 12px #6FCF5366;}
+.timing-result.good{color:#FFD35A;}
+.timing-result.miss{color:#FF7878;}
 /* Badge VS */
 .cfx-vs{position:relative;width:50px;height:50px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
 .cfx-vs b{position:relative;z-index:3;font-family:'Bungee',cursive;font-size:19px;color:#fff;text-shadow:0 0 10px #fff9,0 2px 3px #000;}
@@ -3390,7 +3425,7 @@ function makeBotRock(){
   });
 }
 
-function combatMaxHP(def){ return 50+def*4; }
+function combatMaxHP(def){ return 90+def*6; }
 
 function calcDmg(atkStat,defStat,multiplier=1){
   const raw=Math.max(1, atkStat - Math.floor(defStat/6) + Math.floor(Math.random()*16) - 8);
@@ -3409,6 +3444,121 @@ function getAvailableMoves(rock){
     moves.push({ id:'ultimate', label:'🌟 ULTIME', mult:2.3, onceOnly:true });
   }
   return moves;
+}
+
+/* ========= MOTEUR DE COMBAT PROFOND (solo vs bot) ========= */
+const STATUS_DEFS={
+  brulure:{icon:'🔥',name:'Brûlure',color:'#FF6B35',desc:'Perd des PV chaque tour'},
+  gel:{icon:'❄️',name:'Gelé',color:'#74B9FF',desc:'Saute son prochain tour'},
+  malediction:{icon:'🌑',name:'Malédiction',color:'#B57BE0',desc:'Attaques affaiblies'},
+  aveugle:{icon:'✨',name:'Aveuglé',color:'#F7DC6F',desc:'Risque de rater'},
+  blindage:{icon:'⚙️',name:'Blindage',color:'#AEB7C0',desc:'Dégâts subis réduits'},
+  regen:{icon:'🌿',name:'Régén.',color:'#27AE60',desc:'Récupère des PV chaque tour'},
+  confusion:{icon:'💫',name:'Confus',color:'#FF4081',desc:'Peut se blesser tout seul'},
+};
+// Statut infligé selon le type de l'attaque. self=true → s'applique à l'attaquant.
+const TYPE_STATUS={
+  feu:{kind:'brulure',turns:3},
+  glace:{kind:'gel',turns:1},
+  ombre:{kind:'malediction',turns:2},
+  lumiere:{kind:'aveugle',turns:2},
+  metal:{kind:'blindage',turns:2,self:true},
+  nature:{kind:'regen',turns:3,self:true},
+  chaos:{kind:'confusion',turns:2},
+  neutre:null,
+};
+const ENERGY_ACT=24;   // énergie gagnée quand on agit
+const ENERGY_HIT=12;   // énergie gagnée quand on encaisse
+
+function soloMoves(rock){
+  const typeInfo=ROCK_TYPES.find(t=>t.key===rock.rockType);
+  return [
+    { id:'attack', label:'⚔️ Frappe', cost:0, mult:1.0, kind:'basic' },
+    { id:'type', label:typeInfo?typeInfo.label:'⬜ TYPE', cost:0, mult:0.85, kind:'type' },
+    { id:'special', label:'⚡ Spéciale', cost:50, mult:1.7, kind:'special' },
+    { id:'ultimate', label:'🌟 Ultime', cost:100, mult:2.7, kind:'ultimate' },
+  ];
+}
+function addStatus(side,kind,turns){
+  const key=side+'Status';
+  const arr=battleState[key]||(battleState[key]=[]);
+  const ex=arr.find(s=>s.kind===kind);
+  if(ex) ex.turns=Math.max(ex.turns,turns); else arr.push({kind,turns});
+}
+function hasStatus(side,kind){ return (battleState[side+'Status']||[]).some(s=>s.kind===kind); }
+function outgoingMult(side){ return hasStatus(side,'malediction')?0.7:1; }
+function incomingMult(side){ return hasStatus(side,'blindage')?0.65:1; }
+function applyMoveStatus(attackerSide,defenderSide,rock,strongTurns){
+  const cfg=TYPE_STATUS[rock.rockType];
+  if(!cfg) return;
+  const side=cfg.self?attackerSide:defenderSide;
+  addStatus(side,cfg.kind,strongTurns||cfg.turns);
+  const d=STATUS_DEFS[cfg.kind];
+  const who=(side==='player'?battleState.playerRock:battleState.botRock).name;
+  addCombatLog(`${d.icon} ${who} : ${d.name} !`, cfg.self?'neutral':(side==='player'?'dmg-player':'dmg-bot'));
+}
+// Tick des statuts au début du tour d'un camp. Renvoie {skip, dead}
+function tickStatuses(side){
+  const arr=battleState[side+'Status']||[];
+  const isP=side==='player';
+  const rock=isP?battleState.playerRock:battleState.botRock;
+  const hpKey=isP?'playerHP':'botHP', maxKey=isP?'playerMaxHP':'botMaxHP';
+  let skip=false;
+  for(const st of arr){
+    if(st.kind==='brulure'){
+      const d=Math.max(4,Math.round(battleState[maxKey]*0.06));
+      battleState[hpKey]=Math.max(0,battleState[hpKey]-d);
+      addCombatLog(`🔥 ${rock.name} se consume : -${d} PV`, isP?'dmg-player':'dmg-bot');
+      spawnHitFx(isP?'playerSprite':'botSprite',{dmg:d,color:'#FF6B35'});
+    } else if(st.kind==='regen'){
+      const h=Math.max(5,Math.round(battleState[maxKey]*0.07));
+      battleState[hpKey]=Math.min(battleState[maxKey],battleState[hpKey]+h);
+      addCombatLog(`🌿 ${rock.name} régénère : +${h} PV`,'neutral');
+      spawnHitFx(isP?'playerSprite':'botSprite',{dmg:h,heal:true,color:'#27AE60'});
+    } else if(st.kind==='gel'){ skip=true; }
+  }
+  battleState[side+'Status']=arr.map(s=>({...s,turns:s.turns-1})).filter(s=>s.turns>0);
+  return {skip, dead:battleState[hpKey]<=0};
+}
+
+/* Mini-jeu de timing : vise (attaque) ou pare (défense). Renvoie un multiplicateur. */
+function timingChallenge(kind){
+  return new Promise(resolve=>{
+    const isAtk=kind==='attack';
+    const ov=document.createElement('div'); ov.className='timing-ov';
+    ov.innerHTML=`<div class="timing-card">
+      <div class="timing-title ${isAtk?'atk':'def'}">${isAtk?'⚔️ VISE !':'🛡️ PARE !'}</div>
+      <div class="timing-track"><div class="timing-good"></div><div class="timing-perfect"></div><div class="timing-marker" id="tMarker"></div></div>
+      <div class="timing-hint">${isAtk?'Touche dans la zone verte':'Touche pile au centre pour bloquer'}</div>
+      <div class="timing-result" id="tResult"></div>
+    </div>`;
+    document.body.appendChild(ov);
+    const marker=ov.querySelector('#tMarker');
+    const DUR=1050; let raf, start=performance.now(), done=false;
+    const posNow=()=>{ const e=((performance.now()-start)%DUR)/DUR; return e<0.5?e*2:2-e*2; };
+    function frame(){ if(done) return; marker.style.left=(posNow()*100)+'%'; raf=requestAnimationFrame(frame); }
+    raf=requestAnimationFrame(frame);
+    function finish(){
+      if(done) return; done=true; cancelAnimationFrame(raf);
+      const d=Math.abs(posNow()-0.5);
+      let mult,txt,cls;
+      if(isAtk){
+        if(d<0.07){mult=1.6;txt='PARFAIT ! +60%';cls='perfect';}
+        else if(d<0.17){mult=1.25;txt='Bien ! +25%';cls='good';}
+        else {mult=0.85;txt='Raté... -15%';cls='miss';}
+      } else {
+        if(d<0.07){mult=0.15;txt='BLOCAGE PARFAIT !';cls='perfect';}
+        else if(d<0.18){mult=0.5;txt='Paré ! -50%';cls='good';}
+        else {mult=1.0;txt='Trop tard !';cls='miss';}
+      }
+      marker.classList.add(cls);
+      const res=ov.querySelector('#tResult'); res.textContent=txt; res.className='timing-result '+cls;
+      if(navigator.vibrate) navigator.vibrate(cls==='perfect'?[15,25,35]:15);
+      setTimeout(()=>{ ov.remove(); resolve(mult); },480);
+    }
+    ov.addEventListener('pointerdown',finish);
+    setTimeout(finish,2400);
+  });
 }
 
 async function initBattle(playerRock){
@@ -3430,6 +3580,7 @@ async function initBattle(playerRock){
     turn:'player', winner:null, entered:false,
     playerSpriteUrl, botSpriteUrl:null,
     shieldActive:false, critPending:false,
+    playerEnergy:0, botEnergy:0, playerStatus:[], botStatus:[], turnCount:0,
   };
   if((meta.inventory?.shield||0)>0){ meta.inventory.shield--; battleState.shieldActive=true; usedBuffs.push('🛡️ Bouclier'); }
   if((meta.inventory?.crit||0)>0){ meta.inventory.crit--; battleState.critPending=true; usedBuffs.push('💥 Frappe Critique'); }
@@ -3443,6 +3594,12 @@ function addCombatLog(text,cls='neutral'){
   if(battleState.log.length>4) battleState.log.pop();
 }
 
+function endBattle(winner){
+  battleState.winner=winner; battleState.turn='end';
+  if(winner==='player'){ incrementStat('wins',1); addXp(15); addGravillons(10); grantFoodLoot(); }
+  else { incrementStat('losses',1); }
+  screen='combat-result'; render();
+}
 async function playerAction(moveId){
   if(!battleState||battleState.turn!=='player') return;
   if(moveId==='flee'){
@@ -3453,7 +3610,7 @@ async function playerAction(moveId){
     } else {
       addCombatLog(`${battleState.playerRock.name} tente de fuir... et se rate !`,'neutral');
       battleState.turn='animating'; render();
-      setTimeout(botTurn,900);
+      setTimeout(beginBotTurn,800);
     }
     return;
   }
@@ -3461,85 +3618,147 @@ async function playerAction(moveId){
     const result=consumeFoodHeal(true);
     if(!result){ showToast('Tu n\'as pas de nourriture !'); return; }
     addCombatLog(`${result.food.emoji} ${battleState.playerRock.name} mange : ${result.food.name} (+${result.healAmt} PV) !`,'neutral');
+    spawnHitFx('playerSprite',{dmg:result.healAmt,heal:true,color:'#27AE60'});
     battleState.turn='animating'; render();
-    setTimeout(botTurn,900);
+    setTimeout(beginBotTurn,800);
     return;
   }
-  const moves=getAvailableMoves(battleState.playerRock);
-  const move=moves.find(m=>m.id===moveId);
+  const move=soloMoves(battleState.playerRock).find(m=>m.id===moveId);
   if(!move) return;
-  if(move.onceOnly){
-    const usedFlag=moveId==='special'?'playerSpecialUsed':'playerUltimateUsed';
-    if(battleState[usedFlag]){ showToast('Déjà utilisée !'); return; }
-  }
+  if((battleState.playerEnergy||0)<move.cost){ showToast(`⚡ Il faut ${move.cost} d'énergie pour ça !`); return; }
   battleState.turn='animating'; render();
-  const tMult=move.isType?typeMultiplier(battleState.playerRock.rockType,battleState.botRock.rockType):1;
-  let dmg=calcDmg(battleState.playerRock.atk,battleState.botRock.def,move.mult*tMult);
-  const wasCrit=battleState.critPending;
-  if(wasCrit){ dmg=Math.round(dmg*2); battleState.critPending=false; }
-  await playAttackAnim('playerSprite','botSprite',{dmg,crit:wasCrit,ultimate:moveId==='ultimate',effective:tMult>1?'super':tMult<1?'weak':null,color:attackColor(battleState.playerRock,moveId)});
-  if(moveId==='special') battleState.playerSpecialUsed=true;
-  if(moveId==='ultimate') battleState.playerUltimateUsed=true;
-  battleState.botHP=Math.max(0,battleState.botHP-dmg);
-  const typeTxt=move.isType?(tMult>1?' (super efficace !)':tMult<1?' (peu efficace...)':''):'';
-  let msg;
-  if(moveId==='ultimate') msg=`🌟 ULTIME ! ${battleState.playerRock.name} déchaîne sa puissance`;
-  else if(moveId==='special') msg=`⚡ ${battleState.playerRock.name} : ${battleState.playerRock.specialMove||'Attaque Spéciale'}`;
-  else if(moveId==='type') msg=`${move.label} ${battleState.playerRock.name} frappe`;
-  else msg=`${battleState.playerRock.name} frappe ${battleState.botRock.name}`;
-  if(wasCrit) msg='💥 CRITIQUE ! '+msg;
-  addCombatLog(`${msg} : -${dmg} PV${typeTxt}`,'dmg-bot');
-  if(battleState.botHP<=0){
-    battleState.winner='player'; battleState.turn='end';
-    incrementStat('wins',1);
-    addXp(15); addGravillons(10);
-    grantFoodLoot();
-    screen='combat-result'; render(); return;
+  const pr=battleState.playerRock;
+  // Confusion : risque de se blesser
+  if(hasStatus('player','confusion') && Math.random()<0.3){
+    const d=Math.max(4,Math.round(battleState.playerMaxHP*0.05));
+    battleState.playerHP=Math.max(0,battleState.playerHP-d);
+    battleState.playerEnergy=Math.min(100,(battleState.playerEnergy||0)+ENERGY_ACT);
+    addCombatLog(`💫 ${pr.name} est confus et se cogne : -${d} PV`,'dmg-player');
+    spawnHitFx('playerSprite',{dmg:d,color:'#FF4081'});
+    render();
+    if(battleState.playerHP<=0) return endBattle('bot');
+    return setTimeout(beginBotTurn,850);
   }
+  const timing=await timingChallenge('attack');
+  const elemental=move.kind!=='basic';
+  const tMult=elemental?typeMultiplier(pr.rockType,battleState.botRock.rockType):1;
+  const miss=hasStatus('player','aveugle')&&Math.random()<0.35;
+  let dmg=0, crit=false;
+  if(!miss){
+    dmg=calcDmg(pr.atk,battleState.botRock.def,move.mult*tMult);
+    if(battleState.critPending){ dmg=Math.round(dmg*2); crit=true; battleState.critPending=false; }
+    dmg=Math.round(dmg*outgoingMult('player')*timing);
+    if(move.kind!=='ultimate') dmg=Math.round(dmg*incomingMult('bot'));
+    dmg=Math.max(1,dmg);
+  }
+  await playAttackAnim('playerSprite','botSprite',{dmg:miss?null:dmg,crit:crit||timing>=1.6,ultimate:move.kind==='ultimate',effective:tMult>1?'super':tMult<1?'weak':null,color:attackColor(pr,moveId)});
+  battleState.playerEnergy=Math.min(100,(battleState.playerEnergy||0)-move.cost+ENERGY_ACT);
+  battleState.botEnergy=Math.min(100,(battleState.botEnergy||0)+ENERGY_HIT);
+  if(miss){
+    addCombatLog(`✨ ${pr.name} est aveuglé et rate son attaque !`,'neutral');
+  } else {
+    battleState.botHP=Math.max(0,battleState.botHP-dmg);
+    if(elemental) applyMoveStatus('player','bot',pr, move.kind==='ultimate'?((TYPE_STATUS[pr.rockType]||{}).turns||2)+1:null);
+    let msg;
+    if(move.kind==='ultimate') msg=`🌟 ULTIME ! ${pr.name} déchaîne sa puissance`;
+    else if(move.kind==='special') msg=`⚡ ${pr.name} : ${(pr.specialMove||'Spéciale').split('(')[0].trim()}`;
+    else if(move.kind==='type') msg=`${move.label} ${pr.name} frappe`;
+    else msg=`${pr.name} frappe`;
+    if(crit) msg='💥 CRITIQUE ! '+msg;
+    const eff=tMult>1?' (super efficace !)':tMult<1?' (peu efficace...)':'';
+    const perf=timing>=1.6?' ✨':'';
+    addCombatLog(`${msg} : -${dmg} PV${eff}${perf}`,'dmg-bot');
+  }
+  if(battleState.botHP<=0) return endBattle('player');
   render();
-  setTimeout(botTurn,900);
+  setTimeout(beginBotTurn,850);
 }
 
-function pickBotMove(bot){
-  const moves=getAvailableMoves(bot);
-  const usable=moves.filter(m=>{
-    if(m.id==='special') return !battleState.botSpecialUsed;
-    if(m.id==='ultimate') return !battleState.botUltimateUsed;
-    return true;
-  });
-  const weights={attack:35,type:35,special:20,ultimate:10};
-  const total=usable.reduce((s,m)=>s+(weights[m.id]||10),0);
-  let r=Math.random()*total;
-  for(const m of usable){ const w=weights[m.id]||10; if(r<w) return m; r-=w; }
-  return usable[0];
+function beginBotTurn(){
+  if(!battleState) return;
+  battleState.turn='animating';
+  const tick=tickStatuses('bot');
+  render();
+  if(tick.dead) return endBattle('player');
+  if(tick.skip){
+    addCombatLog(`❄️ ${battleState.botRock.name} est gelé et ne peut pas bouger !`,'dmg-bot');
+    render();
+    return setTimeout(beginPlayerTurn,950);
+  }
+  setTimeout(botAct,650);
 }
-async function botTurn(){
+function pickBotMoveSolo(){
+  const bot=battleState.botRock;
+  const e=battleState.botEnergy||0;
+  const moves=soloMoves(bot).filter(m=>e>=m.cost);
+  const weights={attack:28,type:34,special:26,ultimate:26};
+  const total=moves.reduce((s,m)=>s+(weights[m.id]||10),0);
+  let r=Math.random()*total;
+  for(const m of moves){ const w=weights[m.id]||10; if(r<w) return m; r-=w; }
+  return moves[0]||soloMoves(bot)[0];
+}
+async function botAct(){
   if(!battleState) return;
   const bot=battleState.botRock;
-  const move=pickBotMove(bot);
-  const tMult=move.isType?typeMultiplier(bot.rockType,battleState.playerRock.rockType):1;
-  let dmg=calcDmg(bot.atk,battleState.playerRock.def,move.mult*tMult);
-  const blocked=!!battleState.shieldActive;
-  await playAttackAnim('botSprite','playerSprite',{dmg:blocked?0:dmg,ultimate:move.id==='ultimate',effective:tMult>1?'super':tMult<1?'weak':null,color:attackColor(bot,move.id)});
-  if(move.id==='special') battleState.botSpecialUsed=true;
-  if(move.id==='ultimate') battleState.botUltimateUsed=true;
-  if(battleState.shieldActive){
-    battleState.shieldActive=false; dmg=0;
-    addCombatLog(`🛡️ Le bouclier absorbe complètement l'attaque de ${bot.name} !`,'neutral');
-  } else {
-    const typeTxt=move.isType?(tMult>1?' (super efficace !)':tMult<1?' (peu efficace...)':''):'';
-    let msg;
-    if(move.id==='ultimate') msg=`🌟 ULTIME ! ${bot.name} déchaîne sa puissance`;
-    else if(move.id==='special') msg=`⚡ ${bot.name} : ${bot.specialMove||'Attaque Surprise'}`;
-    else if(move.id==='type') msg=`${move.label} ${bot.name} frappe`;
-    else msg=`${bot.name} contre-attaque`;
-    addCombatLog(`${msg} : -${dmg} PV${typeTxt}`,'dmg-player');
+  const move=pickBotMoveSolo();
+  // Confusion du bot
+  if(hasStatus('bot','confusion') && Math.random()<0.3){
+    const d=Math.max(4,Math.round(battleState.botMaxHP*0.05));
+    battleState.botHP=Math.max(0,battleState.botHP-d);
+    battleState.botEnergy=Math.min(100,(battleState.botEnergy||0)+ENERGY_ACT);
+    addCombatLog(`💫 ${bot.name} est confus et se cogne : -${d} PV`,'dmg-bot');
+    spawnHitFx('botSprite',{dmg:d,color:'#FF4081'});
+    render();
+    if(battleState.botHP<=0) return endBattle('player');
+    return setTimeout(beginPlayerTurn,850);
   }
-  battleState.playerHP=Math.max(0,battleState.playerHP-dmg);
-  if(battleState.playerHP<=0){
-    battleState.winner='bot'; battleState.turn='end';
-    incrementStat('losses',1);
-    screen='combat-result'; render(); return;
+  const elemental=move.kind!=='basic';
+  const tMult=elemental?typeMultiplier(bot.rockType,battleState.playerRock.rockType):1;
+  const miss=hasStatus('bot','aveugle')&&Math.random()<0.35;
+  const shieldBlock=!!battleState.shieldActive;
+  let dmg=0;
+  if(!miss){
+    dmg=calcDmg(bot.atk,battleState.playerRock.def,move.mult*tMult);
+    dmg=Math.round(dmg*outgoingMult('bot'));
+    if(move.kind!=='ultimate') dmg=Math.round(dmg*incomingMult('player'));
+    dmg=Math.max(1,dmg);
+  }
+  let parry=1;
+  if(!miss && !shieldBlock) parry=await timingChallenge('parry');
+  if(shieldBlock) dmg=0; else if(!miss) dmg=Math.max(1,Math.round(dmg*parry));
+  await playAttackAnim('botSprite','playerSprite',{dmg:(miss)?null:dmg,ultimate:move.kind==='ultimate',effective:tMult>1?'super':tMult<1?'weak':null,color:attackColor(bot,move.id)});
+  battleState.botEnergy=Math.min(100,(battleState.botEnergy||0)-move.cost+ENERGY_ACT);
+  battleState.playerEnergy=Math.min(100,(battleState.playerEnergy||0)+ENERGY_HIT);
+  if(shieldBlock){
+    battleState.shieldActive=false;
+    addCombatLog(`🛡️ Le bouclier absorbe l'attaque de ${bot.name} !`,'neutral');
+  } else if(miss){
+    addCombatLog(`✨ ${bot.name} est aveuglé et rate son attaque !`,'neutral');
+  } else {
+    battleState.playerHP=Math.max(0,battleState.playerHP-dmg);
+    if(elemental) applyMoveStatus('bot','player',bot, move.kind==='ultimate'?((TYPE_STATUS[bot.rockType]||{}).turns||2)+1:null);
+    let msg;
+    if(move.kind==='ultimate') msg=`🌟 ULTIME ! ${bot.name} déchaîne sa puissance`;
+    else if(move.kind==='special') msg=`⚡ ${bot.name} : ${(bot.specialMove||'Attaque Surprise').split('(')[0].trim()}`;
+    else if(move.kind==='type') msg=`${move.label} ${bot.name} frappe`;
+    else msg=`${bot.name} contre-attaque`;
+    const eff=tMult>1?' (super efficace !)':tMult<1?' (peu efficace...)':'';
+    const par=parry<=0.15?' 🛡️PARFAIT':parry<1?' 🛡️paré':'';
+    addCombatLog(`${msg} : -${dmg} PV${eff}${par}`,'dmg-player');
+  }
+  if(battleState.playerHP<=0) return endBattle('bot');
+  render();
+  setTimeout(beginPlayerTurn,700);
+}
+function beginPlayerTurn(){
+  if(!battleState) return;
+  battleState.turnCount=(battleState.turnCount||0)+1;
+  const tick=tickStatuses('player');
+  if(tick.dead){ render(); return endBattle('bot'); }
+  if(tick.skip){
+    addCombatLog(`❄️ ${battleState.playerRock.name} est gelé et ne peut pas bouger !`,'dmg-player');
+    battleState.turn='animating'; render();
+    return setTimeout(beginBotTurn,950);
   }
   battleState.turn='player'; render();
 }
@@ -3598,6 +3817,9 @@ function combatFightScreen(){
   const botTint=(ROCK_TYPES.find(x=>x.key===s.botRock.rockType)||{}).color||botHex;
   const playerTint=(ROCK_TYPES.find(x=>x.key===s.playerRock.rockType)||{}).color||playerHex;
   const sparks=Array.from({length:14},(_,i)=>{const c=['#F7DC6F','#ffffff','#FF8A5C','#8FD8FF'][i%4];return `<span class="cfx-spark" style="left:${(Math.random()*100).toFixed(1)}%;bottom:-6px;background:${c};box-shadow:0 0 6px ${c};animation-duration:${(4+Math.random()*4).toFixed(1)}s;animation-delay:${(Math.random()*5).toFixed(1)}s;width:${(2+Math.random()*2).toFixed(1)}px;height:${(2+Math.random()*2).toFixed(1)}px;"></span>`;}).join('');
+  const isSolo=!s.online;
+  const statBadges=(side)=>{ if(!isSolo) return ''; const arr=s[side+'Status']||[]; if(!arr.length) return '<div class="stbadges"></div>'; return `<div class="stbadges">`+arr.map(st=>{const d=STATUS_DEFS[st.kind]||{icon:'?',name:'',color:'#fff'};return `<span class="stbadge" style="border-color:${d.color};color:${d.color};">${d.icon}<i>${st.turns}</i></span>`;}).join('')+`</div>`; };
+  const nrgBar=(side)=>{ if(!isSolo) return ''; const e=Math.max(0,Math.min(100,s[side+'Energy']||0)); const full=e>=100; return `<div class="nrg-wrap"><div class="nrg-bg"><div class="nrg-fill${full?' full':''}" style="width:${e}%;"></div></div><span class="nrg-lbl${full?' full':''}">⚡${e}</span></div>`; };
 
   return `<div class="cfx">
     <div class="cfx-bg"></div>
@@ -3616,6 +3838,8 @@ function combatFightScreen(){
         <div class="bcard-name">${s.botRock.name}</div>
         <div class="bcard-hprow"><b>${s.botHP}</b>/<span>${s.botMaxHP} PV</span></div>
         <div class="arena-bar-bg"><div class="arena-bar-fill hp-shine" style="width:${bPct*100}%;background:${hpBarColor(bPct)};"></div></div>
+        ${nrgBar('bot')}
+        ${statBadges('bot')}
       </div>
       <div class="cfx-vs"><span class="cfx-vs-ring"></span><span class="cfx-vs-pulse"></span><b>VS</b></div>
       <div class="bcard bcard-mine" style="border-color:${playerHex};box-shadow:0 10px 26px rgba(0,0,0,.5),0 0 22px ${playerTint}55,inset 0 0 22px ${playerTint}18;">
@@ -3627,13 +3851,20 @@ function combatFightScreen(){
         <div class="bcard-name">${s.playerRock.name}</div>
         <div class="bcard-hprow"><b>${s.playerHP}</b>/<span>${s.playerMaxHP} PV</span></div>
         <div class="arena-bar-bg"><div class="arena-bar-fill hp-shine" style="width:${pPct*100}%;background:${hpBarColor(pPct)};"></div></div>
+        ${nrgBar('player')}
+        ${statBadges('player')}
       </div>
     </div>
     <div class="combat-log">
       ${s.log.slice(0,3).map((l,i)=>`<div class="log-line ${l.cls}" style="opacity:${1-i*0.28};">${l.text}</div>`).join('')}
     </div>
     <div class="arena-actions">
-      ${getAvailableMoves(s.playerRock).map(m=>{
+      ${isSolo?soloMoves(s.playerRock).map(m=>{
+        const e=s.playerEnergy||0; const locked=e<m.cost; const dis=busy||locked;
+        const cls=m.kind==='ultimate'?'btn-ultimate':m.kind==='special'?'btn-purple':'btn-gold';
+        return `<button class="btn ${cls} mv-btn" ${dis?'disabled':''} style="${dis?'opacity:.42;':''}" data-action="combatMove" data-move="${m.id}">${m.label}${m.cost?`<span class="mv-cost${locked?'':' ready'}">${m.cost}⚡</span>`:''}</button>`;
+      }).join('')
+      :getAvailableMoves(s.playerRock).map(m=>{
         const used=(m.id==='special'&&s.playerSpecialUsed)||(m.id==='ultimate'&&s.playerUltimateUsed);
         const cls=m.id==='ultimate'?'btn-ultimate':m.id==='special'?'btn-purple':'btn-gold';
         return `<button class="btn ${cls}" ${busy||used?'disabled style="opacity:.4;"':''} data-action="combatMove" data-move="${m.id}">${m.label}</button>`;
