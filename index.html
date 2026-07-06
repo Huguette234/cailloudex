@@ -685,7 +685,7 @@ nav{display:flex;gap:8px;padding:8px 16px max(12px,env(safe-area-inset-bottom));
 .btn-feed{font-family:'Baloo 2',sans-serif;font-weight:800;font-size:12px;border:3px solid var(--ink);border-radius:16px;padding:10px 4px;cursor:pointer;text-align:center;background:linear-gradient(135deg,#27AE60,#1E8449);color:#fff;box-shadow:0 6px 0 rgba(0,0,0,.4);}
 .btn-feed:active{transform:translateY(3px);box-shadow:0 3px 0 rgba(0,0,0,.4);}
 /* ===== ARENE DE COMBAT EPIQUE ===== */
-.cfx{position:relative;min-height:100vh;padding:16px 12px calc(env(safe-area-inset-bottom,0px) + 22px);overflow:hidden;display:flex;flex-direction:column;gap:9px;}
+.cfx{position:fixed;inset:0;z-index:20;padding:calc(env(safe-area-inset-top,0px) + 16px) 14px calc(env(safe-area-inset-bottom,0px) + 24px);overflow-y:auto;overflow-x:hidden;display:flex;flex-direction:column;gap:9px;background:#060b14;}
 .cfx-bg{position:absolute;inset:0;z-index:0;background:
   radial-gradient(130% 70% at 50% -5%,#2a3d5c 0%,#182740 34%,#0c1626 66%,#060b14 100%);}
 .cfx-bg::after{content:'';position:absolute;inset:0;opacity:.5;background:
@@ -739,6 +739,27 @@ nav{display:flex;gap:8px;padding:8px 16px max(12px,env(safe-area-inset-bottom));
 .bcard-foe .lunge{animation:lungeFoe .55s ease-in-out;}
 .bcard-mine .lunge{animation:lungeMine .55s ease-in-out;}
 .cfx .combat-log{background:rgba(6,12,22,.62);border:1px solid rgba(255,255,255,.07);backdrop-filter:blur(3px);}
+/* Effets d'impact */
+.hitfx-num{position:fixed;z-index:60;transform:translate(-50%,0);font-family:'Bungee',cursive;color:#fff;pointer-events:none;white-space:nowrap;text-shadow:0 2px 0 #7a0000,0 0 12px rgba(255,70,70,.85);animation:hitNum .95s cubic-bezier(.2,.8,.3,1) forwards;}
+.hitfx-num{font-size:30px;}
+.hitfx-num.crit{font-size:42px;color:#FFE24A;text-shadow:0 2px 0 #7a4d00,0 0 18px #FFD700cc;}
+.hitfx-num.heal{color:#7CFFB0;text-shadow:0 2px 0 #064a25,0 0 12px #3affa088;}
+.hitfx-num.zero{color:#cfe0ff;text-shadow:0 2px 0 #10314f;font-size:22px;}
+@keyframes hitNum{0%{opacity:0;transform:translate(-50%,12px) scale(.5);}18%{opacity:1;transform:translate(-50%,-6px) scale(1.18);}36%{transform:translate(-50%,-14px) scale(1);}100%{opacity:0;transform:translate(-50%,-66px) scale(.9);}}
+.hitfx-burst{position:fixed;z-index:59;width:92px;height:92px;transform:translate(-50%,-50%);pointer-events:none;--fxc:#fff;border-radius:50%;mix-blend-mode:screen;
+  background:radial-gradient(circle,#fff 0%,var(--fxc) 26%,transparent 62%);animation:hitBurst .5s ease-out forwards;}
+.hitfx-burst.crit{width:140px;height:140px;}
+.hitfx-burst::after{content:'';position:absolute;inset:0;border-radius:50%;border:3px solid var(--fxc);animation:hitRing .5s ease-out forwards;}
+@keyframes hitBurst{0%{opacity:0;transform:translate(-50%,-50%) scale(.2);}22%{opacity:1;}100%{opacity:0;transform:translate(-50%,-50%) scale(1.7);}}
+@keyframes hitRing{0%{opacity:.9;transform:scale(.3);}100%{opacity:0;transform:scale(1.55);}}
+@keyframes arenaShake{0%,100%{transform:translate(0,0);}20%{transform:translate(-5px,3px);}40%{transform:translate(5px,-2px);}60%{transform:translate(-3px,2px);}80%{transform:translate(3px,-1px);}}
+.arena-shake{animation:arenaShake .38s ease-in-out;}
+@keyframes arenaShakeHard{0%,100%{transform:translate(0,0) rotate(0);}12%{transform:translate(-10px,6px) rotate(-.6deg);}28%{transform:translate(10px,-5px) rotate(.6deg);}44%{transform:translate(-8px,4px);}60%{transform:translate(8px,-3px);}76%{transform:translate(-4px,2px);}88%{transform:translate(4px,-1px);}}
+.arena-shake-hard{animation:arenaShakeHard .52s ease-in-out;}
+.bcard.card-hurt{animation:cardHurt .5s ease-in-out;}
+@keyframes cardHurt{0%,100%{filter:none;}30%{filter:brightness(1.8) saturate(1.4);}60%{filter:brightness(.7);}}
+.flash-white{position:fixed;inset:0;z-index:58;background:#fff;pointer-events:none;opacity:0;animation:flashWhite .32s ease-out forwards;}
+@keyframes flashWhite{0%{opacity:.55;}100%{opacity:0;}}
 .result-wrap{display:flex;flex-direction:column;align-items:center;padding:24px 16px;gap:12px;}
 .result-banner{font-family:'Bungee',cursive;font-size:40px;text-align:center;animation:resultBounce .5s cubic-bezier(.34,1.56,.64,1);}
 @keyframes resultBounce{from{transform:scale(0);opacity:0;}to{transform:scale(1);opacity:1;}}
@@ -3085,9 +3106,9 @@ async function playerOnlineAction(moveId){
     if(battleState[usedFlag]){ showToast('Déjà utilisée !'); return; }
   }
   battleState.turn='animating'; render();
-  await playAttackAnim('playerSprite','botSprite');
   const tMult=move.isType?typeMultiplier(battleState.playerRock.rockType,battleState.botRock.rockType):1;
   const dmg=calcDmg(battleState.playerRock.atk,battleState.botRock.def,move.mult*tMult);
+  await playAttackAnim('playerSprite','botSprite',{dmg,ultimate:moveId==='ultimate',effective:tMult>1?'super':tMult<1?'weak':null,color:attackColor(battleState.playerRock,moveId)});
   if(moveId==='special') battleState.playerSpecialUsed=true;
   if(moveId==='ultimate') battleState.playerUltimateUsed=true;
   battleState.botHP=Math.max(0,battleState.botHP-dmg);
@@ -3127,8 +3148,8 @@ async function applyOnlineOpponentAction(msg){
     return;
   }
   battleState.turn='animating'; render();
-  await playAttackAnim('botSprite','playerSprite');
   const dmg=msg.dmg||0;
+  await playAttackAnim('botSprite','playerSprite',{dmg,ultimate:msg.action==='ultimate',color:attackColor(battleState.botRock,msg.action)});
   battleState.playerHP=Math.max(0,battleState.playerHP-dmg);
   if(msg.action==='special'){
     battleState.botSpecialUsed=true;
@@ -3271,14 +3292,48 @@ function makeRockSprite(photoDataUrl,seedStr){
     img.src=photoDataUrl;
   });
 }
-function playAttackAnim(attackerId,defenderId){
+function attackColor(rock,moveId){
+  if(moveId==='ultimate') return '#FFD700';
+  if(moveId==='special') return '#C45CFF';
+  const t=ROCK_TYPES.find(x=>x.key===(rock&&rock.rockType)); return t?t.color:'#F7DC6F';
+}
+function spawnHitFx(defenderId,opts={}){
+  const el=document.getElementById(defenderId);
+  const app=document.getElementById('app');
+  const crit=!!opts.crit, big=crit||opts.ultimate;
+  // Secousse de l'arène (appliquee a #app qui survit au re-render)
+  if(app){ const cls=big?'arena-shake-hard':'arena-shake'; app.classList.remove('arena-shake','arena-shake-hard'); void app.offsetWidth; app.classList.add(cls); setTimeout(()=>app.classList.remove(cls),560); }
+  if(navigator.vibrate) navigator.vibrate(big?[30,40,60]:35);
+  // Flash blanc pour les gros coups
+  if(big){ const fl=document.createElement('div'); fl.className='flash-white'; document.body.appendChild(fl); setTimeout(()=>fl.remove(),340); }
+  if(!el) return;
+  const card=el.closest('.bcard');
+  if(card){ card.classList.remove('card-hurt'); void card.offsetWidth; card.classList.add('card-hurt'); setTimeout(()=>card.classList.remove('card-hurt'),520); }
+  const r=el.getBoundingClientRect();
+  const cx=r.left+r.width/2, cy=r.top+r.height/2;
+  const color=opts.color||'#ffffff';
+  const burst=document.createElement('div');
+  burst.className='hitfx-burst'+(crit?' crit':'');
+  burst.style.cssText=`left:${cx}px;top:${cy}px;`;
+  burst.style.setProperty('--fxc',color);
+  document.body.appendChild(burst); setTimeout(()=>burst.remove(),640);
+  if(opts.dmg!=null){
+    const num=document.createElement('div');
+    const isHeal=!!opts.heal, isZero=opts.dmg===0;
+    num.className='hitfx-num'+(crit?' crit':'')+(isHeal?' heal':'')+(isZero&&!isHeal?' zero':'');
+    num.style.cssText=`left:${cx}px;top:${r.top+6}px;`;
+    num.textContent=(isHeal?'+':isZero?'':'-')+opts.dmg+(isZero&&!isHeal?' 🛡️':opts.effective==='super'?' 🔥':'');
+    document.body.appendChild(num); setTimeout(()=>num.remove(),1000);
+  }
+}
+function playAttackAnim(attackerId,defenderId,opts={}){
   return new Promise(resolve=>{
     const atkEl=document.getElementById(attackerId);
     const defEl=document.getElementById(defenderId);
     if(atkEl) atkEl.classList.add('lunge');
     setTimeout(()=>{
       if(defEl) defEl.classList.add('hit-shake');
-      if(navigator.vibrate) navigator.vibrate(40);
+      spawnHitFx(defenderId,opts);
       resolve();
       setTimeout(()=>{
         if(atkEl) atkEl.classList.remove('lunge');
@@ -3418,11 +3473,11 @@ async function playerAction(moveId){
     if(battleState[usedFlag]){ showToast('Déjà utilisée !'); return; }
   }
   battleState.turn='animating'; render();
-  await playAttackAnim('playerSprite','botSprite');
   const tMult=move.isType?typeMultiplier(battleState.playerRock.rockType,battleState.botRock.rockType):1;
   let dmg=calcDmg(battleState.playerRock.atk,battleState.botRock.def,move.mult*tMult);
   const wasCrit=battleState.critPending;
   if(wasCrit){ dmg=Math.round(dmg*2); battleState.critPending=false; }
+  await playAttackAnim('playerSprite','botSprite',{dmg,crit:wasCrit,ultimate:moveId==='ultimate',effective:tMult>1?'super':tMult<1?'weak':null,color:attackColor(battleState.playerRock,moveId)});
   if(moveId==='special') battleState.playerSpecialUsed=true;
   if(moveId==='ultimate') battleState.playerUltimateUsed=true;
   battleState.botHP=Math.max(0,battleState.botHP-dmg);
@@ -3462,9 +3517,10 @@ async function botTurn(){
   if(!battleState) return;
   const bot=battleState.botRock;
   const move=pickBotMove(bot);
-  await playAttackAnim('botSprite','playerSprite');
   const tMult=move.isType?typeMultiplier(bot.rockType,battleState.playerRock.rockType):1;
   let dmg=calcDmg(bot.atk,battleState.playerRock.def,move.mult*tMult);
+  const blocked=!!battleState.shieldActive;
+  await playAttackAnim('botSprite','playerSprite',{dmg:blocked?0:dmg,ultimate:move.id==='ultimate',effective:tMult>1?'super':tMult<1?'weak':null,color:attackColor(bot,move.id)});
   if(move.id==='special') battleState.botSpecialUsed=true;
   if(move.id==='ultimate') battleState.botUltimateUsed=true;
   if(battleState.shieldActive){
