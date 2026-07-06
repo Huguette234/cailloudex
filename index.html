@@ -684,27 +684,61 @@ nav{display:flex;gap:8px;padding:8px 16px max(12px,env(safe-area-inset-bottom));
 .btn-ultimate:active{transform:translateY(3px);box-shadow:0 3px 0 rgba(0,0,0,.4);}
 .btn-feed{font-family:'Baloo 2',sans-serif;font-weight:800;font-size:12px;border:3px solid var(--ink);border-radius:16px;padding:10px 4px;cursor:pointer;text-align:center;background:linear-gradient(135deg,#27AE60,#1E8449);color:#fff;box-shadow:0 6px 0 rgba(0,0,0,.4);}
 .btn-feed:active{transform:translateY(3px);box-shadow:0 3px 0 rgba(0,0,0,.4);}
-/* Cartes de combat facon Dex */
-.bfield{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:7px;margin:2px 0 4px;}
-.bcard{background:linear-gradient(180deg,var(--ink2),#14243a);border:2.5px solid;border-radius:18px;padding:8px 8px 11px;box-shadow:0 6px 18px rgba(0,0,0,.32);position:relative;overflow:hidden;}
-.bcard-role{font-family:'Nunito',sans-serif;font-weight:800;font-size:9px;letter-spacing:.08em;text-align:center;margin-bottom:6px;}
-.bcard-foe .bcard-role{color:#FF7878;}
-.bcard-mine .bcard-role{color:#78FF9C;}
-.bcard-img{position:relative;height:116px;border-radius:12px;overflow:hidden;margin-bottom:9px;display:flex;align-items:center;justify-content:center;
+/* ===== ARENE DE COMBAT EPIQUE ===== */
+.cfx{position:relative;min-height:100vh;padding:16px 12px calc(env(safe-area-inset-bottom,0px) + 22px);overflow:hidden;display:flex;flex-direction:column;gap:9px;}
+.cfx-bg{position:absolute;inset:0;z-index:0;background:
+  radial-gradient(130% 70% at 50% -5%,#2a3d5c 0%,#182740 34%,#0c1626 66%,#060b14 100%);}
+.cfx-bg::after{content:'';position:absolute;inset:0;opacity:.5;background:
+  radial-gradient(circle at 50% 34%,rgba(255,255,255,.10),transparent 42%);}
+.cfx-glow{position:absolute;width:60%;height:34%;top:6%;filter:blur(46px);z-index:0;opacity:.85;border-radius:50%;animation:cfxGlowPulse 3.4s ease-in-out infinite;}
+.cfx-glow-foe{left:-8%;}
+.cfx-glow-mine{right:-8%;animation-delay:1.5s;}
+@keyframes cfxGlowPulse{0%,100%{opacity:.55;transform:scale(1);}50%{opacity:.95;transform:scale(1.12);}}
+.cfx-floor{position:absolute;left:0;right:0;bottom:0;height:46%;z-index:0;
+  background:
+    linear-gradient(180deg,transparent,rgba(10,18,32,.7) 60%,#070d18),
+    repeating-linear-gradient(90deg,transparent 0 38px,rgba(120,180,255,.10) 38px 39px);
+  -webkit-mask-image:linear-gradient(180deg,transparent,#000 45%);mask-image:linear-gradient(180deg,transparent,#000 45%);transform:perspective(340px) rotateX(58deg);transform-origin:bottom;opacity:.6;}
+.cfx-sparks{position:absolute;inset:0;z-index:1;pointer-events:none;overflow:hidden;}
+.cfx-spark{position:absolute;border-radius:50%;opacity:0;animation:cfxSparkRise linear infinite;}
+@keyframes cfxSparkRise{0%{transform:translateY(0) scale(1);opacity:0;}12%{opacity:.9;}80%{opacity:.5;}100%{transform:translateY(-78vh) scale(.4);opacity:0;}}
+.cfx-content{position:relative;z-index:2;display:flex;flex-direction:column;gap:9px;flex:1;}
+.bfield{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:6px;margin:4px 0 2px;}
+.bcard{background:linear-gradient(180deg,rgba(38,60,92,.92),rgba(15,28,46,.96));border:2.5px solid;border-radius:20px;padding:9px 9px 12px;position:relative;overflow:hidden;backdrop-filter:blur(2px);}
+.bcard::before{content:'';position:absolute;top:0;left:-60%;width:55%;height:100%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.16),transparent);transform:skewX(-18deg);animation:cfxSheen 4.5s ease-in-out infinite;pointer-events:none;}
+.bcard-mine::before{animation-delay:2.2s;}
+@keyframes cfxSheen{0%,72%{left:-60%;}88%{left:120%;}100%{left:120%;}}
+.bcard-role{text-align:center;margin-bottom:7px;}
+.bcard-role-pill{font-family:'Nunito',sans-serif;font-weight:800;font-size:9px;letter-spacing:.07em;padding:2px 10px;border-radius:999px;display:inline-block;}
+.bcard-role-pill.foe{color:#FF9A9A;background:rgba(255,80,80,.14);border:1px solid rgba(255,80,80,.4);}
+.bcard-role-pill.mine{color:#8CFFB0;background:rgba(60,220,120,.14);border:1px solid rgba(60,220,120,.4);}
+.bcard-img{position:relative;height:120px;border-radius:14px;overflow:hidden;margin-bottom:9px;display:flex;align-items:center;justify-content:center;
   background:radial-gradient(ellipse 72% 52% at 50% 80%,rgba(255,255,255,.09),transparent 70%),linear-gradient(180deg,#16304a,#0a1822);}
 .bzone{display:flex;align-items:center;justify-content:center;}
-.bcard-img .combatant-visual{width:94px;height:94px;}
-.bcard-img .arena2-emoji-badge{width:80px;height:80px;font-size:40px;}
-.bcard-typechip{position:absolute;top:6px;left:6px;font-family:'Nunito',sans-serif;font-weight:800;font-size:9px;border:1.5px solid;border-radius:999px;padding:1px 7px;z-index:3;background:rgba(10,18,30,.62);}
-.bcard-name{font-family:'Baloo 2',sans-serif;font-weight:800;font-size:12.5px;color:#fff;text-align:center;line-height:1.14;margin-bottom:7px;height:2.28em;display:flex;align-items:center;justify-content:center;overflow:hidden;}
+.bcard-img .combatant-visual{width:104px;height:104px;border-radius:12px;}
+.bcard-img .combatant-visual.char-photo{object-fit:cover;filter:drop-shadow(0 6px 12px rgba(0,0,0,.65));}
+.bcard-img .arena2-emoji-badge{width:82px;height:82px;font-size:42px;border-radius:50%;}
+.bcard-typechip{position:absolute;top:7px;left:7px;font-family:'Nunito',sans-serif;font-weight:800;font-size:9px;border:1.5px solid;border-radius:999px;padding:2px 8px;z-index:3;background:rgba(8,14,24,.72);box-shadow:0 2px 6px rgba(0,0,0,.4);}
+.bcard-name{font-family:'Baloo 2',sans-serif;font-weight:800;font-size:13px;color:#fff;text-align:center;line-height:1.14;margin-bottom:8px;height:2.28em;display:flex;align-items:center;justify-content:center;overflow:hidden;text-shadow:0 1px 4px rgba(0,0,0,.5);}
 .bcard-hprow{display:flex;justify-content:center;align-items:baseline;gap:3px;margin-bottom:5px;}
-.bcard-hprow b{font-family:'Baloo 2',sans-serif;font-weight:800;font-size:14px;color:#fff;}
-.bcard-hprow span,.bcard-hprow{font-family:'Nunito',sans-serif;font-size:10px;color:rgba(255,255,255,.45);}
-.bvs{font-family:'Bungee',cursive;font-size:15px;color:rgba(255,255,255,.55);text-shadow:0 2px 6px rgba(0,0,0,.5);}
-@keyframes lungeFoe{0%{transform:translate(0,0) scale(1);}45%{transform:translate(24px,6px) scale(1.12);}100%{transform:translate(0,0) scale(1);}}
-@keyframes lungeMine{0%{transform:translate(0,0) scale(1);}45%{transform:translate(-24px,6px) scale(1.12);}100%{transform:translate(0,0) scale(1);}}
+.bcard-hprow b{font-family:'Bungee',cursive;font-size:15px;color:#fff;}
+.bcard-hprow span,.bcard-hprow{font-family:'Nunito',sans-serif;font-size:10px;color:rgba(255,255,255,.5);}
+.bcard .arena-bar-bg{height:11px;border:1px solid rgba(0,0,0,.35);box-shadow:inset 0 1px 3px rgba(0,0,0,.5);}
+.hp-shine{position:relative;overflow:hidden;}
+.hp-shine::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(255,255,255,.45),transparent 55%);}
+/* Badge VS */
+.cfx-vs{position:relative;width:50px;height:50px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.cfx-vs b{position:relative;z-index:3;font-family:'Bungee',cursive;font-size:19px;color:#fff;text-shadow:0 0 10px #fff9,0 2px 3px #000;}
+.cfx-vs-ring{position:absolute;inset:-5px;border-radius:50%;z-index:0;background:conic-gradient(from 0deg,#F7DC6F,#FF4081,#C45CFF,#2D9CDB,#6FCF53,#F7DC6F);animation:cfxVsSpin 3.6s linear infinite;filter:blur(.5px);}
+.cfx-vs::after{content:'';position:absolute;inset:0;border-radius:50%;z-index:1;background:radial-gradient(circle at 38% 32%,#26203f,#0c0a18);border:2px solid rgba(255,255,255,.22);box-shadow:inset 0 0 10px rgba(0,0,0,.7);}
+.cfx-vs-pulse{position:absolute;inset:0;border-radius:50%;z-index:0;border:2px solid rgba(255,255,255,.55);animation:cfxVsPulse 2s ease-out infinite;}
+@keyframes cfxVsSpin{to{transform:rotate(360deg);}}
+@keyframes cfxVsPulse{0%{transform:scale(1);opacity:.7;}100%{transform:scale(2.1);opacity:0;}}
+@keyframes lungeFoe{0%{transform:translate(0,0) scale(1);}45%{transform:translate(24px,6px) scale(1.1);}100%{transform:translate(0,0) scale(1);}}
+@keyframes lungeMine{0%{transform:translate(0,0) scale(1);}45%{transform:translate(-24px,6px) scale(1.1);}100%{transform:translate(0,0) scale(1);}}
 .bcard-foe .lunge{animation:lungeFoe .55s ease-in-out;}
 .bcard-mine .lunge{animation:lungeMine .55s ease-in-out;}
+.cfx .combat-log{background:rgba(6,12,22,.62);border:1px solid rgba(255,255,255,.07);backdrop-filter:blur(3px);}
 .result-wrap{display:flex;flex-direction:column;align-items:center;padding:24px 16px;gap:12px;}
 .result-banner{font-family:'Bungee',cursive;font-size:40px;text-align:center;animation:resultBounce .5s cubic-bezier(.34,1.56,.64,1);}
 @keyframes resultBounce{from{transform:scale(0);opacity:0;}to{transform:scale(1);opacity:1;}}
@@ -3505,29 +3539,38 @@ function combatFightScreen(){
 
   const typeChip=(r)=>{ const t=ROCK_TYPES.find(x=>x.key===r.rockType); return t?`<div class="bcard-typechip" style="border-color:${t.color};color:${t.color};">${t.label}</div>`:''; };
   const botHex=s.botRock.hex||'#9E9E9E', playerHex=s.playerRock.hex||'#9E9E9E';
+  const botTint=(ROCK_TYPES.find(x=>x.key===s.botRock.rockType)||{}).color||botHex;
+  const playerTint=(ROCK_TYPES.find(x=>x.key===s.playerRock.rockType)||{}).color||playerHex;
+  const sparks=Array.from({length:14},(_,i)=>{const c=['#F7DC6F','#ffffff','#FF8A5C','#8FD8FF'][i%4];return `<span class="cfx-spark" style="left:${(Math.random()*100).toFixed(1)}%;bottom:-6px;background:${c};box-shadow:0 0 6px ${c};animation-duration:${(4+Math.random()*4).toFixed(1)}s;animation-delay:${(Math.random()*5).toFixed(1)}s;width:${(2+Math.random()*2).toFixed(1)}px;height:${(2+Math.random()*2).toFixed(1)}px;"></span>`;}).join('');
 
-  return `<div class="arena2-wrap">
+  return `<div class="cfx">
+    <div class="cfx-bg"></div>
+    <div class="cfx-glow cfx-glow-foe" style="background:radial-gradient(circle,${botTint}66,transparent 68%);"></div>
+    <div class="cfx-glow cfx-glow-mine" style="background:radial-gradient(circle,${playerTint}66,transparent 68%);"></div>
+    <div class="cfx-floor"></div>
+    <div class="cfx-sparks">${sparks}</div>
+    <div class="cfx-content">
     <div class="bfield">
-      <div class="bcard bcard-foe" style="border-color:${botHex}88;">
-        <div class="bcard-role">🎯 ADVERSAIRE</div>
-        <div class="bcard-img">
+      <div class="bcard bcard-foe" style="border-color:${botHex};box-shadow:0 10px 26px rgba(0,0,0,.5),0 0 22px ${botTint}55,inset 0 0 22px ${botTint}18;">
+        <div class="bcard-role"><span class="bcard-role-pill foe">🎯 ADVERSAIRE</span></div>
+        <div class="bcard-img" style="box-shadow:inset 0 0 26px ${botTint}55;">
           <div class="bot-zone bzone">${botVisual}</div>
           ${typeChip(s.botRock)}
         </div>
         <div class="bcard-name">${s.botRock.name}</div>
         <div class="bcard-hprow"><b>${s.botHP}</b>/<span>${s.botMaxHP} PV</span></div>
-        <div class="arena-bar-bg"><div class="arena-bar-fill" style="width:${bPct*100}%;background:${hpBarColor(bPct)};"></div></div>
+        <div class="arena-bar-bg"><div class="arena-bar-fill hp-shine" style="width:${bPct*100}%;background:${hpBarColor(bPct)};"></div></div>
       </div>
-      <div class="bvs">VS</div>
-      <div class="bcard bcard-mine" style="border-color:${playerHex}88;">
-        <div class="bcard-role">💪 TOI</div>
-        <div class="bcard-img">
+      <div class="cfx-vs"><span class="cfx-vs-ring"></span><span class="cfx-vs-pulse"></span><b>VS</b></div>
+      <div class="bcard bcard-mine" style="border-color:${playerHex};box-shadow:0 10px 26px rgba(0,0,0,.5),0 0 22px ${playerTint}55,inset 0 0 22px ${playerTint}18;">
+        <div class="bcard-role"><span class="bcard-role-pill mine">💪 TOI</span></div>
+        <div class="bcard-img" style="box-shadow:inset 0 0 26px ${playerTint}55;">
           <div class="player-zone bzone">${playerVisual}</div>
           ${typeChip(s.playerRock)}
         </div>
         <div class="bcard-name">${s.playerRock.name}</div>
         <div class="bcard-hprow"><b>${s.playerHP}</b>/<span>${s.playerMaxHP} PV</span></div>
-        <div class="arena-bar-bg"><div class="arena-bar-fill" style="width:${pPct*100}%;background:${hpBarColor(pPct)};"></div></div>
+        <div class="arena-bar-bg"><div class="arena-bar-fill hp-shine" style="width:${pPct*100}%;background:${hpBarColor(pPct)};"></div></div>
       </div>
     </div>
     <div class="combat-log">
@@ -3544,7 +3587,8 @@ function combatFightScreen(){
       ${(()=>{ const f=bestAvailableFood(); return `<button class="btn-feed" ${busy||!f?'disabled style="opacity:.35;"':''} data-action="combatMove" data-move="feed">${f?f.emoji+' Nourrir ('+f.name+')':'🍖 Nourrir (vide)'}</button>`; })()}
       <button class="btn btn-flee" ${busy?'disabled':''} data-action="combatMove" data-move="flee">🏃 Fuir lâchement</button>
     </div>
-    ${waitMsg?`<div style="text-align:center;font-family:'Nunito',sans-serif;font-size:12px;color:rgba(255,255,255,.38);margin-top:2px;">${waitMsg}</div>`:''}
+    ${waitMsg?`<div style="text-align:center;font-family:'Nunito',sans-serif;font-size:12px;color:rgba(255,255,255,.45);margin-top:6px;">${waitMsg}</div>`:''}
+    </div>
   </div>`;
 }
 
