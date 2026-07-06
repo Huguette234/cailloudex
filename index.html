@@ -2122,6 +2122,25 @@ function genName(){ return MIN[Math.floor(Math.random()*MIN.length)]+' '+ADJ[Mat
 function pickQuip(){ return QUIPS[Math.floor(Math.random()*QUIPS.length)]; }
 function pickSpecialMove(){ return SPECIAL_MOVES[Math.floor(Math.random()*SPECIAL_MOVES.length)]; }
 function pickType(){ return ROCK_TYPES[Math.floor(Math.random()*ROCK_TYPES.length)]; }
+// Détermine le type d'un caillou en repartant du choix thématique de l'IA, mais
+// en rééquilibrant grâce aux indices (couleur/brillance) pour que les types rares
+// dans la nature — surtout GLACE — restent atteignables (cailloux pâles/brillants).
+function resolveRockType(ai){
+  const aiKey=(ai&&ai.type&&ROCK_TYPES.find(t=>t.key===ai.type))?ai.type:null;
+  const cc=ai&&ai.color_category||null;   // clair | sombre | autre
+  const shiny=!!(ai&&ai.shiny);
+  const w={feu:1,glace:1,ombre:1,lumiere:1,metal:1,nature:1,chaos:1,neutre:1};
+  if(aiKey) w[aiKey]+=12;                 // le choix de l'IA reste le plus probable
+  if(cc==='clair'){ w.glace+=7; w.lumiere+=4; w.metal+=1; }
+  if(cc==='sombre'){ w.ombre+=7; w.metal+=2; w.chaos+=2; }
+  if(cc==='autre'){ w.feu+=3; w.nature+=3; w.chaos+=2; w.neutre+=1; }
+  if(shiny){ w.glace+=4; w.metal+=4; w.lumiere+=3; w.chaos+=2; }
+  if(cc==='clair'&&shiny){ w.glace+=5; }  // pâle + brillant/cristallin = glace
+  const keys=Object.keys(w); let tot=0; keys.forEach(k=>tot+=w[k]);
+  let r=Math.random()*tot, chosen=keys[0];
+  for(const k of keys){ if(r<w[k]){ chosen=k; break; } r-=w[k]; }
+  return ROCK_TYPES.find(t=>t.key===chosen)||pickType();
+}
 function getDailyChallenge(){
   const t=todayStr();
   // Defi DETERMINISTE : la meme date donne toujours le meme defi, quel que soit
@@ -4162,7 +4181,7 @@ async function handleFile(file){
     else if((meta.inventory?.blessed||0)>0){ meta.inventory.blessed--; tier=pickAtLeast('epique'); saveMeta(); setTimeout(()=>showToast('🌟 Caillou Béni activé !'),200); }
     else if((meta.inventory?.lucky||0)>0){ meta.inventory.lucky--; tier=pickAtLeast('rare'); saveMeta(); setTimeout(()=>showToast('🎲 Caillou Chanceux activé !'),200); }
     else { tier=rollRarity(meta.streak); }
-    const typeInfo=aiResult?.type ? (ROCK_TYPES.find(t=>t.key===aiResult.type)||pickType()) : pickType();
+    const typeInfo=resolveRockType(aiResult);
     const sizeCm=aiResult?.size_cm ? Math.min(60,Math.max(0.5,Number(aiResult.size_cm))) : null;
     const aiDef=aiResult?.def ? Math.min(99,Math.max(1,Math.round(aiResult.def))) : null;
     const finalDef=aiDef ? Math.max(aiDef,minDefForSize(sizeCm)) : rollStat(tier.range);
