@@ -3438,7 +3438,7 @@ function makeBotRock(){
   });
 }
 
-function combatMaxHP(def){ return 90+def*6; }
+function combatMaxHP(def){ return 120+def*7; }
 
 function calcDmg(atkStat,defStat,multiplier=1){
   const raw=Math.max(1, atkStat - Math.floor(defStat/6) + Math.floor(Math.random()*16) - 8);
@@ -3486,10 +3486,10 @@ const ENERGY_HIT=12;   // énergie gagnée quand on encaisse
 function soloMoves(rock){
   const typeInfo=ROCK_TYPES.find(t=>t.key===rock.rockType);
   return [
-    { id:'attack', label:'⚔️ Frappe', cost:0, mult:1.0, kind:'basic' },
-    { id:'type', label:typeInfo?typeInfo.label:'⬜ TYPE', cost:0, mult:0.85, kind:'type' },
-    { id:'special', label:'⚡ Spéciale', cost:50, mult:1.7, kind:'special' },
-    { id:'ultimate', label:'🌟 Ultime', cost:100, mult:2.7, kind:'ultimate' },
+    { id:'attack', label:'⚔️ Frappe', cost:0, mult:1.4, kind:'basic' },
+    { id:'type', label:typeInfo?typeInfo.label:'⬜ TYPE', cost:0, mult:1.2, kind:'type' },
+    { id:'special', label:'⚡ Spéciale', cost:50, mult:2.2, kind:'special' },
+    { id:'ultimate', label:'🌟 Ultime', cost:100, mult:3.4, kind:'ultimate' },
   ];
 }
 function addStatus(side,kind,turns){
