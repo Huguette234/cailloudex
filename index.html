@@ -761,6 +761,15 @@ nav{display:flex;gap:8px;padding:8px 16px max(12px,env(safe-area-inset-bottom));
 .timing-result.perfect{color:#6FCF53;text-shadow:0 0 12px #6FCF5366;}
 .timing-result.good{color:#FFD35A;}
 .timing-result.miss{color:#FF7878;}
+/* Banniere de tour */
+.turn-banner{position:fixed;top:38%;left:0;right:0;z-index:66;display:flex;justify-content:center;pointer-events:none;}
+.turn-banner span{font-family:'Bungee',cursive;font-size:19px;letter-spacing:.03em;padding:12px 26px;border-radius:14px;color:#fff;white-space:nowrap;
+  box-shadow:0 12px 34px rgba(0,0,0,.55);animation:tbIn .32s cubic-bezier(.2,1.3,.5,1) both;}
+.turn-banner.out span{animation:tbOut .28s ease-in forwards;}
+.tb-player span{background:linear-gradient(135deg,#2fa85a,#1c7d40);border:2px solid #8CFFB0;text-shadow:0 2px 4px rgba(0,0,0,.5);}
+.tb-foe span{background:linear-gradient(135deg,#c0392b,#8b1a12);border:2px solid #FF9A9A;text-shadow:0 2px 4px rgba(0,0,0,.5);}
+@keyframes tbIn{0%{opacity:0;transform:translateY(-14px) scale(.7);}100%{opacity:1;transform:translateY(0) scale(1);}}
+@keyframes tbOut{0%{opacity:1;transform:translateY(0) scale(1);}100%{opacity:0;transform:translateY(-10px) scale(.9);}}
 /* Badge VS */
 .cfx-vs{position:relative;width:50px;height:50px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
 .cfx-vs b{position:relative;z-index:3;font-family:'Bungee',cursive;font-size:19px;color:#fff;text-shadow:0 0 10px #fff9,0 2px 3px #000;}
@@ -3577,7 +3586,7 @@ async function initBattle(playerRock){
     playerMaxHP:combatMaxHP(effRock.def), botMaxHP:combatMaxHP(bot.def),
     playerSpecialUsed:false, botSpecialUsed:false, playerUltimateUsed:false, botUltimateUsed:false,
     log:[{text:`⚔️ ${playerRock.name} affronte ${bot.name} !`, cls:'neutral'}],
-    turn:'player', winner:null, entered:false,
+    turn:'animating', winner:null, entered:false,
     playerSpriteUrl, botSpriteUrl:null,
     shieldActive:false, critPending:false,
     playerEnergy:0, botEnergy:0, playerStatus:[], botStatus:[], turnCount:0,
@@ -3587,6 +3596,11 @@ async function initBattle(playerRock){
   if(usedBuffs.length){ saveMeta(); setTimeout(()=>showToast('✨ Objets activés : '+usedBuffs.join(', ')),250); }
   screen='combat-fight'; render();
   generateBotCharacter(bot);
+  setTimeout(async()=>{
+    if(!battleState||battleState.turn==='end'||screen!=='combat-fight') return;
+    await announceTurn('player');
+    if(battleState&&battleState.turn==='animating'){ battleState.turn='player'; render(); }
+  },900);
 }
 
 function addCombatLog(text,cls='neutral'){
@@ -3594,6 +3608,17 @@ function addCombatLog(text,cls='neutral'){
   if(battleState.log.length>4) battleState.log.pop();
 }
 
+function announceTurn(kind){
+  return new Promise(res=>{
+    const prev=document.querySelector('.turn-banner'); if(prev) prev.remove();
+    const el=document.createElement('div');
+    el.className='turn-banner '+(kind==='player'?'tb-player':'tb-foe');
+    el.innerHTML=`<span>${kind==='player'?'⚔️ À TOI DE JOUER':'🎯 TOUR DE L\'ADVERSAIRE'}</span>`;
+    document.body.appendChild(el);
+    setTimeout(()=>el.classList.add('out'),780);
+    setTimeout(()=>{ el.remove(); res(); },1080);
+  });
+}
 function endBattle(winner){
   battleState.winner=winner; battleState.turn='end';
   if(winner==='player'){ incrementStat('wins',1); addXp(15); addGravillons(10); grantFoodLoot(); }
@@ -3674,18 +3699,20 @@ async function playerAction(moveId){
   setTimeout(beginBotTurn,850);
 }
 
-function beginBotTurn(){
+async function beginBotTurn(){
   if(!battleState) return;
-  battleState.turn='animating';
+  battleState.turn='animating'; render();
+  await announceTurn('foe');
+  if(!battleState||battleState.turn==='end') return;
   const tick=tickStatuses('bot');
   render();
   if(tick.dead) return endBattle('player');
   if(tick.skip){
     addCombatLog(`❄️ ${battleState.botRock.name} est gelé et ne peut pas bouger !`,'dmg-bot');
     render();
-    return setTimeout(beginPlayerTurn,950);
+    return setTimeout(beginPlayerTurn,1050);
   }
-  setTimeout(botAct,650);
+  setTimeout(botAct,600);
 }
 function pickBotMoveSolo(){
   const bot=battleState.botRock;
@@ -3750,16 +3777,20 @@ async function botAct(){
   render();
   setTimeout(beginPlayerTurn,700);
 }
-function beginPlayerTurn(){
+async function beginPlayerTurn(){
   if(!battleState) return;
   battleState.turnCount=(battleState.turnCount||0)+1;
+  battleState.turn='animating';
   const tick=tickStatuses('player');
-  if(tick.dead){ render(); return endBattle('bot'); }
+  render();
+  if(tick.dead){ return endBattle('bot'); }
   if(tick.skip){
     addCombatLog(`❄️ ${battleState.playerRock.name} est gelé et ne peut pas bouger !`,'dmg-player');
-    battleState.turn='animating'; render();
-    return setTimeout(beginBotTurn,950);
+    render();
+    return setTimeout(beginBotTurn,1050);
   }
+  await announceTurn('player');
+  if(!battleState||battleState.turn==='end') return;
   battleState.turn='player'; render();
 }
 
@@ -3874,7 +3905,7 @@ function combatFightScreen(){
       ${(()=>{ const f=bestAvailableFood(); return `<button class="btn-feed" ${busy||!f?'disabled style="opacity:.35;"':''} data-action="combatMove" data-move="feed">${f?f.emoji+' Nourrir ('+f.name+')':'🍖 Nourrir (vide)'}</button>`; })()}
       <button class="btn btn-flee" ${busy?'disabled':''} data-action="combatMove" data-move="flee">🏃 Fuir lâchement</button>
     </div>
-    ${waitMsg?`<div style="text-align:center;font-family:'Nunito',sans-serif;font-size:12px;color:rgba(255,255,255,.45);margin-top:6px;">${waitMsg}</div>`:''}
+    ${(waitMsg&&s.online)?`<div style="text-align:center;font-family:'Nunito',sans-serif;font-size:12px;color:rgba(255,255,255,.45);margin-top:6px;">${waitMsg}</div>`:''}
     </div>
   </div>`;
 }
