@@ -72,3 +72,21 @@ create policy app_config_read on public.app_config
 drop policy if exists app_config_admin_write on public.app_config;
 create policy app_config_admin_write on public.app_config
   for all using (public.is_admin()) with check (public.is_admin());
+
+-- ============================================================
+-- DROITS DE TABLE (nécessaires si des tables ont été créées à la main)
+-- Sans ces GRANT, on obtient "permission denied for table ..." même en admin.
+-- La sécurité par ligne reste assurée par les politiques RLS ci-dessus.
+-- ============================================================
+grant select, insert, update, delete on public.reports to authenticated;
+grant select, insert, update, delete on public.app_errors to authenticated;
+grant select, insert, update, delete on public.app_config to authenticated;
+
+-- Politiques d'insertion joueurs (signaler / logger) — sans droit de lecture
+drop policy if exists reports_insert_own on public.reports;
+create policy reports_insert_own on public.reports
+  for insert to authenticated with check (auth.uid() = reporter_id);
+
+drop policy if exists app_errors_insert on public.app_errors;
+create policy app_errors_insert on public.app_errors
+  for insert to authenticated with check (true);
