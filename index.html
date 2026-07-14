@@ -4053,6 +4053,10 @@ function maybeShowConsent(){
 }
 function render(){
   const app=document.getElementById('app');
+  // Mémorise la position de défilement de l'overlay (fiche caillou) pour la restaurer
+  // après reconstruction — évite que l'écran remonte en haut à chaque clic (+/- d'amélioration).
+  const _ovPrev=document.querySelector('.overlay');
+  const _ovScroll=_ovPrev?_ovPrev.scrollTop:0;
   let mainHtml='';
   let showHeader=true;
   let showNav=false;
@@ -4222,6 +4226,8 @@ function render(){
     </div>`;
     document.body.appendChild(ov2);
   }
+  // Restaure le défilement de l'overlay (si toujours ouvert) pour un rendu fluide.
+  if(_ovScroll){ const nov=document.querySelector('.overlay'); if(nov) nov.scrollTop=_ovScroll; }
 }
 
 /* ===== ACTIONS ===== */
