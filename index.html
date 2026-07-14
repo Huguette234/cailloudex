@@ -349,6 +349,19 @@ nav{display:flex;gap:8px;padding:8px 16px max(12px,env(safe-area-inset-bottom));
 .btn-gem:active{transform:translateY(3px);box-shadow:0 3px 0 rgba(0,0,0,.4);}
 .btn-gem.evolve{background:linear-gradient(135deg,#FFD700,#C45CFF,#74B9FF);}
 .evolved-tag{font-family:'Bungee',cursive;font-size:14px;color:#FFD700;letter-spacing:.06em;}
+/* Répartition des points d'amélioration */
+.alloc-pool{font-family:'Nunito',sans-serif;font-size:12px;color:rgba(255,255,255,.7);margin-bottom:8px;}
+.alloc-pool b{font-family:'Baloo 2',sans-serif;color:#F7DC6F;font-size:15px;}
+.alloc-row{display:flex;align-items:center;gap:8px;margin:6px 0;}
+.alloc-lbl{flex:1;text-align:left;font-family:'Baloo 2',sans-serif;font-weight:800;font-size:13px;color:#fff;}
+.alloc-val{min-width:58px;font-family:'Baloo 2',sans-serif;font-weight:800;font-size:15px;color:#fff;}
+.alloc-val b{color:#6FCF53;font-size:13px;margin-left:2px;}
+.alloc-btn{width:34px;height:34px;flex-shrink:0;border-radius:10px;border:2px solid rgba(255,255,255,.18);background:rgba(255,255,255,.08);color:#fff;font-family:'Baloo 2',sans-serif;font-weight:800;font-size:20px;line-height:1;cursor:pointer;}
+.alloc-btn:active{transform:scale(.92);}
+.alloc-btn:disabled{opacity:.3;}
+/* Halo holographique pour la rareté GALAXIE */
+.galaxie-holo{position:relative;}
+.galaxie-holo::after{content:'';position:absolute;inset:0;border-radius:inherit;pointer-events:none;background:linear-gradient(115deg,transparent 30%,rgba(255,255,255,.35) 45%,transparent 60%);background-size:250% 250%;animation:holoShift 3.5s linear infinite;mix-blend-mode:overlay;}
 .shop-cat-title{font-family:'Bungee',cursive;font-size:13px;color:rgba(255,255,255,.6);letter-spacing:.06em;margin:18px 0 8px;}
 .shop-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
 .shop-item{background:rgba(255,255,255,.05);border:1.5px solid rgba(255,255,255,.1);border-radius:14px;padding:12px 10px;text-align:center;cursor:pointer;transition:transform .1s;}
@@ -831,11 +844,15 @@ nav{display:flex;gap:8px;padding:8px 16px max(12px,env(safe-area-inset-bottom));
 <input type="file" id="fileInput" accept="image/*" capture="environment" style="display:none">
 <script>
 /* ===== DATA ===== */
+const STAT_CAP = 150;
 const RARITY_TIERS = [
-  { key:'commun', label:'COMMUN', hex:'#6FCF53', hdark:'#3A8C20', range:[1,25], confetti:0 },
-  { key:'rare', label:'RARE', hex:'#2D9CDB', hdark:'#1560A0', range:[25,50], confetti:12 },
-  { key:'epique', label:'ÉPIQUE', hex:'#C45CFF', hdark:'#8020C0', range:[50,78], confetti:25 },
-  { key:'legendaire', label:'LÉGENDAIRE', hex:'#FFD700', hdark:'#B8900A', range:[78,99], confetti:45 },
+  { key:'commun', label:'COMMUN', hex:'#6FCF53', hdark:'#3A8C20', range:[5,25], confetti:0 },
+  { key:'rare', label:'RARE', hex:'#2D9CDB', hdark:'#1560A0', range:[20,45], confetti:12 },
+  { key:'epique', label:'ÉPIQUE', hex:'#C45CFF', hdark:'#8020C0', range:[40,65], confetti:25 },
+  { key:'legendaire', label:'LÉGENDAIRE', hex:'#FFD700', hdark:'#B8900A', range:[60,85], confetti:45 },
+  { key:'mythique', label:'MYTHIQUE', hex:'#FF4D6D', hdark:'#B01030', range:[80,102], confetti:60 },
+  { key:'cosmique', label:'COSMIQUE', hex:'#22E0D6', hdark:'#0E8C86', range:[98,122], confetti:85 },
+  { key:'galaxie', label:'GALAXIE', hex:'#7C4DFF', hdark:'#4A1FA0', range:[118,145], confetti:120 },
 ];
 
 const ROCK_TYPES = [
@@ -1112,7 +1129,7 @@ const XP_BY_RARITY = { commun:10, rare:25, epique:50, legendaire:100 };
 
 /* ===== GRAVILLONS (monnaie du jeu) ===== */
 const GRAVILLON_BY_RARITY = { commun:5, rare:12, epique:25, legendaire:50 };
-const RECYCLE_VALUE = { commun:3, rare:8, epique:18, legendaire:40 };
+const RECYCLE_VALUE = { commun:3, rare:8, epique:18, legendaire:40, mythique:80, cosmique:150, galaxie:280 };
 const STAT_DB_FIELD={ xp:'xp', gravillons:'gravillons', gems:'gems', wins:'wins', losses:'losses', streakFreezeCount:'streak_freeze_count' };
 function incrementStat(key,amount){
   if(!amount) return;
@@ -1276,27 +1293,55 @@ function buyFoodReal(foodId){
   screen='shop'; render();
 }
 
-const UPGRADE_MAX=10;
-function upgradeCost(level){ return 20+level*15; }
-async function upgradeRock(rockId){
+const UPGRADE_MAX=20;
+const POINTS_PER_LEVEL=3;
+function upgradeCost(level){ return 20+level*20; }
+let upgradeAlloc=null; // {rockId, add:{atk,def,vit}, pool, cost, level}
+function startUpgrade(rockId){
   const rock=dex.find(r=>r.id===rockId);
   if(!rock||!session) return;
   const level=rock.upgradeLevel||0;
-  if(level>=UPGRADE_MAX){ showToast('Caillou déjà au maximum — fais-le évoluer !'); return; }
+  if(level>=UPGRADE_MAX){ showToast('Niveau maximum atteint — fais-le évoluer !'); return; }
   const cost=upgradeCost(level);
   if((meta.gems||0)<cost){ showToast('❌ Pas assez de Gemmes !'); return; }
-  incrementStat('gems',-cost);
+  upgradeAlloc={rockId, add:{atk:0,def:0,vit:0}, pool:POINTS_PER_LEVEL, cost, level:level+1};
+  render();
+}
+function allocPoint(stat,delta){
+  if(!upgradeAlloc) return;
+  const rock=dex.find(r=>r.id===upgradeAlloc.rockId); if(!rock) return;
+  if(delta>0){
+    if(upgradeAlloc.pool<=0) return;
+    if((rock[stat]+upgradeAlloc.add[stat])>=STAT_CAP){ showToast('Stat au maximum ('+STAT_CAP+')'); return; }
+    upgradeAlloc.add[stat]++; upgradeAlloc.pool--;
+  } else {
+    if(upgradeAlloc.add[stat]<=0) return;
+    upgradeAlloc.add[stat]--; upgradeAlloc.pool++;
+  }
+  render();
+}
+function cancelUpgrade(){ upgradeAlloc=null; render(); }
+async function confirmUpgrade(){
+  if(!upgradeAlloc) return;
+  if(upgradeAlloc.pool>0){ showToast('Répartis tous tes points d\'abord !'); return; }
+  const rock=dex.find(r=>r.id===upgradeAlloc.rockId);
+  if(!rock||!session){ upgradeAlloc=null; render(); return; }
+  const cost=upgradeAlloc.cost;
+  if((meta.gems||0)<cost){ showToast('❌ Pas assez de Gemmes !'); upgradeAlloc=null; render(); return; }
+  const a={...upgradeAlloc.add}, newLevel=upgradeAlloc.level;
   const updates={
-    upgradeLevel:level+1,
-    atk:Math.min(99,rock.atk+3), def:Math.min(99,rock.def+3), vit:Math.min(99,rock.vit+3),
+    upgradeLevel:newLevel,
+    atk:Math.min(STAT_CAP,rock.atk+a.atk), def:Math.min(STAT_CAP,rock.def+a.def), vit:Math.min(STAT_CAP,rock.vit+a.vit),
   };
+  incrementStat('gems',-cost);
   try{
-    const { error } = await sb.from('rocks').update({ upgrade_level:updates.upgradeLevel, atk:updates.atk, def:updates.def, vit:updates.vit }).eq('id',rockId).eq('user_id',session.user.id);
+    const { error } = await sb.from('rocks').update({ upgrade_level:updates.upgradeLevel, atk:updates.atk, def:updates.def, vit:updates.vit }).eq('id',rock.id).eq('user_id',session.user.id);
     if(error) throw error;
-    Object.assign(rock,updates);
-    saveMeta();
-    detailRock=rock;
-    showToast(`⬆️ Amélioration ${updates.upgradeLevel}/${UPGRADE_MAX} ! +3 ATK/DEF/VIT`);
+    Object.assign(rock,updates); saveMeta(); detailRock=rock;
+    const parts=[]; if(a.atk)parts.push('+'+a.atk+' ⚔️'); if(a.def)parts.push('+'+a.def+' 🛡️'); if(a.vit)parts.push('+'+a.vit+' 💨');
+    upgradeAlloc=null;
+    showToast(`⬆️ Niveau ${newLevel}/${UPGRADE_MAX} ! ${parts.join('  ')}`);
+    if(navigator.vibrate) navigator.vibrate(30);
     render();
   }catch(e){ incrementStat('gems',cost); showToast('❌ Erreur: '+(e?.message||e)); }
 }
@@ -1305,12 +1350,12 @@ async function evolveRock(rockId){
   if(!rock||!session) return;
   if((rock.upgradeLevel||0)<UPGRADE_MAX){ showToast('Le caillou doit être amélioré au maximum avant d\'évoluer.'); return; }
   if(rock.evolved){ showToast('Déjà évolué !'); return; }
-  const cost=150;
+  const cost=300;
   if((meta.gems||0)<cost){ showToast('❌ Pas assez de Gemmes !'); return; }
   incrementStat('gems',-cost);
   const updates={
     evolved:true, name:rock.name+' Suprême',
-    atk:Math.min(99,rock.atk+10), def:Math.min(99,rock.def+10), vit:Math.min(99,rock.vit+10),
+    atk:Math.min(STAT_CAP,rock.atk+15), def:Math.min(STAT_CAP,rock.def+15), vit:Math.min(STAT_CAP,rock.vit+15),
   };
   try{
     const { error } = await sb.from('rocks').update({ evolved:true, name:updates.name, atk:updates.atk, def:updates.def, vit:updates.vit }).eq('id',rockId).eq('user_id',session.user.id);
@@ -2092,15 +2137,16 @@ function animateStats(rock){
 /* ===== HELPERS ===== */
 function delay(ms){ return new Promise(r=>setTimeout(r,ms)); }
 function todayStr(d=new Date()){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+// Poids de tirage par rareté : [commun, rare, épique, légendaire, mythique, cosmique, galaxie]
 function getWeights(streak){
-  if(streak>=7) return [38,32,20,10];
-  if(streak>=3) return [48,28,17,7];
-  return [58,26,13,3];
+  if(streak>=7) return [40,30,18,9,2.4,0.5,0.1];
+  if(streak>=3) return [50,27,15,6,1.5,0.4,0.1];
+  return [58,26,12,3.4,0.5,0.09,0.01];
 }
 function rollRarity(streak){
   const w=getWeights(streak);
   if(meta.luckyBoostUntil&&new Date(meta.luckyBoostUntil).getTime()>Date.now()){
-    w[0]=Math.max(15,w[0]-20); w[1]+=8; w[2]+=8; w[3]+=4;
+    w[0]=Math.max(15,w[0]-20); w[1]+=8; w[2]+=8; w[3]+=4; w[4]+=1.6; w[5]+=0.5; w[6]+=0.12;
   }
   const total=w.reduce((a,b)=>a+b,0);
   let r=Math.random()*total;
@@ -2117,6 +2163,14 @@ function pickAtLeast(minKey){
   return pool[0];
 }
 function rollStat([min,max]){ return Math.floor(min+Math.random()*(max-min)); }
+// Stat calée sur la fourchette de rareté [min,max], inclinée par l'indice IA (1-99).
+function tierStat(aiVal,[min,max]){
+  const roll=min+Math.random()*(max-min);
+  if(aiVal==null||isNaN(aiVal)) return Math.max(1,Math.round(roll));
+  const a=Math.max(1,Math.min(99,Number(aiVal)));
+  const mapped=min+(a/99)*(max-min);
+  return Math.max(1,Math.min(STAT_CAP,Math.round(roll*0.5+mapped*0.5)));
+}
 function minDefForSize(sizeCm){ if(!sizeCm||sizeCm<=0) return 1; return Math.min(95,Math.round(sizeCm*2.5)); }
 function genName(){ return MIN[Math.floor(Math.random()*MIN.length)]+' '+ADJ[Math.floor(Math.random()*ADJ.length)]; }
 function pickQuip(){ return QUIPS[Math.floor(Math.random()*QUIPS.length)]; }
@@ -2285,10 +2339,11 @@ const STAT_ICONS={
   VIT:`<svg width="10" height="10" viewBox="0 0 24 24"><path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z" fill="currentColor"/></svg>`,
 };
 function statBlock(label,val,color){
+  const pct=Math.max(0,Math.min(100,Math.round((val||0)/STAT_CAP*100)));
   return `<div class="stat">
     <div class="stat-label">${STAT_ICONS[label]}<span>${label}</span></div>
     <div class="stat-val">${val}</div>
-    <div class="stat-bar"><i style="width:${val}%;background:${color};"></i></div>
+    <div class="stat-bar"><i style="width:${pct}%;background:${color};"></i></div>
   </div>`;
 }
 
@@ -2458,10 +2513,11 @@ function scanningScreen(){
 }
 
 function tcardStat(label,val,color){
+  const pct=Math.max(0,Math.min(100,Math.round((val||0)/STAT_CAP*100)));
   return `<div class="tcard-stat">
     <div class="tcard-stat-lbl">${label}</div>
     <div class="tcard-stat-val">${val}</div>
-    <div class="tcard-stat-bar"><div class="tcard-stat-fill" style="width:${val}%;background:${color};"></div></div>
+    <div class="tcard-stat-bar"><div class="tcard-stat-fill" style="width:${pct}%;background:${color};"></div></div>
   </div>`;
 }
 function specimenCard(rock,pop){
@@ -2570,7 +2626,7 @@ function dexCard(r){
   const pv=combatMaxHP(r.def||10);
   const img=r.characterPhoto||r.animePhoto||r.photo;
   const atts=rockAttacks(r);
-  return `<div class="dexc" style="border-color:${r.hex}77;" data-action="detail" data-id="${r.id}">
+  return `<div class="dexc${r.rarity==='galaxie'?' galaxie-holo':''}" style="border-color:${r.hex}77;" data-action="detail" data-id="${r.id}">
     <div class="dexc-imgwrap">
       <img class="dexc-img" src="${img}" alt="${r.name}">
       <div class="dexc-no">N°${String(r.catalogNumber).padStart(4,'0')}</div>
@@ -4086,20 +4142,41 @@ function render(){
       </div>
       ${(()=>{
         const lvl=detailRock.upgradeLevel||0;
+        if(upgradeAlloc && upgradeAlloc.rockId===detailRock.id){
+          const a=upgradeAlloc.add;
+          const row=(key,icon,label)=>{
+            const cur=detailRock[key], add=a[key];
+            return `<div class="alloc-row">
+              <span class="alloc-lbl">${icon} ${label}</span>
+              <button class="alloc-btn" data-action="allocMinus" data-stat="${key}" ${add<=0?'disabled':''}>−</button>
+              <span class="alloc-val">${cur}${add?`<b>+${add}</b>`:''}</span>
+              <button class="alloc-btn" data-action="allocPlus" data-stat="${key}" ${(upgradeAlloc.pool<=0||cur+add>=STAT_CAP)?'disabled':''}>+</button>
+            </div>`;
+          };
+          return `<div class="upgrade-panel">
+            <div class="upgrade-panel-title">⬆️ Niveau ${upgradeAlloc.level}/${UPGRADE_MAX} — répartis tes points</div>
+            <div class="alloc-pool">Points à placer : <b>${upgradeAlloc.pool}</b> / ${POINTS_PER_LEVEL}</div>
+            ${row('atk','⚔️','ATK')}${row('def','🛡️','DEF')}${row('vit','💨','VIT')}
+            <div class="btn-row" style="margin-top:10px;">
+              <button class="btn btn-ghost" data-action="cancelUpgrade">Annuler</button>
+              <button class="btn-gem" data-action="confirmUpgrade" ${upgradeAlloc.pool>0?'disabled style="opacity:.45;"':''}>💎 ${upgradeAlloc.cost} — Confirmer</button>
+            </div>
+          </div>`;
+        }
         if(lvl<UPGRADE_MAX){
           const cost=upgradeCost(lvl);
           return `<div class="upgrade-panel">
             <div class="upgrade-panel-title">⬆️ Atelier d'Amélioration — Niveau ${lvl}/${UPGRADE_MAX}</div>
-            <div class="upgrade-bar-bg"><div class="upgrade-bar-fill" style="width:${lvl*10}%;"></div></div>
-            <button class="btn-gem" data-action="upgradeRock" data-id="${detailRock.id}">💎 ${cost} — +3 ATK/DEF/VIT</button>
+            <div class="upgrade-bar-bg"><div class="upgrade-bar-fill" style="width:${Math.round(lvl/UPGRADE_MAX*100)}%;"></div></div>
+            <button class="btn-gem" data-action="startUpgrade" data-id="${detailRock.id}">💎 ${cost} — Améliorer (+${POINTS_PER_LEVEL} pts au choix)</button>
           </div>`;
         }
         if(detailRock.evolved){
           return `<div class="upgrade-panel"><div class="evolved-tag">✨ CAILLOU ÉVOLUÉ ✨</div></div>`;
         }
         return `<div class="upgrade-panel">
-          <div class="upgrade-panel-title">⬆️ Niveau maximum atteint !</div>
-          <button class="btn-gem evolve" data-action="evolveRock" data-id="${detailRock.id}">💎 150 — ✨ FAIRE ÉVOLUER ✨</button>
+          <div class="upgrade-panel-title">⬆️ Niveau ${UPGRADE_MAX} atteint — prêt à évoluer !</div>
+          <button class="btn-gem evolve" data-action="evolveRock" data-id="${detailRock.id}">💎 300 — ✨ FAIRE ÉVOLUER ✨</button>
         </div>`;
       })()}
     </div>`;
@@ -4177,14 +4254,18 @@ async function handleFile(file){
     await saveMeta();
 
     let tier;
-    if((meta.inventory?.sacred||0)>0){ meta.inventory.sacred--; tier=RARITY_TIERS[RARITY_TIERS.length-1]; saveMeta(); setTimeout(()=>showToast('👑 Caillou Sacré activé !'),200); }
+    if((meta.inventory?.sacred||0)>0){ meta.inventory.sacred--; tier=pickAtLeast('legendaire'); saveMeta(); setTimeout(()=>showToast('👑 Caillou Sacré activé !'),200); }
     else if((meta.inventory?.blessed||0)>0){ meta.inventory.blessed--; tier=pickAtLeast('epique'); saveMeta(); setTimeout(()=>showToast('🌟 Caillou Béni activé !'),200); }
     else if((meta.inventory?.lucky||0)>0){ meta.inventory.lucky--; tier=pickAtLeast('rare'); saveMeta(); setTimeout(()=>showToast('🎲 Caillou Chanceux activé !'),200); }
     else { tier=rollRarity(meta.streak); }
     const typeInfo=resolveRockType(aiResult);
     const sizeCm=aiResult?.size_cm ? Math.min(60,Math.max(0.5,Number(aiResult.size_cm))) : null;
-    const aiDef=aiResult?.def ? Math.min(99,Math.max(1,Math.round(aiResult.def))) : null;
-    const finalDef=aiDef ? Math.max(aiDef,minDefForSize(sizeCm)) : rollStat(tier.range);
+    const tierIdx=RARITY_TIERS.findIndex(t=>t.key===tier.key);
+    // La rareté fixe la FOURCHETTE de puissance ; le profil de l'IA (pointu→atk,
+    // gros→def) fait pencher les stats À L'INTÉRIEUR de cette fourchette.
+    const atkStat=tierStat(aiResult?.atk, tier.range);
+    const defStat=tierStat(aiResult?.def, tier.range);
+    const vitStat=tierStat(aiResult?.vit, [1, 6+tierIdx*2]);
 
     revealRock={
       id: Date.now().toString(36)+Math.random().toString(36).slice(2),
@@ -4202,9 +4283,9 @@ async function handleFile(file){
       rarityLabel: tier.label,
       hex: tier.hex,
       sizeCm: sizeCm ? Math.round(sizeCm*10)/10 : null,
-      atk: aiResult?.atk ? Math.min(99,Math.max(1,Math.round(aiResult.atk))) : rollStat(tier.range),
-      def: finalDef,
-      vit: aiResult?.vit ? Math.min(99,Math.max(1,Math.round(aiResult.vit))) : rollStat([1,8]),
+      atk: atkStat,
+      def: defStat,
+      vit: vitStat,
       confettiCount: tier.confetti,
       aiGenerated: !!aiResult,
       date: new Date().toISOString(),
@@ -4476,13 +4557,15 @@ async function rerollRockAI(rockId){
   saveMeta();
   const typeInfo=aiResult.type?(ROCK_TYPES.find(t=>t.key===aiResult.type)||null):null;
   const sizeCm=aiResult.size_cm?Math.min(60,Math.max(0.5,Number(aiResult.size_cm))):null;
+  const rTier=RARITY_TIERS.find(t=>t.key===rock.rarity)||RARITY_TIERS[0];
+  const rIdx=RARITY_TIERS.indexOf(rTier);
   const updates={
     name:aiResult.name||rock.name, personality:aiResult.personality||null,
     quip:aiResult.quip||rock.quip, specialMove:aiResult.special_move||rock.specialMove,
     rockType:typeInfo?typeInfo.key:rock.rockType, typeLabel:typeInfo?typeInfo.label:rock.typeLabel, typeColor:typeInfo?typeInfo.color:rock.typeColor,
-    atk:aiResult.atk?Math.min(99,Math.max(1,Math.round(aiResult.atk))):rock.atk,
-    def:aiResult.def?Math.max(Math.min(99,Math.max(1,Math.round(aiResult.def))),minDefForSize(sizeCm)):rock.def,
-    vit:aiResult.vit?Math.min(99,Math.max(1,Math.round(aiResult.vit))):rock.vit,
+    atk:aiResult.atk?tierStat(aiResult.atk,rTier.range):rock.atk,
+    def:aiResult.def?tierStat(aiResult.def,rTier.range):rock.def,
+    vit:aiResult.vit?tierStat(aiResult.vit,[1,6+rIdx*2]):rock.vit,
     sizeCm:sizeCm?Math.round(sizeCm*10)/10:rock.sizeCm,
   };
   try{
@@ -4535,8 +4618,8 @@ document.addEventListener('click',(e)=>{
     saveCharacterPhoto(characterResult.rockId, dataUrl);
   }
   else if(action==='confirmAdd'){ confirmAdd(); }
-  else if(action==='detail'){ detailRock=dex.find(r=>r.id===t.dataset.id)||null; render(); }
-  else if(action==='closeDetail'){ detailRock=null; render(); }
+  else if(action==='detail'){ detailRock=dex.find(r=>r.id===t.dataset.id)||null; upgradeAlloc=null; render(); }
+  else if(action==='closeDetail'){ detailRock=null; upgradeAlloc=null; render(); }
   else if(action==='share'){ const r=findRockById(t.dataset.id); if(r) shareRock(r); }
   else if(action==='recycleRock'){
     const r=findRockById(t.dataset.id);
@@ -4545,7 +4628,11 @@ document.addEventListener('click',(e)=>{
   else if(action==='rerollRock'){ rerollRockAI(t.dataset.id); }
   else if(action==='buyGemPack'){ buyGemPack(t.dataset.id); }
   else if(action==='buyFoodReal'){ buyFoodReal(t.dataset.id); }
-  else if(action==='upgradeRock'){ upgradeRock(t.dataset.id); }
+  else if(action==='startUpgrade'){ startUpgrade(t.dataset.id); }
+  else if(action==='allocPlus'){ allocPoint(t.dataset.stat,1); }
+  else if(action==='allocMinus'){ allocPoint(t.dataset.stat,-1); }
+  else if(action==='confirmUpgrade'){ confirmUpgrade(); }
+  else if(action==='cancelUpgrade'){ cancelUpgrade(); }
   else if(action==='evolveRock'){ evolveRock(t.dataset.id); }
   else if(action==='buyItem'){ buyShopItem(t.dataset.id); }
   else if(action==='showStats'){ screen='reveal'; render(); setTimeout(()=>{ animateStats(revealRock); },300); }
