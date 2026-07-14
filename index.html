@@ -1128,7 +1128,11 @@ function rowToRock(row){
 const XP_BY_RARITY = { commun:10, rare:25, epique:50, legendaire:100 };
 
 /* ===== GRAVILLONS (monnaie du jeu) ===== */
-const GRAVILLON_BY_RARITY = { commun:5, rare:12, epique:25, legendaire:50 };
+const GRAVILLON_BY_RARITY = { commun:5, rare:12, epique:25, legendaire:50, mythique:90, cosmique:160, galaxie:300 };
+// Gemmes gagnées en jouant (progression accessible sans payer)
+const GEM_BY_RARITY = { commun:0, rare:1, epique:2, legendaire:4, mythique:7, cosmique:12, galaxie:25 };
+const WIN_GEMS = 3;        // par combat gagné
+const CHALLENGE_GEMS = 5;  // défi du jour
 const RECYCLE_VALUE = { commun:3, rare:8, epique:18, legendaire:40, mythique:80, cosmique:150, galaxie:280 };
 const STAT_DB_FIELD={ xp:'xp', gravillons:'gravillons', gems:'gems', wins:'wins', losses:'losses', streakFreezeCount:'streak_freeze_count' };
 function incrementStat(key,amount){
@@ -1433,7 +1437,10 @@ function shopScreen(){
       <div class="shop-balance">🪙 <span>${bal}</span> Gravillons</div>
       <div class="shop-balance gem">💎 <span>${gemBal}</span> Gemmes</div>
     </div>
-    <div class="shop-cat-title gem-title">💎 ACHETER DES GEMMES <span style="font-size:9px;opacity:.6;font-weight:700;">(MODE TEST — PAS DE VRAI PAIEMENT)</span></div>
+    <div style="background:rgba(247,220,111,.08);border:1px solid rgba(247,220,111,.25);border-radius:12px;padding:9px 12px;margin:6px 0 4px;font-family:'Nunito',sans-serif;font-size:11.5px;color:rgba(255,255,255,.72);line-height:1.5;">
+      💎 <b>Gagne des Gemmes gratuitement</b> en jouant : <b>+${WIN_GEMS}</b> par combat gagné, <b>+${CHALLENGE_GEMS}</b> au défi du jour, et jusqu'à <b>+${GEM_BY_RARITY.galaxie}</b> sur une capture rare. Les gemmes servent à améliorer et faire évoluer tes cailloux.
+    </div>
+    <div class="shop-cat-title gem-title">💎 ACHETER DES GEMMES <span style="font-size:9px;opacity:.6;font-weight:700;">(RACCOURCI — MODE TEST)</span></div>
     <div class="shop-grid">
       ${GEM_PACKS.map(pack=>`<div class="shop-item gem-pack" data-action="buyGemPack" data-id="${pack.id}">
         <div class="shop-item-icon">💎</div>
@@ -3246,7 +3253,7 @@ async function playerOnlineAction(moveId){
   if(battleState.botHP<=0){
     battleState.winner='player'; battleState.turn='end';
     incrementStat('wins',1);
-    addXp(30); addGravillons(20);
+    addXp(30); addGravillons(20); addGems(WIN_GEMS);
     grantFoodLoot();
     screen='combat-result'; render(); return;
   }
@@ -3259,7 +3266,7 @@ async function applyOnlineOpponentAction(msg){
     addCombatLog(`${battleState.botRock.name} prend ses jambes à son cou ! (enfin, façon de parler)`,'dmg-bot');
     battleState.winner='player'; battleState.turn='end';
     incrementStat('wins',1);
-    addXp(30); addGravillons(20);
+    addXp(30); addGravillons(20); addGems(WIN_GEMS);
     grantFoodLoot();
     screen='combat-result'; render(); return;
   }
@@ -3700,7 +3707,7 @@ function announceTurn(kind){
 }
 function endBattle(winner){
   battleState.winner=winner; battleState.turn='end';
-  if(winner==='player'){ incrementStat('wins',1); addXp(15); addGravillons(10); grantFoodLoot(); }
+  if(winner==='player'){ incrementStat('wins',1); addXp(15); addGravillons(10); addGems(WIN_GEMS); grantFoodLoot(); }
   else { incrementStat('losses',1); }
   screen='combat-result'; render();
 }
@@ -4002,6 +4009,7 @@ function combatResultScreen(){
     <div style="font-size:64px;animation:resultBounce .5s cubic-bezier(.34,1.56,.64,1);">${emoji}</div>
     <div class="result-banner ${won?'result-win':draw?'result-draw':'result-lose'}">${banner}</div>
     <p class="result-sub">${sub}</p>
+    ${won?`<div style="font-family:'Baloo 2',sans-serif;font-weight:800;font-size:14px;color:#F7DC6F;margin:-2px 0 6px;">🏆 Récompense : +${WIN_GEMS} 💎 &nbsp;+${s.online?20:10} 🪙</div>`:''}
     <div class="result-stats">
       <div class="result-stat-item"><div class="result-stat-val">${meta.wins||0}</div><div class="result-stat-lbl">VICTOIRES</div></div>
       <div class="result-stat-item"><div class="result-stat-val">${meta.losses||0}</div><div class="result-stat-lbl">DÉFAITES</div></div>
@@ -4328,13 +4336,15 @@ async function confirmAdd(){
     dex.push(rowToRock(data));
     addXp(XP_BY_RARITY[revealRock.rarity]||10);
     addGravillons(GRAVILLON_BY_RARITY[revealRock.rarity]||5);
+    const gemDrop=GEM_BY_RARITY[revealRock.rarity]||0;
+    if(gemDrop>0){ addGems(gemDrop); setTimeout(()=>showToast(`💎 +${gemDrop} Gemme${gemDrop>1?'s':''} (capture ${revealRock.rarityLabel}) !`),700); }
     const t=todayStr();
     if(meta.challengeDate===t&&meta.challengeCompletedDate!==t&&challengeMatches(revealRock,meta.todayChallenge)){
       meta.challengeCompletedDate=t;
       saveMeta();
       setTimeout(()=>{
-        addXp(CHALLENGE_XP_BONUS); addGravillons(CHALLENGE_GRAVILLON_BONUS);
-        showToast(`${meta.todayChallenge.icon} Défi du jour relevé ! +${CHALLENGE_XP_BONUS} XP +${CHALLENGE_GRAVILLON_BONUS} 🪙`);
+        addXp(CHALLENGE_XP_BONUS); addGravillons(CHALLENGE_GRAVILLON_BONUS); addGems(CHALLENGE_GEMS);
+        showToast(`${meta.todayChallenge.icon} Défi du jour relevé ! +${CHALLENGE_XP_BONUS} XP +${CHALLENGE_GRAVILLON_BONUS} 🪙 +${CHALLENGE_GEMS} 💎`);
       },500);
     }
   }catch(e){ showToast('❌ Erreur: '+(e?.message||e?.code||JSON.stringify(e))); return; }
