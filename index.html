@@ -2852,6 +2852,12 @@ let appAnnouncement=null;
 function escHtml(s){ return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function isAdmin(){ try{ return !!(session&&session.user&&(session.user.email||'').toLowerCase()===ADMIN_EMAIL.toLowerCase()); }catch(e){ return false; } }
 function adminPwHash(){ try{ return localStorage.getItem('cdx_admin_pw')||''; }catch(e){ return ''; } }
+function adminForgotPw(){
+  if(!isAdmin()) return;
+  if(!confirm('Réinitialiser le mot de passe admin sur cet appareil ? Tu pourras en créer un nouveau juste après.')) return;
+  try{ localStorage.removeItem('cdx_admin_pw'); }catch(e){}
+  adminUnlocked=false; showToast('Mot de passe réinitialisé — crée-en un nouveau.'); render();
+}
 function openAdmin(){ if(!isAdmin()){ showToast('🔒 Accès réservé.'); return; } screen='admin'; render(); if(adminUnlocked) setAdminTab(adminTabId); }
 function adminSubmitPw(){
   const el=document.getElementById('adminPwInput'); const pw=(el&&el.value||'').trim();
@@ -3012,7 +3018,8 @@ function adminScreen(){
       <p class="setup-sub">${first?'Crée ton mot de passe admin (mémorisé sur cet appareil).':'Entre ton mot de passe admin.'}</p>
       <input class="input-field" id="adminPwInput" type="password" placeholder="Mot de passe" autocomplete="off">
       <button class="btn btn-gold" style="margin-top:10px;" data-action="adminSubmitPw">${first?'Créer et entrer':'Déverrouiller'}</button>
-      <button class="btn btn-ghost" style="margin-top:8px;" data-action="goto" data-screen="account">← Retour</button></div>`;
+      <button class="btn btn-ghost" style="margin-top:8px;" data-action="goto" data-screen="account">← Retour</button>
+      ${first?'':`<div style="text-align:center;margin-top:12px;"><span data-action="adminForgotPw" style="font-family:'Nunito',sans-serif;font-size:11px;color:rgba(255,255,255,.4);text-decoration:underline;cursor:pointer;">Mot de passe oublié ? Réinitialiser</span></div>`}</div>`;
   }
   const tb=(id,label)=>`<button class="admin-tab${adminTabId===id?' active':''}" data-action="adminTab" data-tab="${id}">${label}</button>`;
   return `<div class="admin-wrap">
@@ -4900,6 +4907,7 @@ document.addEventListener('click',(e)=>{
   else if(action==='cancelSetup'){ screen='home'; render(); }
   else if(action==='openAdmin'){ openAdmin(); }
   else if(action==='adminSubmitPw'){ adminSubmitPw(); }
+  else if(action==='adminForgotPw'){ adminForgotPw(); }
   else if(action==='adminTab'){ setAdminTab(t.dataset.tab); }
   else if(action==='adminSearchPlayer'){ adminSearchPlayer(); }
   else if(action==='adminGive'){ adminGive(t.dataset.field, parseInt(t.dataset.amt,10)||0); }
