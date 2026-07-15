@@ -863,6 +863,47 @@ nav{display:flex;gap:8px;padding:8px 16px max(12px,env(safe-area-inset-bottom));
 .ann-banner{position:fixed;top:0;left:0;right:0;z-index:55;display:flex;align-items:center;gap:10px;justify-content:center;padding:9px 14px;background:linear-gradient(90deg,#7B2FBE,#C45CFF);box-shadow:0 3px 12px rgba(0,0,0,.4);font-family:'Baloo 2',sans-serif;font-weight:800;font-size:12.5px;color:#fff;}
 .ann-banner span{flex:1;text-align:center;}
 .ann-banner button{background:rgba(0,0,0,.25);border:none;color:#fff;width:24px;height:24px;border-radius:8px;font-size:13px;cursor:pointer;flex-shrink:0;}
+/* ===== PAGE DE SCAN (viseur immersif + révélation) ===== */
+.scan2{padding:10px 14px 26px;max-width:460px;margin:0 auto;}
+.scan2-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:2px 0 10px;}
+.scan2-title{font-family:'Playfair Display',Georgia,serif;font-weight:700;font-size:16px;color:#fff;line-height:1.15;}
+.scan2-counter{flex-shrink:0;font-family:'Baloo 2',sans-serif;font-weight:800;font-size:12px;color:rgba(255,255,255,.72);background:rgba(255,255,255,.08);border:1.5px solid rgba(255,255,255,.15);border-radius:999px;padding:4px 11px;white-space:nowrap;}
+.scan2-counter.low{color:#FFB080;border-color:rgba(255,140,80,.45);}
+.scan2-vf{position:relative;width:100%;aspect-ratio:1/1;border-radius:24px;overflow:hidden;cursor:pointer;
+  background:radial-gradient(circle at 50% 45%,#16304a,#0a1524 68%,#060d18);
+  border:2px solid rgba(255,255,255,.1);
+  box-shadow:0 0 0 1px rgba(255,255,255,.04) inset,0 10px 30px rgba(0,0,0,.5),0 0 26px -8px var(--glow);}
+.scan2-vf .corner{border-color:var(--glow);width:26px;height:26px;}
+.scan2-vf.vf-guaranteed{animation:vfGuar 1.8s ease-in-out infinite;}
+@keyframes vfGuar{0%,100%{box-shadow:0 0 0 1px rgba(255,255,255,.04) inset,0 10px 30px rgba(0,0,0,.5),0 0 20px -10px var(--glow);}50%{box-shadow:0 0 0 1px rgba(255,255,255,.04) inset,0 10px 30px rgba(0,0,0,.5),0 0 36px 0 var(--glow);}}
+.scan2-radar{position:absolute;inset:-28%;background:conic-gradient(from 0deg,var(--glow) 0deg,transparent 60deg);opacity:.1;filter:blur(6px);animation:radarSpin 3.6s linear infinite;pointer-events:none;}
+@keyframes radarSpin{to{transform:rotate(360deg);}}
+.scan2-scanline{position:absolute;left:6%;right:6%;height:2px;top:8%;background:linear-gradient(90deg,transparent,var(--glow),transparent);box-shadow:0 0 12px var(--glow);animation:scanSweep 2.8s ease-in-out infinite;pointer-events:none;}
+@keyframes scanSweep{0%{top:8%;opacity:0;}12%{opacity:.9;}88%{opacity:.9;}100%{top:90%;opacity:0;}}
+.scan2-read{position:absolute;font-family:'Baloo 2',sans-serif;font-weight:800;font-size:9px;letter-spacing:.06em;color:var(--glow);opacity:.55;}
+.scan2-read.tl{top:15px;left:16px;}.scan2-read.tr{top:15px;right:16px;}.scan2-read.bl{bottom:15px;left:16px;}.scan2-read.br{bottom:15px;right:16px;}
+.scan2-center{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;}
+.scan2-reticle{position:absolute;width:150px;height:150px;}
+.r-ring{position:absolute;inset:0;border:2px solid var(--glow);border-radius:50%;opacity:.6;animation:reticlePulse 2s ease-in-out infinite;}
+.r-h,.r-v{position:absolute;background:var(--glow);opacity:.45;}
+.r-h{left:-14px;right:-14px;top:50%;height:1.5px;}
+.r-v{top:-14px;bottom:-14px;left:50%;width:1.5px;}
+@keyframes reticlePulse{0%,100%{transform:scale(1);opacity:.5;}50%{transform:scale(1.07);opacity:.95;}}
+.scan2-mascot{position:relative;z-index:2;animation:breathe 3s ease-in-out infinite;}
+.scan2-mascot .mascot{width:90px;height:68px;}
+.scan2-hint{position:absolute;bottom:13px;left:0;right:0;text-align:center;font-family:'Baloo 2',sans-serif;font-weight:700;font-size:11px;color:rgba(255,255,255,.55);pointer-events:none;}
+.scan2-shutter-wrap{display:flex;justify-content:center;margin-top:16px;}
+.scan2-shutter{position:relative;width:80px;height:80px;border-radius:50%;border:none;background:none;cursor:pointer;padding:0;}
+.scan2-shutter-ring{position:absolute;inset:0;border-radius:50%;border:4px solid var(--glow);box-shadow:0 0 18px -2px var(--glow);}
+.scan2-shutter-core{position:absolute;inset:7px;border-radius:50%;background:radial-gradient(circle at 40% 34%,#fff,#ece4c6);display:flex;align-items:center;justify-content:center;font-size:31px;box-shadow:0 4px 12px rgba(0,0,0,.45);transition:transform .09s;}
+.scan2-shutter:active .scan2-shutter-core{transform:scale(.88);}
+.scan2-shutter-label{text-align:center;font-family:'Baloo 2',sans-serif;font-weight:700;font-size:12px;color:rgba(255,255,255,.6);margin-top:9px;}
+.scan2-shutter-label b{color:#F7DC6F;}
+.scan2-odds{margin-top:16px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:12px 12px 10px;}
+.scan2-odds-title{font-family:'Baloo 2',sans-serif;font-weight:800;font-size:10px;letter-spacing:.1em;color:rgba(255,255,255,.5);text-align:center;margin-bottom:8px;}
+.odds-bar{display:flex;height:12px;border-radius:999px;overflow:hidden;gap:1px;box-shadow:inset 0 1px 3px rgba(0,0,0,.4);}
+.odds-seg{display:block;min-width:3px;}
+.scan2-odds .legend{margin-top:10px;}
 </style>
 </head>
 <body>
@@ -1983,20 +2024,25 @@ function initStars(){
 function hasApiKey(){ return !!session; }
 
 /* ===== AI ANALYSIS (relais via Edge Function, clé serveur partagée) ===== */
+/* Compteur de scans du jour (affichage — la vraie limite est côté serveur) */
+const DAILY_SCAN_LIMIT=10;
+function scanKey(){ return 'cdx_scans_'+todayStr(); }
+function getScansToday(){ try{ return parseInt(localStorage.getItem(scanKey())||'0',10)||0; }catch(e){ return 0; } }
+function setScansToday(n){ try{ localStorage.setItem(scanKey(), String(Math.max(0,Math.min(DAILY_SCAN_LIMIT,n)))); }catch(e){} }
+function incScansToday(){ setScansToday(getScansToday()+1); }
 async function analyzeWithAI(dataUrl){
   if(!session||!sb) return null;
   const base64 = dataUrl.split(',')[1];
   try{
     const { data, error } = await sb.functions.invoke('analyze-rock', { body:{ image: base64 } });
     if(error){
-      try{
-        const body=await error.context.json();
-        console.error('analyzeWithAI error',body);
-        if(body?.error==='limit_reached') showToast(`⏱️ Limite de ${body.limit||10} scans IA/jour atteinte. Réessaie demain !`);
-        else showToast('⚠️ IA indisponible ('+(body?.error||'erreur')+') — mode aléatoire pour cette fois.');
-      }catch(e2){ showToast('⚠️ IA indisponible — mode aléatoire pour cette fois.'); }
+      let body=null; try{ body=await error.context.json(); }catch(e2){}
+      console.error('analyzeWithAI error',body);
+      if(body?.error==='limit_reached'){ setScansToday(DAILY_SCAN_LIMIT); showToast(`⏱️ Limite de ${body.limit||10} scans IA/jour atteinte. Réessaie demain !`); }
+      else { incScansToday(); showToast('⚠️ IA indisponible ('+(body?.error||'erreur')+') — mode aléatoire pour cette fois.'); }
       return null;
     }
+    incScansToday();
     if(typeof data?.is_rock==='undefined'){
       console.error('analyzeWithAI unexpected payload',data);
       showToast('⚠️ Réponse IA inattendue — mode aléatoire pour cette fois.');
@@ -2589,27 +2635,47 @@ function nav(){
 
 function scannerScreen(){
   const w=getWeights(meta.streak);
+  const oddsBar=RARITY_TIERS.map((t,i)=>`<span class="odds-seg" style="flex:${Math.max(0.5,w[i])};background:${t.hex};"></span>`).join('');
   const legend=RARITY_TIERS.map((t,i)=>`<span class="chip"><span class="dot" style="background:${t.hex}"></span>${t.label} ${w[i]}%</span>`).join('');
   const streakLine=meta.streak>0
     ?`<div class="hint-soft">🔥 Série de ${meta.streak} jour${meta.streak>1?'s':''} — chances de rareté boostées !</div>`
     :`<div class="hint-soft">Scanne chaque jour pour booster ta chance de rareté.</div>`;
   const aiLine=hasApiKey()
-    ?`<div class="hint-soft" style="color:rgba(196,92,255,.6);">🤖 IA active — noms personnalisés + détection anti-triche</div>`
-    :`<div class="hint-soft">Active l'IA pour des noms personnalisés et bloquer les fausses photos → <span style="color:rgba(255,215,0,.7);cursor:pointer;" data-action="account">⚙️ IA</span></div>`;
+    ?`<div class="hint-soft" style="color:rgba(196,92,255,.6);">🤖 IA active — noms personnalisés + anti-triche</div>`
+    :`<div class="hint-soft">Active l'IA pour des noms uniques → <span style="color:rgba(255,215,0,.7);cursor:pointer;" data-action="account">⚙️ IA</span></div>`;
   const gKey=guaranteedRarityKey();
   const gTier=gKey?RARITY_TIERS.find(x=>x.key===gKey):null;
   const guaranteedBadge=gTier?`<div class="guaranteed-badge" style="border-color:${gTier.hex};color:${gTier.hex};box-shadow:0 0 16px ${gTier.hex}55;">✨ Prochaine capture : <b>${gTier.label}</b> garantie</div>`:'';
-  const luckyBadge=isLuckyActive()?`<div class="hint-soft" style="color:rgba(90,220,130,.85);">🍀 Porte-Bonheur actif — chances de rareté boostées</div>`:'';
-  return `<div class="panel">
+  const luckyBadge=isLuckyActive()?`<div class="hint-soft" style="color:rgba(90,220,130,.85);">🍀 Porte-Bonheur actif — rareté boostée</div>`:'';
+  const scans=getScansToday(); const left=Math.max(0,DAILY_SCAN_LIMIT-scans);
+  const glow=gTier?gTier.hex:'#F7DC6F';
+  return `<div class="scan2">
     ${guaranteedBadge}
-    <div class="viewfinder${gTier?' vf-guaranteed':''}" data-action="capture" ${gTier?`style="border-color:${gTier.hex};color:${gTier.hex};"`:''}>
-      <div class="corner c-tl"></div><div class="corner c-tr"></div>
-      <div class="corner c-bl"></div><div class="corner c-br"></div>
-      ${mascotSvg()}
-      <div class="vf-label">Cadre ton caillou ici</div>
+    <div class="scan2-head">
+      <div class="scan2-title">✨ Quel caillou vas-tu révéler ?</div>
+      <div class="scan2-counter${left<=2?' low':''}">📸 ${scans}/${DAILY_SCAN_LIMIT}</div>
     </div>
-    <button class="btn btn-gold" style="margin-top:14px;" data-action="capture">CAPTURER UN CAILLOU 🪨</button>
-    <div class="legend">${legend}</div>
+    <div class="scan2-vf${gTier?' vf-guaranteed':''}" data-action="capture" style="--glow:${glow};">
+      <div class="scan2-radar"></div>
+      <div class="scan2-scanline"></div>
+      <div class="corner c-tl"></div><div class="corner c-tr"></div><div class="corner c-bl"></div><div class="corner c-br"></div>
+      <div class="scan2-read tl">◇ PRÊT</div>
+      <div class="scan2-read tr">AUTH ✓</div>
+      <div class="scan2-center">
+        <div class="scan2-reticle"><span class="r-ring"></span><span class="r-h"></span><span class="r-v"></span></div>
+        <div class="scan2-mascot">${mascotSvg()}</div>
+      </div>
+      <div class="scan2-hint">Vise ton caillou et touche pour capturer</div>
+    </div>
+    <div class="scan2-shutter-wrap">
+      <button class="scan2-shutter" data-action="capture" aria-label="Capturer"><span class="scan2-shutter-ring"></span><span class="scan2-shutter-core">📸</span></button>
+    </div>
+    <div class="scan2-shutter-label">${left>0?`Il te reste <b>${left}</b> scan${left>1?'s':''} aujourd'hui`:`Limite du jour atteinte — reviens demain`}</div>
+    <div class="scan2-odds">
+      <div class="scan2-odds-title">🎲 TES CHANCES</div>
+      <div class="odds-bar">${oddsBar}</div>
+      <div class="legend">${legend}</div>
+    </div>
     ${streakLine}
     ${luckyBadge}
     ${aiLine}
