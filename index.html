@@ -999,20 +999,9 @@ nav{display:flex;gap:8px;padding:8px 16px max(12px,env(safe-area-inset-bottom));
 @keyframes spGlint{0%,100%{opacity:.6;transform:scaleX(.82);}50%{opacity:1;transform:scaleX(1.18);}}
 @keyframes spGlintSparkle{from{background-position:0 0;}to{background-position:0 11px;}}
 .sp-surface{position:absolute;top:64%;left:0;right:0;height:3px;z-index:3;background:linear-gradient(90deg,transparent,rgba(255,255,255,.95),transparent);box-shadow:0 0 12px rgba(255,255,255,.6),0 1px 5px rgba(120,200,240,.5);}
-/* Pont travaillé (garde-corps : main courante + barreaux réguliers + tablier) */
-.sp-bridge{position:absolute;top:11%;left:0;right:0;height:48px;z-index:4;}
-/* Tablier (les planches où repose le caillou) */
-.sp-plank{position:absolute;bottom:0;left:0;right:0;height:17px;border-radius:2px;
-  background:linear-gradient(180deg,#cf9457 0%,#a5703c 42%,#7c4f28 100%);
-  box-shadow:0 2px 0 rgba(255,255,255,.18) inset,0 5px 0 #5e3a1c,0 12px 16px rgba(0,0,0,.35);}
-.sp-plank::before{content:'';position:absolute;inset:0;background:repeating-linear-gradient(90deg,rgba(0,0,0,.16) 0 1.5px,transparent 1.5px 38px);}
-.sp-plank::after{content:'';position:absolute;inset:0;background:repeating-linear-gradient(90deg,transparent 0 8px,rgba(255,255,255,.06) 8px 9px,transparent 9px 16px);}
-/* Main courante (rail du haut) */
-.sp-rail{position:absolute;top:0;left:0;right:0;height:8px;border-radius:4px;background:linear-gradient(180deg,#c1894d,#8a5a30);box-shadow:0 3px 5px rgba(0,0,0,.3),0 1px 0 rgba(255,255,255,.25) inset;}
-/* Barreaux verticaux réguliers entre la main courante et le tablier */
-.sp-posts{position:absolute;top:7px;left:0;right:0;height:26px;
-  background:repeating-linear-gradient(90deg,transparent 0 40px,rgba(179,121,64,.55) 40px 41px,#a56f3b 41px 45px,#7c4f28 45px 46px,transparent 46px 48px);}
-.sp-bridge-shadow{position:absolute;left:5%;right:5%;top:100%;height:14px;margin-top:3px;background:radial-gradient(ellipse at 50% 0%,rgba(0,0,0,.3),transparent 72%);filter:blur(2px);}
+/* Pont en bois détaillé (SVG : grain de bois, rambarde, boulons) */
+.sp-bridge{position:absolute;top:10.5%;left:0;right:0;height:62px;z-index:4;}
+.sp-bridge-svg{position:absolute;inset:0;width:100%;height:100%;display:block;filter:drop-shadow(0 6px 10px rgba(0,0,0,.3));}
 /* Caillou */
 .sp-rock{position:absolute;top:15%;left:50%;width:48px;height:48px;z-index:5;transform:translateX(-50%);}
 .sp-rock img{width:100%;height:100%;border-radius:12px;object-fit:cover;border:2px solid rgba(255,255,255,.75);box-shadow:0 6px 12px rgba(0,0,0,.45);}
@@ -2779,6 +2768,54 @@ let splashRock=null, splashPhase='idle';
 function splashTierOf(r){ return r&&r.rarity==='secret'?7:Math.max(0,RARITY_TIERS.findIndex(t=>t.key===(r&&r.rarity))); }
 function getSplashRecord(){ try{ return parseInt(localStorage.getItem('cdx_splash_record')||'-1',10); }catch(e){ return -1; } }
 function setSplashRecord(n){ try{ localStorage.setItem('cdx_splash_record',String(n)); }catch(e){} }
+function splashBridgeSvg(){
+  const W=440;
+  let posts='';
+  for(let x=24;x<=W-24;x+=41){
+    posts+=`<g transform="translate(${x},0)">
+      <rect x="-4.5" y="15" width="9" height="27" rx="3.2" fill="url(#brPostG)"/>
+      <rect x="-4.5" y="15" width="9" height="27" rx="3.2" fill="url(#brGrainVfill)" opacity="0.7"/>
+      <ellipse cx="0" cy="17" rx="5" ry="2.6" fill="#5e3a1c" opacity="0.4"/>
+      <ellipse cx="0" cy="41" rx="5" ry="2.2" fill="#3d2611" opacity="0.35"/>
+      <rect x="-2.7" y="16" width="1.7" height="25" rx="0.8" fill="#e0ad6a" opacity="0.6"/></g>`;
+  }
+  let planks='';
+  for(let x=0;x<=W;x+=44){
+    planks+=`<line x1="${x}" y1="42" x2="${x}" y2="60.5" stroke="#452a13" stroke-width="1.6" opacity="0.72"/>
+      <line x1="${x+1.6}" y1="42" x2="${x+1.6}" y2="60.5" stroke="#cf9860" stroke-width="0.9" opacity="0.45"/>
+      <circle cx="${x+22}" cy="46" r="1.6" fill="#33200e"/><circle cx="${x+22}" cy="46.5" r="1.15" fill="#8a6740"/><circle cx="${x+21.6}" cy="45.6" r="0.5" fill="#c9a877"/>
+      <circle cx="${x+22}" cy="56" r="1.6" fill="#33200e"/><circle cx="${x+22}" cy="56.5" r="1.15" fill="#8a6740"/><circle cx="${x+21.6}" cy="55.6" r="0.5" fill="#c9a877"/>`;
+  }
+  return `<svg class="sp-bridge-svg" viewBox="0 0 ${W} 66" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="brRailG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e6b876"/><stop offset="0.28" stop-color="#c2894c"/><stop offset="0.7" stop-color="#9a6636"/><stop offset="1" stop-color="#764c28"/></linearGradient>
+    <linearGradient id="brDeckG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#d6a061"/><stop offset="0.14" stop-color="#b17d43"/><stop offset="0.72" stop-color="#8a5c31"/><stop offset="1" stop-color="#5f3c1e"/></linearGradient>
+    <linearGradient id="brPostG" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#6e451f"/><stop offset="0.4" stop-color="#a5713d"/><stop offset="0.6" stop-color="#9a6838"/><stop offset="1" stop-color="#5e3a1c"/></linearGradient>
+    <linearGradient id="brSun" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset="0.62" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#ffe9c2" stop-opacity="0.5"/></linearGradient>
+    <filter id="brGrainH" x="0" y="0" width="100%" height="100%"><feTurbulence type="fractalNoise" baseFrequency="0.028 0.82" numOctaves="4" seed="14" result="n"/><feColorMatrix in="n" type="matrix" values="0 0 0 0 0.15  0 0 0 0 0.08  0 0 0 0 0.02  0 0 0 0.9 0"/></filter>
+    <filter id="brGrainHl" x="0" y="0" width="100%" height="100%"><feTurbulence type="fractalNoise" baseFrequency="0.04 0.9" numOctaves="3" seed="27" result="n"/><feColorMatrix in="n" type="matrix" values="0 0 0 0 1  0 0 0 0 0.87  0 0 0 0 0.62  0 0 0 0.4 0"/></filter>
+    <filter id="brGrainV" x="0" y="0" width="100%" height="100%"><feTurbulence type="fractalNoise" baseFrequency="0.85 0.05" numOctaves="3" seed="4" result="n"/><feColorMatrix in="n" type="matrix" values="0 0 0 0 0.15  0 0 0 0 0.08  0 0 0 0 0.02  0 0 0 0.8 0"/></filter>
+    <pattern id="brGrainHfill" patternUnits="userSpaceOnUse" width="${W}" height="66"><rect width="${W}" height="66" filter="url(#brGrainH)"/></pattern>
+    <pattern id="brGrainHlfill" patternUnits="userSpaceOnUse" width="${W}" height="66"><rect width="${W}" height="66" filter="url(#brGrainHl)"/></pattern>
+    <pattern id="brGrainVfill" patternUnits="userSpaceOnUse" width="${W}" height="66"><rect width="${W}" height="66" filter="url(#brGrainV)"/></pattern>
+  </defs>
+  <ellipse cx="220" cy="63" rx="212" ry="6.5" fill="#03203a" opacity="0.3"/>
+  ${posts}
+  <rect x="0" y="6" width="${W}" height="11" rx="5.5" fill="url(#brRailG)"/>
+  <rect x="0" y="6" width="${W}" height="11" rx="5.5" fill="url(#brGrainHfill)" opacity="0.75"/>
+  <rect x="0" y="6" width="${W}" height="11" rx="5.5" fill="url(#brGrainHlfill)" opacity="0.6"/>
+  <rect x="0" y="6" width="${W}" height="11" rx="5.5" fill="url(#brSun)"/>
+  <rect x="4" y="7.4" width="${W-8}" height="2" rx="1" fill="#f6d9a4" opacity="0.8"/>
+  <rect x="0" y="15" width="${W}" height="2.6" rx="1" fill="#452a13" opacity="0.6"/>
+  <rect x="0" y="41" width="${W}" height="20" rx="2" fill="url(#brDeckG)"/>
+  <rect x="0" y="41" width="${W}" height="20" rx="2" fill="url(#brGrainHfill)" opacity="0.75"/>
+  <rect x="0" y="41" width="${W}" height="20" rx="2" fill="url(#brGrainHlfill)" opacity="0.55"/>
+  <rect x="0" y="41" width="${W}" height="20" rx="2" fill="url(#brSun)"/>
+  <rect x="0" y="41" width="${W}" height="2.8" rx="1" fill="#eec488" opacity="0.8"/>
+  <rect x="0" y="57.8" width="${W}" height="3.2" fill="#3f2712" opacity="0.6"/>
+  ${planks}
+  </svg>`;
+}
 function splashScreen(){
   if(!dex.length) return `<div class="empty">${mascotSvg('happy')}<p>Capture d'abord un caillou<br>pour le jeter à l'eau ! 🪨🌊</p><button class="btn btn-gold" style="margin-top:14px;" data-action="goto" data-screen="scanner">📷 CAPTURER</button></div>`;
   if(!splashRock||!dex.find(r=>r.id===splashRock.id)){
@@ -2799,7 +2836,7 @@ function splashScreen(){
       <span class="sp-cloud c1"></span><span class="sp-cloud c2"></span><span class="sp-cloud c3"></span>
       <div class="sp-water"><canvas class="sp-water-gl" id="spWaterGl"></canvas><div class="sp-glint"></div><div class="sp-caustics"></div><div class="sp-waves"></div></div>
       <div class="sp-surface"></div>
-      <div class="sp-bridge"><div class="sp-plank"></div><div class="sp-posts"></div><div class="sp-rail"></div><div class="sp-bridge-shadow"></div></div>
+      <div class="sp-bridge">${splashBridgeSvg()}</div>
       <div class="sp-rock" id="spRock"><img src="${img}" alt="${r.name}"></div>
       <div class="sp-splash-layer" id="spSplashLayer"></div>
       <div class="sp-result" id="spResult"></div>
