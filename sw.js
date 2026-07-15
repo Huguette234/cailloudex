@@ -1,5 +1,6 @@
-const CACHE = 'cailloudex-v51';
-const ASSETS = ['./', './index.html'];
+const CACHE = 'cailloudex-v52';
+const ASSETS = ['./', './index.html',
+  './secrets/roch.jpg', './secrets/galactor.jpg', './secrets/meme.jpg', './secrets/dore.jpg', './secrets/diamant.jpg'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)));
