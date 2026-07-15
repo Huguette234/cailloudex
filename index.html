@@ -2836,6 +2836,7 @@ function dropRock(){
   setTimeout(()=>{
     if(!document.getElementById('splashScene')){ splashPhase='idle'; return; }
     doSplash(tier);
+    if(splashWater){ splashWater.impactStart=performance.now(); splashWater.impactX=0.5; }
     if(navigator.vibrate) navigator.vibrate(tier>=3?[15,25,45]:15);
     if(tier>=3){ scene.classList.add('arena-shake'); setTimeout(()=>scene.classList.remove('arena-shake'),400); }
     rock.classList.add('sp-hidden');
@@ -2852,7 +2853,7 @@ function dropRock(){
 /* ===== Eau WebGL du Plouf (shader) — repli sur l'eau CSS si indisponible ===== */
 let splashWater=null;
 const SPLASH_WATER_FS=`precision highp float;
-uniform vec2 uRes; uniform float uTime;
+uniform vec2 uRes; uniform float uTime; uniform float uImpactT; uniform float uImpactX;
 float hash(vec2 p){ p=fract(p*vec2(123.34,456.21)); p+=dot(p,p+45.32); return fract(p.x*p.y); }
 float noise(vec2 p){ vec2 i=floor(p),f=fract(p); float a=hash(i),b=hash(i+vec2(1.0,0.0)),c=hash(i+vec2(0.0,1.0)),d=hash(i+vec2(1.0,1.0)); vec2 u=f*f*(3.0-2.0*f); return mix(mix(a,b,u.x),mix(c,d,u.x),u.y); }
 float fbm(vec2 p){ float s=0.0,a=0.5; for(int i=0;i<3;i++){ s+=a*noise(p); p*=2.03; a*=0.5; } return s; }
@@ -2869,20 +2870,43 @@ void main(){
   vec2 wp=vec2((uv.x-0.5)*persp*1.1, persp*1.2);
   float h=H(wp);
   float dh=(h-H(wp+vec2(0.0,0.03)));
+  /* --- Plouf : ondes concentriques à l'impact (dans la surface) --- */
+  float foam=0.0;
+  if(uImpactT>=0.0){
+    float iy=0.10; float ip=1.0/(iy+0.11);
+    vec2 iwp=vec2((uImpactX-0.5)*ip*1.1, ip*1.2);
+    float d=distance(wp,iwp);
+    float R=uImpactT*3.6;
+    float fade=smoothstep(2.6,0.0,uImpactT);
+    float shell=smoothstep(0.0,0.6,R-d)*smoothstep(1.5,0.0,R-d);
+    float rip=sin(d*6.5-uImpactT*12.0)*shell*fade;
+    h+=rip*0.9; dh+=rip*0.85;
+    foam=smoothstep(0.18,0.0,abs(R-d))*fade;
+  }
+  /* --- couleur de base + profondeur --- */
   vec3 top=vec3(0.28,0.60,0.76), deep=vec3(0.02,0.15,0.33);
   vec3 col=mix(top,deep,smoothstep(0.0,1.0,y));
   col+=vec3(0.42,0.70,0.84)*clamp(dh*2.4,0.0,1.0)*0.62;
   col-=0.11*clamp(-dh*2.1,0.0,1.0);
   float crest=smoothstep(0.80,1.2,h);
   col+=vec3(0.82,0.93,1.0)*crest*0.5;
-  col=mix(col,vec3(0.80,0.91,0.98),pow(1.0-clamp(y,0.0,1.0),3.0)*0.72);
+  /* --- reflet du ciel (surface glossy, comme un miroir) --- */
+  vec3 skyCol=vec3(0.74,0.87,0.98);
+  float skyMix=pow(1.0-clamp(y,0.0,1.0),2.2)*0.78 + crest*0.22;
+  col=mix(col,skyCol,clamp(skyMix,0.0,0.9));
+  /* --- reflet du soleil (halo chaud sous le soleil, près de l'horizon) --- */
   float sunX=0.74;
+  float sunGlow=smoothstep(0.17,0.0,abs(uv.x-sunX))*smoothstep(0.60,0.0,y);
+  col+=vec3(1.0,0.85,0.52)*sunGlow*0.55;
+  /* --- chemin scintillant du soleil --- */
   float w=0.05+y*0.30;
   float column=smoothstep(w,0.0,abs(uv.x-sunX));
   float spk=fbm(wp*3.8+vec2(uTime*0.4,uTime*2.7));
   float sparkle=smoothstep(0.50,0.85,spk);
-  float glit=column*(sparkle*(0.5+abs(dh)*7.5)+0.12);
-  col+=vec3(1.0,0.87,0.55)*glit*1.5;
+  float glit=column*(sparkle*(0.5+abs(dh)*7.5)+0.10);
+  col+=vec3(1.0,0.87,0.55)*glit*1.4;
+  /* --- écume de l'impact --- */
+  col+=vec3(0.95,0.98,1.0)*foam*0.7;
   col+=vec3(0.92,0.97,1.0)*smoothstep(0.04,0.0,y)*0.7;
   gl_FragColor=vec4(col,1.0);
 }`;
@@ -2908,7 +2932,8 @@ function startSplashWater(){
   gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,3,-1,-1,3]),gl.STATIC_DRAW);
   const lp=gl.getAttribLocation(pr,'p'); gl.enableVertexAttribArray(lp); gl.vertexAttribPointer(lp,2,gl.FLOAT,false,0,0);
   const uRes=gl.getUniformLocation(pr,'uRes'), uTime=gl.getUniformLocation(pr,'uTime');
-  const st={gl:gl,raf:0,start:performance.now(),cv:cv,uRes:uRes,uTime:uTime,w:0,h:0};
+  const uImpactT=gl.getUniformLocation(pr,'uImpactT'), uImpactX=gl.getUniformLocation(pr,'uImpactX');
+  const st={gl:gl,raf:0,start:performance.now(),cv:cv,uRes:uRes,uTime:uTime,w:0,h:0,impactStart:0,impactX:0.5};
   splashWater=st;
   function frame(){
     if(splashWater!==st||!document.getElementById('spWaterGl')) return;
@@ -2917,6 +2942,10 @@ function startSplashWater(){
     if(w!==st.w||h!==st.h){ cv.width=w; cv.height=h; st.w=w; st.h=h; gl.viewport(0,0,w,h); }
     gl.uniform2f(uRes,st.w,st.h);
     gl.uniform1f(uTime,(performance.now()-st.start)/1000);
+    let it=-1.0;
+    if(st.impactStart){ const dt=(performance.now()-st.impactStart)/1000; if(dt<2.8) it=dt; else st.impactStart=0; }
+    gl.uniform1f(uImpactT,it);
+    gl.uniform1f(uImpactX,st.impactX);
     gl.drawArrays(gl.TRIANGLES,0,3);
     st.raf=requestAnimationFrame(frame);
   }
