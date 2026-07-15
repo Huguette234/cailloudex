@@ -85,6 +85,7 @@ body.theme-soir{
 
 /* --- SKY DECORATIONS --- */
 #skyDeco{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;}
+#homeFx{position:fixed;inset:0;z-index:0;pointer-events:none;display:none;mix-blend-mode:screen;}
 
 /* Soleil (matin/aprem) */
 .sky-sun{position:absolute;border-radius:50%;animation:sunPulse 4s ease-in-out infinite alternate;}
@@ -1029,6 +1030,7 @@ nav{display:flex;gap:8px;padding:8px 16px max(12px,env(safe-area-inset-bottom));
 <div id="skyDeco"></div>
 <div class="stars" id="stars"></div>
 <svg class="ground-svg" id="groundSvg" viewBox="0 0 400 130" preserveAspectRatio="none"></svg>
+<canvas id="homeFx"></canvas>
 <div class="frame" id="app"></div>
 <div class="grain-overlay"></div>
 <div class="vignette-overlay"></div>
@@ -2988,6 +2990,91 @@ function startSplashWater(){
   }
   st.raf=requestAnimationFrame(frame);
 }
+/* ===== Ciel vivant de l'accueil (WebGL) — poussières lumineuses + rayons + halo, selon l'heure ===== */
+let homeFx=null;
+const SKY_FX_FS=`precision highp float;
+uniform vec2 uRes; uniform float uTime; uniform float uTheme; uniform vec2 uSun;
+float hash(vec2 p){ p=fract(p*vec2(123.34,456.21)); p+=dot(p,p+45.32); return fract(p.x*p.y); }
+float noise(vec2 p){ vec2 i=floor(p),f=fract(p); float a=hash(i),b=hash(i+vec2(1.0,0.0)),c=hash(i+vec2(0.0,1.0)),d=hash(i+vec2(1.0,1.0)); vec2 u=f*f*(3.0-2.0*f); return mix(mix(a,b,u.x),mix(c,d,u.x),u.y); }
+float fbm(vec2 p){ float s=0.0,a=0.5; for(int i=0;i<3;i++){ s+=a*noise(p); p*=2.03; a*=0.5; } return s; }
+float motes(vec2 uv, float scale, float speed, float seed){
+  vec2 g=uv*scale; g.y-=uTime*speed; g.x+=uTime*speed*0.3;
+  vec2 cell=floor(g), f=fract(g); float acc=0.0;
+  for(int j=-1;j<=1;j++){ for(int i=-1;i<=1;i++){
+    vec2 nb=vec2(float(i),float(j)); vec2 id=cell+nb; float rnd=hash(id+seed);
+    vec2 pos=nb+vec2(hash(id+seed+3.1),hash(id+seed+7.3));
+    float d=length(f-pos);
+    float tw=0.45+0.55*sin(uTime*(1.2+rnd*3.0)+rnd*30.0);
+    acc+=smoothstep(0.09,0.0,d)*tw*step(0.55,rnd);
+  }}
+  return acc;
+}
+void main(){
+  vec2 uv=gl_FragCoord.xy/uRes.xy;
+  vec2 p=uv; p.x*=uRes.x/uRes.y;
+  vec3 warm=vec3(1.0,0.85,0.55), cool=vec3(0.66,0.82,1.0), ember=vec3(1.0,0.6,0.3);
+  bool night=uTheme<0.5; bool eve=uTheme>2.5;
+  vec3 moteCol = night? cool : (eve? ember : warm);
+  vec3 col=vec3(0.0);
+  vec2 d=uv-uSun; float ang=atan(d.y,d.x); float dist=length(d);
+  float rays=fbm(vec2(ang*3.0,uTime*0.12))*0.55 + fbm(vec2(ang*7.0-uTime*0.09,1.7))*0.45;
+  rays=pow(rays,2.2);
+  float rayFall=smoothstep(1.15,0.04,dist)*smoothstep(0.0,0.28,dist);
+  vec3 rayCol = night? vec3(0.72,0.8,1.0) : (eve? ember : vec3(1.0,0.88,0.6));
+  col += rayCol*rays*rayFall*(night?0.09:0.20);
+  col += rayCol*smoothstep(0.45,0.0,dist)*(0.35+0.25*sin(uTime*0.7))*0.14;
+  float mo=motes(p,6.5,0.03,1.0)*1.0 + motes(p,3.6,0.021,9.0)*0.7;
+  col += moteCol*mo*(night?0.9:0.8);
+  gl_FragColor=vec4(col,1.0);
+}`;
+function homeThemeParams(){
+  const k=getThemeKey();
+  if(k==='nuit') return {t:0.0, sun:[0.89,0.92]};
+  if(k==='matin') return {t:1.0, sun:[0.90,0.18]};
+  if(k==='aprem') return {t:2.0, sun:[0.82,0.90]};
+  return {t:3.0, sun:[0.10,0.20]};
+}
+function stopHomeFx(){
+  if(!homeFx) return;
+  try{ cancelAnimationFrame(homeFx.raf); }catch(e){}
+  try{ const l=homeFx.gl.getExtension('WEBGL_lose_context'); if(l) l.loseContext(); }catch(e){}
+  const cv=document.getElementById('homeFx'); if(cv) cv.style.display='none';
+  homeFx=null;
+}
+function startHomeFx(){
+  if(screen!=='home'||homeFx) return;
+  const cv=document.getElementById('homeFx'); if(!cv) return;
+  let gl=null; try{ gl=cv.getContext('webgl')||cv.getContext('experimental-webgl'); }catch(e){}
+  if(!gl){ return; }
+  function mkSh(t,s){ const o=gl.createShader(t); gl.shaderSource(o,s); gl.compileShader(o); return gl.getShaderParameter(o,gl.COMPILE_STATUS)?o:null; }
+  const vs=mkSh(gl.VERTEX_SHADER,'attribute vec2 p;void main(){gl_Position=vec4(p,0.0,1.0);}');
+  const fs=mkSh(gl.FRAGMENT_SHADER,SKY_FX_FS);
+  if(!vs||!fs){ return; }
+  const pr=gl.createProgram(); gl.attachShader(pr,vs); gl.attachShader(pr,fs); gl.linkProgram(pr);
+  if(!gl.getProgramParameter(pr,gl.LINK_STATUS)){ return; }
+  gl.useProgram(pr);
+  const buf=gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER,buf);
+  gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,3,-1,-1,3]),gl.STATIC_DRAW);
+  const lp=gl.getAttribLocation(pr,'p'); gl.enableVertexAttribArray(lp); gl.vertexAttribPointer(lp,2,gl.FLOAT,false,0,0);
+  const uRes=gl.getUniformLocation(pr,'uRes'), uTime=gl.getUniformLocation(pr,'uTime'), uTheme=gl.getUniformLocation(pr,'uTheme'), uSun=gl.getUniformLocation(pr,'uSun');
+  const tp=homeThemeParams();
+  cv.style.display='block';
+  const st={gl:gl,raf:0,start:performance.now(),cv:cv,uRes:uRes,uTime:uTime,w:0,h:0};
+  homeFx=st;
+  function frame(){
+    if(homeFx!==st||screen!=='home') return;
+    const dpr=Math.min(window.devicePixelRatio||1,1.75);
+    const w=Math.max(1,Math.round(cv.clientWidth*dpr)), h=Math.max(1,Math.round(cv.clientHeight*dpr));
+    if(w!==st.w||h!==st.h){ cv.width=w; cv.height=h; st.w=w; st.h=h; gl.viewport(0,0,w,h); }
+    gl.uniform2f(uRes,st.w,st.h);
+    gl.uniform1f(uTime,(performance.now()-st.start)/1000);
+    gl.uniform1f(uTheme,tp.t);
+    gl.uniform2f(uSun,tp.sun[0],tp.sun[1]);
+    gl.drawArrays(gl.TRIANGLES,0,3);
+    st.raf=requestAnimationFrame(frame);
+  }
+  st.raf=requestAnimationFrame(frame);
+}
 function scannerScreen(){
   const w=getWeights(meta.streak);
   const oddsBar=RARITY_TIERS.map((t,i)=>`<span class="odds-seg" style="flex:${Math.max(0.5,w[i])};background:${t.hex};"></span>`).join('');
@@ -4810,6 +4897,7 @@ function maybeShowConsent(){
 function render(){
   const app=document.getElementById('app');
   stopSplashWater();
+  stopHomeFx();
   // Mémorise la position de défilement de l'overlay (fiche caillou) pour la restaurer
   // après reconstruction — évite que l'écran remonte en haut à chaque clic (+/- d'amélioration).
   const _ovPrev=document.querySelector('.overlay');
@@ -4864,6 +4952,7 @@ function render(){
   maybeShowConsent();
   maybeShowAnnouncement();
   if(screen==='splash') requestAnimationFrame(startSplashWater);
+  if(screen==='home') requestAnimationFrame(startHomeFx);
 
   if(generatingCharacter){
     const ESTIMATED_MS=10000;
