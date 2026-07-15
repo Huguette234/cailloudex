@@ -947,67 +947,85 @@ nav{display:flex;gap:8px;padding:8px 16px max(12px,env(safe-area-inset-bottom));
 .splash-head{width:100%;display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
 .splash-title{font-family:'Playfair Display',Georgia,serif;font-weight:800;font-size:24px;color:#fff;}
 .splash-record{font-family:'Baloo 2',sans-serif;font-weight:800;font-size:11px;color:rgba(255,255,255,.7);background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:999px;padding:4px 11px;max-width:55%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.splash-scene{position:relative;width:100%;height:56vh;min-height:360px;max-height:520px;border-radius:22px;overflow:hidden;border:2px solid rgba(255,255,255,.14);box-shadow:0 14px 38px rgba(0,0,0,.45),inset 0 0 0 1px rgba(255,255,255,.06);background:#0c2942;}
-/* ===== VUE DU DESSUS — plan d'eau profond (caméra qui suit la chute) ===== */
-.dv-water{position:absolute;inset:-12%;z-index:1;transform:scale(.9);transform-origin:50% 46%;
-  background:radial-gradient(circle at 50% 46%,#5ba0cf 0%,#3d84b6 22%,#2a6796 46%,#1a4d78 70%,#0f3557 100%);}
-.dv-caustics{position:absolute;inset:0;opacity:.5;mix-blend-mode:screen;
-  background-image:repeating-linear-gradient(58deg,transparent 0 26px,rgba(200,240,255,.10) 26px 30px),repeating-linear-gradient(126deg,transparent 0 30px,rgba(180,230,255,.08) 30px 34px),repeating-linear-gradient(4deg,transparent 0 40px,rgba(255,255,255,.05) 40px 44px);
-  animation:dvCaustics 11s linear infinite;}
-@keyframes dvCaustics{from{background-position:0 0,0 0,0 0;}to{background-position:80px 40px,-70px 30px,30px -60px;}}
-.dv-glint{position:absolute;top:18%;left:55%;width:42%;height:42%;border-radius:50%;
-  background:radial-gradient(circle at 50% 50%,rgba(255,247,214,.55),rgba(255,240,190,.15) 46%,transparent 68%);
-  animation:dvGlint 6s ease-in-out infinite;}
-@keyframes dvGlint{0%,100%{opacity:.5;transform:scale(.92);}50%{opacity:.85;transform:scale(1.08);}}
-.dv-depth{position:absolute;inset:0;z-index:2;pointer-events:none;
-  background:radial-gradient(circle at 50% 46%,transparent 34%,rgba(6,26,44,.32) 68%,rgba(4,18,32,.62) 100%);}
-/* Pont vu du dessus (planches + rambarde) : on est dessus, on jette par-dessus bord */
-.dv-bridge{position:absolute;left:0;right:0;bottom:0;height:33%;z-index:4;transform-origin:50% 100%;
-  background:linear-gradient(180deg,#a9763e 0%,#95683a 44%,#7a5230 100%);
-  box-shadow:0 -12px 26px rgba(0,0,0,.42);}
-.dv-bridge::before{content:'';position:absolute;inset:0;background:repeating-linear-gradient(90deg,rgba(0,0,0,.24) 0 2px,transparent 2px 48px);}
-.dv-bridge::after{content:'';position:absolute;inset:0;background:repeating-linear-gradient(90deg,transparent 0 11px,rgba(255,255,255,.06) 11px 13px,transparent 13px 24px);}
-.dv-rail{position:absolute;left:0;right:0;top:0;height:11px;border-radius:0 0 3px 3px;
-  background:linear-gradient(180deg,#d8a862 0%,#b8813f 60%,#946530 100%);
-  box-shadow:0 4px 9px rgba(0,0,0,.42),0 1px 0 rgba(255,255,255,.32) inset;}
-.dv-rail::before,.dv-rail::after{content:'';position:absolute;top:2px;width:9px;height:7px;border-radius:2px;background:linear-gradient(180deg,#c69551,#93632f);}
-.dv-rail::before{left:20%;}.dv-rail::after{right:20%;}
-/* Traînées de vitesse pendant la chute (flou radial) */
-.dv-speed{position:absolute;inset:-30%;z-index:5;opacity:0;pointer-events:none;
-  background:repeating-conic-gradient(from 0deg,rgba(255,255,255,.11) 0deg 1.4deg,transparent 1.4deg 7deg);
-  -webkit-mask:radial-gradient(circle at 50% 50%,transparent 10%,#000 32%,transparent 70%);mask:radial-gradient(circle at 50% 50%,transparent 10%,#000 32%,transparent 70%);transform:scale(.5);}
-/* Ombre du caillou sur l'eau : grandit à l'approche de la surface */
-.dv-shadow{position:absolute;top:50%;left:50%;width:58px;height:58px;z-index:3;border-radius:50%;transform:translate(-50%,-50%) scale(.18);opacity:0;
-  background:radial-gradient(circle at 50% 50%,rgba(3,18,32,.5),rgba(3,18,32,.22) 55%,transparent 72%);filter:blur(3px);}
-/* Le caillou : la caméra le suit, il reste centré */
-.dv-rock{position:absolute;top:50%;left:50%;width:64px;height:64px;z-index:6;transform:translate(-50%,-50%);}
-.dv-rock img{width:100%;height:100%;border-radius:14px;object-fit:cover;border:2px solid rgba(255,255,255,.8);box-shadow:0 10px 22px rgba(0,0,0,.5),0 0 0 1px rgba(0,0,0,.2);}
-.dv-rock.dv-gone{opacity:0;}
-/* Timeline de la chute (~2.8s, accélération) */
-.splash-scene.diving .dv-water{animation:dvZoom 2.8s cubic-bezier(.5,.02,.86,.5) forwards;}
-.splash-scene.diving .dv-speed{animation:dvSpeed 2.8s cubic-bezier(.5,.02,.86,.5) forwards;}
-.splash-scene.diving .dv-shadow{animation:dvShadow 2.8s cubic-bezier(.5,.02,.86,.5) forwards;}
-.splash-scene.diving .dv-rock{animation:dvRock 2.8s cubic-bezier(.5,.02,.86,.5) forwards;}
-.splash-scene.diving .dv-bridge{animation:dvBridge 2.8s cubic-bezier(.5,.02,.86,.5) forwards;}
-@keyframes dvBridge{0%{transform:translateY(0) scale(1);opacity:1;}22%{transform:translateY(-3%) scale(.86);opacity:.95;}62%{transform:translateY(-12%) scale(.48);opacity:0;}100%{transform:translateY(-16%) scale(.4);opacity:0;}}
-@keyframes dvZoom{0%{transform:scale(.9) translateY(-2%);filter:brightness(.72) saturate(.9);}70%{filter:brightness(.96) saturate(1);}100%{transform:scale(1.7) translateY(3%);filter:brightness(1.12) saturate(1.08);}}
-@keyframes dvSpeed{0%{opacity:0;transform:scale(.5);}25%{opacity:.15;}60%{opacity:.55;}100%{opacity:.72;transform:scale(1.9);}}
-@keyframes dvShadow{0%{opacity:0;transform:translate(-50%,-50%) scale(.16);}30%{opacity:.25;}100%{opacity:.6;transform:translate(-50%,-50%) scale(1.15);}}
-@keyframes dvRock{0%{transform:translate(-50%,-50%) rotate(0deg) scale(1.08);opacity:1;}82%{transform:translate(-50%,-50%) rotate(296deg) scale(1);opacity:1;}100%{transform:translate(-50%,-50%) rotate(332deg) scale(.5);opacity:0;}}
-.dv-vignette{position:absolute;inset:0;z-index:9;pointer-events:none;box-shadow:inset 0 0 60px rgba(0,20,40,.4),inset 0 0 22px rgba(0,10,26,.3);}
-/* ===== Splash vu du dessus (anneaux concentriques + écume + gouttes radiales) ===== */
-.dv-splash-layer{position:absolute;top:50%;left:50%;z-index:7;pointer-events:none;}
-.dv-core{position:absolute;left:0;top:0;width:70px;height:70px;border-radius:50%;background:radial-gradient(circle at 50% 50%,#fff,var(--col) 50%,transparent 72%);animation:dvCore .5s ease-out forwards;}
-@keyframes dvCore{0%{transform:translate(-50%,-50%) scale(.2);opacity:.95;}100%{transform:translate(-50%,-50%) scale(var(--sc));opacity:0;}}
-.dv-foam{position:absolute;left:0;top:0;width:84px;height:84px;border-radius:50%;background:radial-gradient(circle at 50% 50%,rgba(255,255,255,.9) 40%,rgba(255,255,255,.4) 62%,transparent 74%);animation:dvFoam .9s ease-out forwards;}
-@keyframes dvFoam{0%{transform:translate(-50%,-50%) scale(.12);opacity:.9;}55%{opacity:.5;}100%{transform:translate(-50%,-50%) scale(var(--sc));opacity:0;}}
-.dv-ripple{position:absolute;left:0;top:0;width:80px;height:80px;border:3px solid rgba(255,255,255,.75);border-radius:50%;animation:dvRipple 1.4s cubic-bezier(.2,.6,.3,1) forwards;}
-@keyframes dvRipple{0%{transform:translate(-50%,-50%) scale(.14);opacity:.9;border-width:3px;}100%{transform:translate(-50%,-50%) scale(var(--sc));opacity:0;border-width:1px;}}
-.dv-drop{position:absolute;left:0;top:0;width:9px;height:9px;border-radius:50%;background:radial-gradient(circle at 40% 35%,#fff,#cfeeff);box-shadow:0 0 5px rgba(255,255,255,.5);animation:dvDrop 1s cubic-bezier(.25,.4,.5,1) forwards;}
-@keyframes dvDrop{0%{transform:translate(-50%,-50%) scale(1);opacity:1;}70%{opacity:1;}100%{transform:translate(calc(-50% + var(--dx)),calc(-50% + var(--dy))) scale(.4);opacity:0;}}
-.dv-result{position:absolute;top:30%;left:50%;z-index:8;width:88%;text-align:center;line-height:1.12;font-family:'Playfair Display',Georgia,serif;font-weight:900;font-size:22px;color:#fff;text-shadow:0 2px 12px rgba(0,0,0,.75),0 0 20px rgba(255,255,255,.4);opacity:0;transform:translateX(-50%);}
-.dv-result.show{animation:dvResult 1.8s ease both;}
-@keyframes dvResult{0%{opacity:0;transform:translateX(-50%) scale(.4);}16%{opacity:1;transform:translateX(-50%) scale(1.14);}30%{transform:translateX(-50%) scale(1);}82%{opacity:1;}100%{opacity:0;transform:translateX(-50%) translateY(-20px) scale(1);}}
+.splash-scene{position:relative;width:100%;height:52vh;min-height:350px;max-height:500px;border-radius:22px;overflow:hidden;border:2px solid rgba(255,255,255,.14);box-shadow:0 14px 38px rgba(0,0,0,.45),inset 0 0 0 1px rgba(255,255,255,.06);
+  background:linear-gradient(180deg,#7ec2ee 0%,#a3d6f2 26%,#c9e9f6 44%,#e8f5f6 52%,#eef7f7 54%);}
+/* Soleil + halo */
+.sp-sun{position:absolute;top:8%;right:21%;width:46px;height:46px;border-radius:50%;z-index:1;background:radial-gradient(circle,#fffdf0 32%,#ffe9a6 60%,rgba(255,221,130,0) 74%);box-shadow:0 0 50px 26px rgba(255,238,180,.5);animation:spSun 5s ease-in-out infinite;}
+@keyframes spSun{0%,100%{filter:brightness(1);}50%{filter:brightness(1.12);}}
+/* Collines lointaines (profondeur, brume) */
+.sp-hills{position:absolute;left:0;right:0;top:47%;height:7%;z-index:1;overflow:hidden;}
+.sp-hills::before,.sp-hills::after{content:'';position:absolute;bottom:-42%;border-radius:50%;filter:blur(2px);}
+.sp-hills::before{left:-15%;width:82%;height:100%;background:#93afc7;opacity:.42;}
+.sp-hills::after{right:-12%;width:66%;height:80%;background:#809eb8;opacity:.48;}
+/* Nuages doux */
+.sp-cloud{position:absolute;height:15px;border-radius:999px;background:rgba(255,255,255,.92);filter:blur(1px);z-index:1;}
+.sp-cloud::before,.sp-cloud::after{content:'';position:absolute;background:inherit;border-radius:50%;}
+.sp-cloud::before{width:58%;height:190%;top:-75%;left:12%;}
+.sp-cloud::after{width:42%;height:150%;top:-46%;right:12%;}
+.sp-cloud.c1{width:62px;top:9%;left:13%;animation:spCloud 24s ease-in-out infinite;}
+.sp-cloud.c2{width:44px;top:20%;right:15%;opacity:.85;animation:spCloud 30s ease-in-out infinite reverse;}
+.sp-cloud.c3{width:34px;top:14%;left:53%;opacity:.68;animation:spCloud 27s ease-in-out infinite;}
+@keyframes spCloud{0%,100%{transform:translateX(0);}50%{transform:translateX(20px);}}
+/* Eau réaliste — surface vue en perspective, profondeur, reflets */
+.sp-water{position:absolute;left:0;right:0;top:54%;bottom:0;z-index:2;overflow:hidden;perspective:230px;perspective-origin:50% 0;
+  background:
+    radial-gradient(130% 70% at 50% -6%,rgba(196,236,248,.55),rgba(150,214,236,0) 46%),
+    linear-gradient(180deg,#79bfe4 0%,#57a2cf 14%,#3b83b4 34%,#2a6a98 56%,#1a527e 76%,#103c5e 100%);}
+/* Reflet clair du ciel juste sous l'horizon */
+.sp-water::before{content:'';position:absolute;top:0;left:0;right:0;height:20%;background:linear-gradient(180deg,rgba(226,245,252,.6),transparent);}
+/* Ondulations en perspective : lignes qui reculent vers l'horizon */
+.sp-caustics{position:absolute;left:-40%;right:-40%;top:0;bottom:-30%;transform-origin:50% 0;transform:rotateX(74deg) scale(1,2.1);
+  background:repeating-linear-gradient(0deg,transparent 0 7px,rgba(255,255,255,.10) 7px 9px,transparent 9px 15px);
+  -webkit-mask:linear-gradient(180deg,transparent,#000 16%,#000 100%);mask:linear-gradient(180deg,transparent,#000 16%,#000 100%);
+  animation:spCaustics 6.5s linear infinite;}
+@keyframes spCaustics{from{background-position:0 0;}to{background-position:0 16px;}}
+/* Fines rides secondaires (détail, plus lentes) */
+.sp-waves{position:absolute;left:-40%;right:-40%;top:0;bottom:-30%;transform-origin:50% 0;transform:rotateX(76deg) scale(1,2.4);opacity:.6;
+  background:repeating-linear-gradient(0deg,transparent 0 12px,rgba(255,255,255,.06) 12px 13px);
+  -webkit-mask:linear-gradient(180deg,transparent,#000 20%,#000 100%);mask:linear-gradient(180deg,transparent,#000 20%,#000 100%);
+  animation:spWaves 9s linear infinite;}
+@keyframes spWaves{from{background-position:0 0;}to{background-position:0 26px;}}
+/* Chemin scintillant du soleil sur l'eau (triangle qui s'élargit vers l'avant) */
+.sp-glint{position:absolute;top:0;right:13%;width:20%;height:100%;
+  clip-path:polygon(36% 0,64% 0,100% 100%,0 100%);
+  background:linear-gradient(180deg,rgba(255,248,212,.9),rgba(255,240,182,.42) 32%,rgba(255,235,158,.14) 62%,transparent 90%);
+  -webkit-mask:linear-gradient(180deg,#000,#000 56%,transparent);mask:linear-gradient(180deg,#000,#000 56%,transparent);
+  filter:blur(1px);animation:spGlint 2.4s ease-in-out infinite;}
+.sp-glint::before{content:'';position:absolute;inset:0;
+  background:repeating-linear-gradient(0deg,transparent 0 4px,rgba(255,255,255,.55) 4px 6px,transparent 6px 12px);
+  -webkit-mask:linear-gradient(180deg,#000,transparent 72%);mask:linear-gradient(180deg,#000,transparent 72%);
+  animation:spGlintSparkle 1.1s steps(6) infinite;}
+@keyframes spGlint{0%,100%{opacity:.6;transform:scaleX(.82);}50%{opacity:1;transform:scaleX(1.18);}}
+@keyframes spGlintSparkle{from{background-position:0 0;}to{background-position:0 11px;}}
+.sp-surface{position:absolute;top:54%;left:0;right:0;height:3px;z-index:3;background:linear-gradient(90deg,transparent,rgba(255,255,255,.95),transparent);box-shadow:0 0 12px rgba(255,255,255,.6),0 1px 5px rgba(120,200,240,.5);}
+/* Pont travaillé */
+.sp-bridge{position:absolute;top:15%;left:0;right:0;height:56px;z-index:4;}
+.sp-plank{position:absolute;bottom:0;left:0;right:0;height:20px;border-radius:2px;
+  background:linear-gradient(180deg,#cf9457 0%,#a5703c 42%,#7c4f28 100%);
+  box-shadow:0 2px 0 rgba(255,255,255,.18) inset,0 5px 0 #5e3a1c,0 12px 16px rgba(0,0,0,.35);}
+.sp-plank::before{content:'';position:absolute;inset:0;background:repeating-linear-gradient(90deg,rgba(0,0,0,.16) 0 1.5px,transparent 1.5px 36px);}
+.sp-plank::after{content:'';position:absolute;inset:0;background:repeating-linear-gradient(90deg,transparent 0 7px,rgba(255,255,255,.06) 7px 8px,transparent 8px 15px);}
+.sp-rail{position:absolute;top:2px;left:0;right:0;height:7px;border-radius:4px;background:linear-gradient(180deg,#b8814b,#8a5a30);box-shadow:0 2px 4px rgba(0,0,0,.28);}
+.sp-bridge::before,.sp-bridge::after{content:'';position:absolute;top:9px;width:7px;height:32px;border-radius:3px;background:linear-gradient(90deg,#a06c39,#7c4f28);box-shadow:0 3px 5px rgba(0,0,0,.3);}
+.sp-bridge::before{left:23%;}.sp-bridge::after{right:23%;}
+.sp-bridge-shadow{position:absolute;left:5%;right:5%;top:100%;height:14px;margin-top:3px;background:radial-gradient(ellipse at 50% 0%,rgba(0,0,0,.3),transparent 72%);filter:blur(2px);}
+/* Caillou */
+.sp-rock{position:absolute;top:20%;left:50%;width:52px;height:52px;z-index:5;transform:translateX(-50%);}
+.sp-rock img{width:100%;height:100%;border-radius:12px;object-fit:cover;border:2px solid rgba(255,255,255,.75);box-shadow:0 6px 12px rgba(0,0,0,.45);}
+.sp-rock.sp-hidden{opacity:0;}
+@keyframes spFall{0%{top:20%;transform:translateX(-50%) rotate(0) scale(1);}70%{transform:translateX(-50%) rotate(200deg) scale(1);}100%{top:51%;transform:translateX(-50%) rotate(262deg) scale(.7);}}
+.sp-rock.sp-falling{animation:spFall .82s cubic-bezier(.45,0,.85,.5) forwards;}
+.sp-vignette{position:absolute;inset:0;z-index:8;pointer-events:none;box-shadow:inset 0 0 55px rgba(0,22,44,.28),inset 0 -26px 40px rgba(0,12,30,.22);}
+.sp-splash-layer{position:absolute;top:54%;left:50%;transform:translateX(-50%);z-index:6;pointer-events:none;}
+.sp-burst{position:absolute;left:0;top:0;width:66px;height:34px;border-radius:50%;background:radial-gradient(ellipse at 50% 45%,#fff,var(--col) 58%,transparent 74%);animation:spBurst .55s ease-out forwards;}
+@keyframes spBurst{0%{transform:translate(-50%,-20%) scale(.2);opacity:.95;}55%{opacity:.9;}100%{transform:translate(-50%,-95%) scale(var(--sc));opacity:0;}}
+.sp-ripple{position:absolute;left:0;top:0;width:44px;height:15px;border:2px solid rgba(255,255,255,.75);border-radius:50%;animation:spRipple 1.15s ease-out forwards;}
+@keyframes spRipple{0%{transform:translate(-50%,-50%) scale(.3);opacity:.85;}100%{transform:translate(-50%,-50%) scale(calc(var(--sc)*2.4));opacity:0;}}
+.sp-drop{position:absolute;left:0;top:0;width:8px;height:8px;border-radius:50%;background:radial-gradient(circle at 40% 35%,#fff,#bfe6f2);animation:spDrop .82s cubic-bezier(.25,-.2,.7,1) forwards;}
+@keyframes spDrop{0%{transform:translate(-50%,-50%);opacity:1;}75%{opacity:1;}100%{transform:translate(calc(-50% + var(--dx)),calc(-50% + var(--dy)));opacity:0;}}
+.sp-result{position:absolute;top:28%;left:50%;z-index:7;width:88%;text-align:center;line-height:1.12;font-family:'Playfair Display',Georgia,serif;font-weight:900;font-size:21px;color:#fff;text-shadow:0 2px 12px rgba(0,0,0,.7),0 0 18px rgba(255,255,255,.4);opacity:0;transform:translateX(-50%);}
+.sp-result.show{animation:spResult 1.5s ease both;}
+@keyframes spResult{0%{opacity:0;transform:translateX(-50%) scale(.4);}18%{opacity:1;transform:translateX(-50%) scale(1.12);}32%{transform:translateX(-50%) scale(1);}80%{opacity:1;}100%{opacity:0;transform:translateX(-50%) translateY(-22px) scale(1);}}
 .sp-pick-label{font-family:'Nunito',sans-serif;font-size:11px;color:rgba(255,255,255,.5);margin:14px 0 6px;text-align:center;}
 .sp-picker{display:flex;gap:8px;overflow-x:auto;width:100%;padding:2px 2px 6px;-webkit-overflow-scrolling:touch;}
 .sp-thumb{width:48px;height:48px;flex-shrink:0;border-radius:11px;object-fit:cover;border:2px solid;opacity:.55;cursor:pointer;transition:opacity .15s,transform .15s;}
@@ -2772,15 +2790,16 @@ function splashScreen(){
       <span class="splash-record">🏆 ${rec>=0?(SPLASH_TIERS[rec].label.replace(/[💧💦🌊✨]/g,'').trim()):'Aucun record'}</span>
     </div>
     <div class="splash-scene" id="splashScene">
-      <div class="dv-water" id="dvWater"><div class="dv-caustics"></div><div class="dv-glint"></div></div>
-      <div class="dv-depth"></div>
-      <div class="dv-bridge" id="dvBridge"><div class="dv-rail"></div></div>
-      <div class="dv-speed" id="dvSpeed"></div>
-      <div class="dv-shadow" id="dvShadow"></div>
-      <div class="dv-rock" id="dvRock"><img src="${img}" alt="${r.name}"></div>
-      <div class="dv-splash-layer" id="dvSplashLayer"></div>
-      <div class="dv-result" id="dvResult"></div>
-      <div class="dv-vignette"></div>
+      <div class="sp-sun"></div>
+      <div class="sp-hills"></div>
+      <span class="sp-cloud c1"></span><span class="sp-cloud c2"></span><span class="sp-cloud c3"></span>
+      <div class="sp-water"><div class="sp-glint"></div><div class="sp-caustics"></div><div class="sp-waves"></div></div>
+      <div class="sp-surface"></div>
+      <div class="sp-bridge"><div class="sp-rail"></div><div class="sp-plank"></div><div class="sp-bridge-shadow"></div></div>
+      <div class="sp-rock" id="spRock"><img src="${img}" alt="${r.name}"></div>
+      <div class="sp-splash-layer" id="spSplashLayer"></div>
+      <div class="sp-result" id="spResult"></div>
+      <div class="sp-vignette"></div>
     </div>
     <button class="btn btn-gold" id="spDropBtn" style="margin-top:14px;" data-action="dropRock">💧 LÂCHER LE CAILLOU</button>
     <div class="sp-pick-label">Choisis ton caillou (plus il est rare, plus ça éclabousse) :</div>
@@ -2788,47 +2807,43 @@ function splashScreen(){
     <button class="btn btn-ghost" style="margin-top:12px;" data-action="goto" data-screen="home">← Retour</button>
   </div>`;
 }
-function doSplashTop(tier){
-  const layer=document.getElementById('dvSplashLayer'); if(!layer) return;
+function doSplash(tier){
+  const layer=document.getElementById('spSplashLayer'); if(!layer) return;
+  const sc=1+tier*0.24;
   const col=(splashRock&&splashRock.hex)||'#8FD8FF';
-  const core=document.createElement('div'); core.className='dv-core'; core.style.setProperty('--sc',(1.4+tier*0.4).toFixed(2)); core.style.setProperty('--col',col); layer.appendChild(core);
-  const foam=document.createElement('div'); foam.className='dv-foam'; foam.style.setProperty('--sc',(1.6+tier*0.5).toFixed(2)); layer.appendChild(foam);
-  const rings=3+Math.min(4,tier);
-  for(let i=0;i<rings;i++){ const rg=document.createElement('div'); rg.className='dv-ripple'; rg.style.setProperty('--sc',((2.2+tier*0.7)*(0.55+i*0.34)).toFixed(2)); rg.style.animationDelay=(i*0.12).toFixed(2)+'s'; layer.appendChild(rg); }
-  const drops=8+tier*4;
-  for(let i=0;i<drops;i++){ const d=document.createElement('div'); d.className='dv-drop';
-    const ang=(i/drops)*360+(Math.random()*30-15); const dist=(46+Math.random()*80)*(0.7+tier*0.16);
-    d.style.setProperty('--dx',(Math.cos(ang*Math.PI/180)*dist).toFixed(0)+'px');
-    d.style.setProperty('--dy',(Math.sin(ang*Math.PI/180)*dist).toFixed(0)+'px');
-    d.style.animationDelay=(Math.random()*0.1).toFixed(2)+'s'; layer.appendChild(d); }
-  setTimeout(()=>{ if(layer) layer.innerHTML=''; },1700);
+  const burst=document.createElement('div'); burst.className='sp-burst'; burst.style.setProperty('--sc',sc); burst.style.setProperty('--col',col); layer.appendChild(burst);
+  const rings=2+Math.min(4,tier);
+  for(let i=0;i<rings;i++){ const rg=document.createElement('div'); rg.className='sp-ripple'; rg.style.setProperty('--sc',sc); rg.style.animationDelay=(i*0.13)+'s'; layer.appendChild(rg); }
+  const drops=6+tier*3;
+  for(let i=0;i<drops;i++){ const d=document.createElement('div'); d.className='sp-drop'; const ang=-90+(Math.random()*130-65); const dist=(38+Math.random()*70)*sc;
+    d.style.setProperty('--dx',(Math.cos(ang*Math.PI/180)*dist).toFixed(0)+'px'); d.style.setProperty('--dy',(-Math.abs(Math.sin(ang*Math.PI/180))*dist*1.15-14).toFixed(0)+'px'); d.style.animationDelay=(Math.random()*0.08).toFixed(2)+'s'; layer.appendChild(d); }
+  setTimeout(()=>{ layer.innerHTML=''; },1500);
 }
 function dropRock(){
   if(splashPhase==='dropping'||!splashRock) return;
-  const rock=document.getElementById('dvRock'), scene=document.getElementById('splashScene'), res=document.getElementById('dvResult'), layer=document.getElementById('dvSplashLayer');
+  const rock=document.getElementById('spRock'), scene=document.getElementById('splashScene'), res=document.getElementById('spResult'), layer=document.getElementById('spSplashLayer');
   if(!rock||!scene) return;
-  scene.classList.remove('diving'); rock.classList.remove('dv-gone'); if(layer) layer.innerHTML=''; if(res){ res.classList.remove('show'); res.textContent=''; }
-  void scene.offsetWidth;
+  rock.classList.remove('sp-falling','sp-hidden'); if(layer) layer.innerHTML=''; if(res){ res.classList.remove('show'); res.textContent=''; }
+  void rock.offsetWidth;
   splashPhase='dropping';
   const btn=document.getElementById('spDropBtn'); if(btn){ btn.disabled=true; btn.style.opacity='.5'; }
-  scene.classList.add('diving');
+  rock.classList.add('sp-falling');
   const tier=splashTierOf(splashRock);
   setTimeout(()=>{
     if(!document.getElementById('splashScene')){ splashPhase='idle'; return; }
-    doSplashTop(tier);
-    if(navigator.vibrate) navigator.vibrate(tier>=3?[15,25,55]:15);
+    doSplash(tier);
+    if(navigator.vibrate) navigator.vibrate(tier>=3?[15,25,45]:15);
     if(tier>=3){ scene.classList.add('arena-shake'); setTimeout(()=>scene.classList.remove('arena-shake'),400); }
-    rock.classList.add('dv-gone');
+    rock.classList.add('sp-hidden');
     let isRecord=false; if(tier>getSplashRecord()){ setSplashRecord(tier); isRecord=true; }
     if(res){ res.textContent=(isRecord?'🏆 RECORD ! ':'')+SPLASH_TIERS[tier].label; res.classList.add('show'); }
     splashPhase='done';
     setTimeout(()=>{
-      const sc2=document.getElementById('splashScene'); if(sc2) sc2.classList.remove('diving');
       const b=document.getElementById('spDropBtn'); if(b){ b.disabled=false; b.style.opacity=''; b.textContent='🔁 RELANCER'; }
-      const rk=document.getElementById('dvRock'); if(rk) rk.classList.remove('dv-gone');
+      const rk=document.getElementById('spRock'); if(rk) rk.classList.remove('sp-hidden','sp-falling');
       splashPhase='idle';
-    },1900);
-  },2800);
+    },1500);
+  },880);
 }
 function scannerScreen(){
   const w=getWeights(meta.streak);
