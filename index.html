@@ -942,6 +942,43 @@ nav{display:flex;gap:8px;padding:8px 16px max(12px,env(safe-area-inset-bottom));
 .rarity-banner span{font-family:'Playfair Display',Georgia,serif;font-weight:900;font-size:34px;color:#fff;letter-spacing:.03em;padding:6px 24px;text-shadow:0 0 20px var(--pk),0 3px 6px rgba(0,0,0,.6);animation:rbIn .5s cubic-bezier(.2,1.4,.5,1) both,rbOut .35s ease-in 1.05s forwards;}
 @keyframes rbIn{0%{opacity:0;transform:scale(2.4) rotate(-6deg);}60%{opacity:1;transform:scale(.92) rotate(2deg);}100%{transform:scale(1) rotate(0);}}
 @keyframes rbOut{to{opacity:0;transform:scale(1.25);}}
+/* ===== MINI-JEU PLOUF ===== */
+.splash-game{padding:8px 14px 24px;max-width:460px;margin:0 auto;display:flex;flex-direction:column;align-items:center;}
+.splash-head{width:100%;display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
+.splash-title{font-family:'Playfair Display',Georgia,serif;font-weight:800;font-size:24px;color:#fff;}
+.splash-record{font-family:'Baloo 2',sans-serif;font-weight:800;font-size:11px;color:rgba(255,255,255,.7);background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:999px;padding:4px 11px;max-width:55%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.splash-scene{position:relative;width:100%;height:52vh;min-height:350px;max-height:500px;border-radius:22px;overflow:hidden;border:2px solid rgba(255,255,255,.1);box-shadow:0 10px 30px rgba(0,0,0,.4);
+  background:linear-gradient(180deg,#7cc0ea 0%,#a9daf2 38%,#c9ebf6 53%,#4b93cf 54%,#2a6ca8 78%,#164e82 100%);}
+.sp-cloud{position:absolute;background:rgba(255,255,255,.55);border-radius:50%;filter:blur(3px);box-shadow:26px 6px 0 -4px rgba(255,255,255,.5),-22px 4px 0 -6px rgba(255,255,255,.45);}
+.sp-cloud.c1{width:46px;height:20px;top:8%;left:16%;animation:spCloud 14s ease-in-out infinite;}
+.sp-cloud.c2{width:34px;height:15px;top:16%;right:18%;animation:spCloud 18s ease-in-out infinite reverse;}
+@keyframes spCloud{0%,100%{transform:translateX(0);}50%{transform:translateX(18px);}}
+.sp-bridge{position:absolute;top:15%;left:0;right:0;height:52px;z-index:2;}
+.sp-plank{position:absolute;bottom:0;left:0;right:0;height:18px;background:linear-gradient(180deg,#b57b45,#7c4f28);box-shadow:0 3px 0 #5e3a1c,0 7px 12px rgba(0,0,0,.3);}
+.sp-plank::after{content:'';position:absolute;inset:0;background:repeating-linear-gradient(90deg,transparent 0 30px,rgba(0,0,0,.14) 30px 32px);}
+.sp-rail{position:absolute;top:0;left:0;right:0;height:6px;background:#8a5a30;border-radius:3px;}
+.sp-bridge::before,.sp-bridge::after{content:'';position:absolute;top:6px;width:6px;height:30px;background:#8a5a30;border-radius:2px;}
+.sp-bridge::before{left:24%;}.sp-bridge::after{right:24%;}
+.sp-rock{position:absolute;top:20%;left:50%;width:52px;height:52px;z-index:3;transform:translateX(-50%);}
+.sp-rock img{width:100%;height:100%;border-radius:12px;object-fit:cover;border:2px solid rgba(255,255,255,.7);box-shadow:0 5px 10px rgba(0,0,0,.4);}
+.sp-rock.sp-hidden{opacity:0;}
+@keyframes spFall{0%{top:20%;transform:translateX(-50%) rotate(0) scale(1);}70%{transform:translateX(-50%) rotate(200deg) scale(1);}100%{top:50%;transform:translateX(-50%) rotate(260deg) scale(.72);}}
+.sp-rock.sp-falling{animation:spFall .82s cubic-bezier(.45,0,.85,.5) forwards;}
+.sp-surface{position:absolute;top:53%;left:0;right:0;height:3px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.6),transparent);z-index:1;}
+.sp-splash-layer{position:absolute;top:53.5%;left:50%;transform:translateX(-50%);z-index:4;pointer-events:none;}
+.sp-burst{position:absolute;left:0;top:0;width:66px;height:34px;border-radius:50%;background:radial-gradient(ellipse at 50% 45%,#fff,var(--col) 58%,transparent 74%);animation:spBurst .55s ease-out forwards;}
+@keyframes spBurst{0%{transform:translate(-50%,-20%) scale(.2);opacity:.95;}55%{opacity:.9;}100%{transform:translate(-50%,-95%) scale(var(--sc));opacity:0;}}
+.sp-ripple{position:absolute;left:0;top:0;width:44px;height:15px;border:2px solid rgba(255,255,255,.75);border-radius:50%;animation:spRipple 1.15s ease-out forwards;}
+@keyframes spRipple{0%{transform:translate(-50%,-50%) scale(.3);opacity:.85;}100%{transform:translate(-50%,-50%) scale(calc(var(--sc)*2.4));opacity:0;}}
+.sp-drop{position:absolute;left:0;top:0;width:8px;height:8px;border-radius:50%;background:radial-gradient(circle at 40% 35%,#fff,#bfe6f2);animation:spDrop .82s cubic-bezier(.25,-.2,.7,1) forwards;}
+@keyframes spDrop{0%{transform:translate(-50%,-50%);opacity:1;}75%{opacity:1;}100%{transform:translate(calc(-50% + var(--dx)),calc(-50% + var(--dy)));opacity:0;}}
+.sp-result{position:absolute;top:28%;left:50%;z-index:6;width:88%;text-align:center;line-height:1.12;font-family:'Playfair Display',Georgia,serif;font-weight:900;font-size:21px;color:#fff;text-shadow:0 2px 12px rgba(0,0,0,.7),0 0 18px rgba(255,255,255,.4);opacity:0;transform:translateX(-50%);}
+.sp-result.show{animation:spResult 1.5s ease both;}
+@keyframes spResult{0%{opacity:0;transform:translateX(-50%) scale(.4);}18%{opacity:1;transform:translateX(-50%) scale(1.12);}32%{transform:translateX(-50%) scale(1);}80%{opacity:1;}100%{opacity:0;transform:translateX(-50%) translateY(-22px) scale(1);}}
+.sp-pick-label{font-family:'Nunito',sans-serif;font-size:11px;color:rgba(255,255,255,.5);margin:14px 0 6px;text-align:center;}
+.sp-picker{display:flex;gap:8px;overflow-x:auto;width:100%;padding:2px 2px 6px;-webkit-overflow-scrolling:touch;}
+.sp-thumb{width:48px;height:48px;flex-shrink:0;border-radius:11px;object-fit:cover;border:2px solid;opacity:.55;cursor:pointer;transition:opacity .15s,transform .15s;}
+.sp-thumb.sel{opacity:1;box-shadow:0 0 0 2px #fff,0 0 12px currentColor;transform:scale(1.06);}
 </style>
 </head>
 <body>
@@ -2651,6 +2688,7 @@ function homeScreen(){
     <button class="btn btn-gold btn-pulse" data-action="goto" data-screen="scanner" style="margin-top:12px;width:100%;max-width:340px;">📷 CAPTURER UN CAILLOU</button>
     <div class="home-links">
       <span data-action="goto" data-screen="combat-pick">⚔️ Combat</span>
+      <span data-action="goto" data-screen="splash">🌊 Plouf</span>
       <span data-action="goto" data-screen="friends">👥 Amis</span>
       <span data-action="goto" data-screen="shop">🛒 Boutique</span>
       <span data-action="account">⚙️ Compte</span>
@@ -2671,6 +2709,87 @@ function nav(){
   </nav>`;
 }
 
+/* ===== MINI-JEU : PLOUF ! (lâcher de caillou) ===== */
+const SPLASH_TIERS=[
+  {label:'Petit "plic" 💧', emoji:'💧'},
+  {label:'Plouf 💦', emoji:'💦'},
+  {label:'Beau PLOUF ! 💦', emoji:'💦'},
+  {label:'GROS PLOUF ! 🌊', emoji:'🌊'},
+  {label:'VAGUE ! 🌊', emoji:'🌊'},
+  {label:'ÉCLABOUSSURE GÉANTE ! 🌊', emoji:'🌊'},
+  {label:'TSUNAMI !! 🌊', emoji:'🌊'},
+  {label:'RAZ-DE-MARÉE COSMIQUE ✨🌊', emoji:'🌊'},
+];
+let splashRock=null, splashPhase='idle';
+function splashTierOf(r){ return r&&r.rarity==='secret'?7:Math.max(0,RARITY_TIERS.findIndex(t=>t.key===(r&&r.rarity))); }
+function getSplashRecord(){ try{ return parseInt(localStorage.getItem('cdx_splash_record')||'-1',10); }catch(e){ return -1; } }
+function setSplashRecord(n){ try{ localStorage.setItem('cdx_splash_record',String(n)); }catch(e){} }
+function splashScreen(){
+  if(!dex.length) return `<div class="empty">${mascotSvg('happy')}<p>Capture d'abord un caillou<br>pour le jeter à l'eau ! 🪨🌊</p><button class="btn btn-gold" style="margin-top:14px;" data-action="goto" data-screen="scanner">📷 CAPTURER</button></div>`;
+  if(!splashRock||!dex.find(r=>r.id===splashRock.id)){
+    splashRock=dex.slice().sort((a,b)=>splashTierOf(b)-splashTierOf(a))[0];
+  }
+  const r=splashRock;
+  const img=r.characterPhoto||r.animePhoto||r.photo;
+  const rec=getSplashRecord();
+  const list=dex.slice().reverse();
+  return `<div class="splash-game">
+    <div class="splash-head">
+      <span class="splash-title">🌊 PLOUF !</span>
+      <span class="splash-record">🏆 ${rec>=0?(SPLASH_TIERS[rec].label.replace(/[💧💦🌊✨]/g,'').trim()):'Aucun record'}</span>
+    </div>
+    <div class="splash-scene" id="splashScene">
+      <span class="sp-cloud c1"></span><span class="sp-cloud c2"></span>
+      <div class="sp-bridge"><div class="sp-rail"></div><div class="sp-plank"></div></div>
+      <div class="sp-rock" id="spRock"><img src="${img}" alt="${r.name}"></div>
+      <div class="sp-surface"></div>
+      <div class="sp-splash-layer" id="spSplashLayer"></div>
+      <div class="sp-result" id="spResult"></div>
+    </div>
+    <button class="btn btn-gold" id="spDropBtn" style="margin-top:14px;" data-action="dropRock">💧 LÂCHER LE CAILLOU</button>
+    <div class="sp-pick-label">Choisis ton caillou (plus il est rare, plus ça éclabousse) :</div>
+    <div class="sp-picker">${list.map(x=>`<img class="sp-thumb${x.id===r.id?' sel':''}" src="${x.characterPhoto||x.animePhoto||x.photo}" alt="${x.name}" data-action="pickSplash" data-id="${x.id}" style="border-color:${x.hex};color:${x.hex};">`).join('')}</div>
+    <button class="btn btn-ghost" style="margin-top:12px;" data-action="goto" data-screen="home">← Retour</button>
+  </div>`;
+}
+function doSplash(tier){
+  const layer=document.getElementById('spSplashLayer'); if(!layer) return;
+  const sc=1+tier*0.24;
+  const col=(splashRock&&splashRock.hex)||'#8FD8FF';
+  const burst=document.createElement('div'); burst.className='sp-burst'; burst.style.setProperty('--sc',sc); burst.style.setProperty('--col',col); layer.appendChild(burst);
+  const rings=2+Math.min(4,tier);
+  for(let i=0;i<rings;i++){ const rg=document.createElement('div'); rg.className='sp-ripple'; rg.style.setProperty('--sc',sc); rg.style.animationDelay=(i*0.13)+'s'; layer.appendChild(rg); }
+  const drops=6+tier*3;
+  for(let i=0;i<drops;i++){ const d=document.createElement('div'); d.className='sp-drop'; const ang=-90+(Math.random()*130-65); const dist=(38+Math.random()*70)*sc;
+    d.style.setProperty('--dx',(Math.cos(ang*Math.PI/180)*dist).toFixed(0)+'px'); d.style.setProperty('--dy',(-Math.abs(Math.sin(ang*Math.PI/180))*dist*1.15-14).toFixed(0)+'px'); d.style.animationDelay=(Math.random()*0.08).toFixed(2)+'s'; layer.appendChild(d); }
+  setTimeout(()=>{ layer.innerHTML=''; },1500);
+}
+function dropRock(){
+  if(splashPhase==='dropping'||!splashRock) return;
+  const rock=document.getElementById('spRock'), scene=document.getElementById('splashScene'), res=document.getElementById('spResult'), layer=document.getElementById('spSplashLayer');
+  if(!rock||!scene) return;
+  rock.classList.remove('sp-falling','sp-hidden'); if(layer) layer.innerHTML=''; if(res){ res.classList.remove('show'); res.textContent=''; }
+  void rock.offsetWidth;
+  splashPhase='dropping';
+  const btn=document.getElementById('spDropBtn'); if(btn){ btn.disabled=true; btn.style.opacity='.5'; }
+  rock.classList.add('sp-falling');
+  const tier=splashTierOf(splashRock);
+  setTimeout(()=>{
+    if(!document.getElementById('splashScene')){ splashPhase='idle'; return; }
+    doSplash(tier);
+    if(navigator.vibrate) navigator.vibrate(tier>=3?[15,25,45]:15);
+    if(tier>=3){ scene.classList.add('arena-shake'); setTimeout(()=>scene.classList.remove('arena-shake'),400); }
+    rock.classList.add('sp-hidden');
+    let isRecord=false; if(tier>getSplashRecord()){ setSplashRecord(tier); isRecord=true; }
+    if(res){ res.textContent=(isRecord?'🏆 RECORD ! ':'')+SPLASH_TIERS[tier].label; res.classList.add('show'); }
+    splashPhase='done';
+    setTimeout(()=>{
+      const b=document.getElementById('spDropBtn'); if(b){ b.disabled=false; b.style.opacity=''; b.textContent='🔁 RELANCER'; }
+      const rk=document.getElementById('spRock'); if(rk) rk.classList.remove('sp-hidden','sp-falling');
+      splashPhase='idle';
+    },1500);
+  },880);
+}
 function scannerScreen(){
   const w=getWeights(meta.streak);
   const oddsBar=RARITY_TIERS.map((t,i)=>`<span class="odds-seg" style="flex:${Math.max(0.5,w[i])};background:${t.hex};"></span>`).join('');
@@ -4526,6 +4645,7 @@ function render(){
     if(screen==='scanner'){ mainHtml=scannerScreen(); showNav=true; }
     else if(screen==='scanning'){ mainHtml=scanningScreen(); }
     else if(screen==='pack'){ mainHtml=packRevealScreen(); }
+    else if(screen==='splash'){ mainHtml=splashScreen(); showNav=true; }
     else if(screen==='anime'){ mainHtml=animeRevealScreen(); }
     else if(screen==='reveal'){ mainHtml=revealScreen(); }
     else if(screen==='dex'){ mainHtml=dexScreen(); showNav=true; }
@@ -5104,6 +5224,8 @@ document.addEventListener('click',(e)=>{
   else if(action==='account'){ screen='account'; render(); }
   else if(action==='cancelSetup'){ screen='home'; render(); }
   else if(action==='openPack'){ openPack(); }
+  else if(action==='dropRock'){ dropRock(); }
+  else if(action==='pickSplash'){ splashRock=dex.find(r=>r.id===t.dataset.id)||splashRock; splashPhase='idle'; render(); }
   else if(action==='openAdmin'){ openAdmin(); }
   else if(action==='adminSubmitPw'){ adminSubmitPw(); }
   else if(action==='adminForgotPw'){ adminForgotPw(); }
