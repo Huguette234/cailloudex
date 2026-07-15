@@ -904,27 +904,39 @@ nav{display:flex;gap:8px;padding:8px 16px max(12px,env(safe-area-inset-bottom));
 .odds-bar{display:flex;height:12px;border-radius:999px;overflow:hidden;gap:1px;box-shadow:inset 0 1px 3px rgba(0,0,0,.4);}
 .odds-seg{display:block;min-width:3px;}
 .scan2-odds .legend{margin-top:10px;}
-/* ===== OUVERTURE BOOSTER (révélation) ===== */
-.pack-wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:64vh;padding:20px;}
-.pack-sub{font-family:'Playfair Display',Georgia,serif;font-size:13px;letter-spacing:.15em;color:rgba(255,255,255,.6);text-transform:uppercase;margin-bottom:24px;}
-.pack-stage{position:relative;width:240px;height:240px;display:flex;align-items:center;justify-content:center;cursor:pointer;}
-.pk-rays{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;animation:radarSpin 9s linear infinite;}
-.pk-ray{position:absolute;width:8px;height:120px;bottom:50%;transform-origin:50% 100%;opacity:.35;filter:blur(2px);border-radius:4px;}
-.pk-glow{position:absolute;width:150px;height:150px;border-radius:50%;background:radial-gradient(circle,var(--pk),transparent 70%);opacity:.55;animation:pkGlow 1.6s ease-in-out infinite;}
-@keyframes pkGlow{0%,100%{transform:scale(.9);opacity:.4;}50%{transform:scale(1.18);opacity:.8;}}
-.pk-capsule{position:relative;z-index:2;width:124px;height:124px;border-radius:34% 34% 42% 42%/36% 36% 44% 44%;background:linear-gradient(160deg,#2a3d5c,#0f1c2e);border:3px solid var(--pk);box-shadow:0 0 30px var(--pk),inset 0 0 22px rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;animation:pkFloat 2.6s ease-in-out infinite;}
-@keyframes pkFloat{0%,100%{transform:translateY(0) rotate(-2deg);}50%{transform:translateY(-10px) rotate(2deg);}}
-.pk-capsule-shine{position:absolute;top:14px;left:20px;width:30px;height:16px;border-radius:50%;background:rgba(255,255,255,.32);filter:blur(3px);}
-.pk-q{font-family:'Playfair Display',Georgia,serif;font-weight:800;font-size:58px;color:var(--pk);text-shadow:0 0 18px var(--pk);opacity:.92;}
-.pk-sparks{position:absolute;inset:0;pointer-events:none;}
-.pk-spark{position:absolute;width:5px;height:5px;border-radius:50%;background:#fff;box-shadow:0 0 8px #fff;animation:pkSpark 1.8s ease-in-out infinite;opacity:0;}
-@keyframes pkSpark{0%,100%{opacity:0;transform:scale(0);}50%{opacity:1;transform:scale(1);}}
-.pack-cta{margin-top:28px;font-family:'Baloo 2',sans-serif;font-weight:800;font-size:15px;color:#fff;background:rgba(255,255,255,.1);border:2px solid rgba(255,255,255,.28);border-radius:999px;padding:12px 26px;animation:ctaPulse 1.4s ease-in-out infinite;cursor:pointer;transition:opacity .2s;}
-@keyframes ctaPulse{0%,100%{transform:scale(1);}50%{transform:scale(1.06);}}
-.pack-tease{margin-top:14px;font-family:'Baloo 2',sans-serif;font-weight:700;font-size:12px;text-align:center;opacity:.85;animation:ctaPulse 1.8s ease-in-out infinite;}
-.pack-stage.pk-open .pk-capsule{animation:pkBurst .5s ease-out forwards;}
-@keyframes pkBurst{0%{transform:scale(1);}38%{transform:scale(1.35);}100%{transform:scale(0);opacity:0;}}
-.pack-stage.pk-open .pk-glow{animation:pkFlash .5s ease-out forwards;}
+/* ===== OUVERTURE BOOSTER (révélation premium) ===== */
+.pack-wrap{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:66vh;padding:20px;}
+.pack-vignette{position:fixed;inset:0;z-index:0;pointer-events:none;background:radial-gradient(circle at 50% 42%,transparent 26%,rgba(3,7,14,.6) 78%);}
+.pack-sub{position:relative;z-index:1;font-family:'Playfair Display',Georgia,serif;font-size:13px;letter-spacing:.18em;color:rgba(255,255,255,.7);text-transform:uppercase;margin-bottom:32px;}
+.pack-stage{position:relative;z-index:1;width:252px;height:252px;display:flex;align-items:center;justify-content:center;cursor:pointer;}
+.pk-halo{position:absolute;width:236px;height:236px;border-radius:50%;background:radial-gradient(circle,var(--pk) 0%,transparent 62%);opacity:.4;filter:blur(16px);animation:pkHalo 2.8s ease-in-out infinite;}
+@keyframes pkHalo{0%,100%{transform:scale(.9);opacity:.3;}50%{transform:scale(1.1);opacity:.5;}}
+.pk-ring{position:absolute;width:128px;height:128px;border-radius:50%;border:2px solid var(--pk);opacity:0;}
+.pk-ring.r1{animation:pkRing 2.8s ease-out infinite;}
+.pk-ring.r2{animation:pkRing 2.8s ease-out infinite 1.4s;}
+@keyframes pkRing{0%{opacity:.55;transform:scale(.85);}80%{opacity:0;}100%{opacity:0;transform:scale(2.05);}}
+.pk-shimmer{position:absolute;width:190px;height:190px;border-radius:50%;background:conic-gradient(from 0deg,transparent,var(--pk) 12%,transparent 30%,transparent 55%,rgba(255,255,255,.65) 66%,transparent 82%);opacity:.4;-webkit-mask:radial-gradient(circle,transparent 61%,#000 63%,#000 71%,transparent 73%);mask:radial-gradient(circle,transparent 61%,#000 63%,#000 71%,transparent 73%);animation:radarSpin 6s linear infinite;}
+.pk-orbit{position:absolute;width:212px;height:212px;animation:radarSpin 7s linear infinite;}
+.pk-orbit.rev{width:172px;height:172px;animation-direction:reverse;animation-duration:9s;}
+.pk-orbdot{position:absolute;top:-3px;left:50%;width:6px;height:6px;border-radius:50%;background:#fff;box-shadow:0 0 10px var(--pk),0 0 6px #fff;transform:translateX(-50%);}
+.pk-gem{position:relative;z-index:3;width:134px;height:152px;animation:pkFloat 3.2s ease-in-out infinite;}
+.pk-gem-face{position:absolute;inset:0;border-radius:26px;overflow:hidden;display:flex;align-items:center;justify-content:center;
+  background:linear-gradient(155deg,#37547e 0%,#1b2e49 44%,#0b1626 100%);border:2.5px solid var(--pk);
+  box-shadow:0 0 0 1px rgba(255,255,255,.08) inset,0 12px 32px rgba(0,0,0,.55),0 0 34px -4px var(--pk),0 0 70px -22px var(--pk);}
+.pk-gem-face::before{content:'';position:absolute;top:-40%;left:-45%;width:70%;height:180%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.24),transparent);transform:rotate(8deg);animation:pkGloss 3.6s ease-in-out infinite;}
+@keyframes pkGloss{0%,58%{left:-50%;}86%,100%{left:130%;}}
+.pk-gem-shine{position:absolute;top:14px;left:18px;width:40px;height:20px;border-radius:50%;background:rgba(255,255,255,.4);filter:blur(4px);}
+.pk-q{position:relative;z-index:2;font-family:'Playfair Display',Georgia,serif;font-weight:800;font-size:70px;color:#fff;text-shadow:0 0 22px var(--pk),0 2px 5px rgba(0,0,0,.5);opacity:.95;}
+@keyframes pkFloat{0%,100%{transform:translateY(0) rotate(-1.5deg);}50%{transform:translateY(-12px) rotate(1.5deg);}}
+.pack-open-btn{position:relative;z-index:1;margin-top:36px;font-family:'Baloo 2',sans-serif;font-weight:800;font-size:15px;color:#0D1B2A;border:3px solid var(--ink);border-radius:18px;padding:14px 32px;cursor:pointer;overflow:hidden;transition:opacity .2s,transform .06s,box-shadow .06s;
+  background:linear-gradient(135deg,#FFE9A0,#F7DC6F 45%,#E8B923);box-shadow:0 6px 0 rgba(0,0,0,.42),0 0 22px rgba(247,220,111,.35);animation:ctaPulse 1.7s ease-in-out infinite;}
+.pack-open-btn::after{content:'';position:absolute;top:0;left:-150%;width:55%;height:100%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.55),transparent);animation:shineSweep 2.4s ease-in-out infinite;}
+.pack-open-btn:active{transform:translateY(3px);box-shadow:0 3px 0 rgba(0,0,0,.42);}
+@keyframes ctaPulse{0%,100%{transform:scale(1);}50%{transform:scale(1.045);}}
+.pack-tease{position:relative;z-index:1;margin-top:16px;font-family:'Baloo 2',sans-serif;font-weight:700;font-size:12.5px;text-align:center;opacity:.9;text-shadow:0 0 12px currentColor;animation:pkHalo 2.4s ease-in-out infinite;}
+.pack-stage.pk-open .pk-gem{animation:pkBurst .5s ease-out forwards;}
+@keyframes pkBurst{0%{transform:scale(1);}36%{transform:scale(1.32);}100%{transform:scale(0);opacity:0;}}
+.pack-stage.pk-open .pk-halo{animation:pkFlash .5s ease-out forwards;}
 @keyframes pkFlash{0%{transform:scale(1);opacity:.8;}100%{transform:scale(3.4);opacity:0;}}
 .rarity-banner{position:fixed;top:36%;left:0;right:0;z-index:66;display:flex;justify-content:center;pointer-events:none;}
 .rarity-banner span{font-family:'Playfair Display',Georgia,serif;font-weight:900;font-size:34px;color:#fff;letter-spacing:.03em;padding:6px 24px;text-shadow:0 0 20px var(--pk),0 3px 6px rgba(0,0,0,.6);animation:rbIn .5s cubic-bezier(.2,1.4,.5,1) both,rbOut .35s ease-in 1.05s forwards;}
@@ -2769,21 +2781,24 @@ function specimenCard(rock,pop){
 let packOpening=false;
 function packRevealScreen(){
   const r=revealRock;
-  const rays=Array.from({length:10},(_,i)=>`<span class="pk-ray" style="transform:rotate(${i*36}deg);background:linear-gradient(to top,transparent,${r.hex});"></span>`).join('');
-  const sparks=Array.from({length:8},()=>`<span class="pk-spark" style="left:${(Math.random()*90+5)|0}%;top:${(Math.random()*90+5)|0}%;animation-delay:${(Math.random()).toFixed(2)}s;"></span>`).join('');
   const teaseHigh=['legendaire','mythique','cosmique','galaxie','secret'].includes(r.rarity);
   return `<div class="pack-wrap">
+    <div class="pack-vignette"></div>
     <div class="pack-sub">✨ Analyse terminée</div>
     <div class="pack-stage" data-action="openPack" style="--pk:${r.hex};">
-      <div class="pk-rays">${rays}</div>
-      <div class="pk-glow"></div>
-      <div class="pk-capsule">
-        <div class="pk-capsule-shine"></div>
-        <span class="pk-q">?</span>
+      <div class="pk-halo"></div>
+      <div class="pk-ring r1"></div><div class="pk-ring r2"></div>
+      <div class="pk-shimmer"></div>
+      <div class="pk-orbit"><span class="pk-orbdot"></span></div>
+      <div class="pk-orbit rev"><span class="pk-orbdot"></span></div>
+      <div class="pk-gem">
+        <div class="pk-gem-face">
+          <div class="pk-gem-shine"></div>
+          <span class="pk-q">?</span>
+        </div>
       </div>
-      <div class="pk-sparks">${sparks}</div>
     </div>
-    <div class="pack-cta" data-action="openPack">👆 Touche pour révéler</div>
+    <button class="pack-open-btn" data-action="openPack">👆 Toucher pour révéler</button>
     ${teaseHigh?`<div class="pack-tease" style="color:${r.hex};">…une aura puissante émane de ce caillou 👀</div>`:''}
   </div>`;
 }
@@ -2798,7 +2813,7 @@ function openPack(){
   packOpening=true;
   const stage=document.querySelector('.pack-stage');
   if(stage) stage.classList.add('pk-open');
-  const cta=document.querySelector('.pack-cta'); if(cta) cta.style.opacity='0';
+  const cta=document.querySelector('.pack-open-btn'); if(cta) cta.style.opacity='0';
   const fl=document.createElement('div'); fl.className='flash-white'; document.body.appendChild(fl); setTimeout(()=>fl.remove(),340);
   if(navigator.vibrate) navigator.vibrate(revealRock.confettiCount>40?[30,50,40,50,120]:[40,60]);
   spawnConfetti(revealRock.confettiCount,revealRock.hex);
