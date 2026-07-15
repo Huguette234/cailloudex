@@ -1156,15 +1156,58 @@ function rowToRock(row){
 }
 
 /* ===== NIVEAU & XP ===== */
-const XP_BY_RARITY = { commun:10, rare:25, epique:50, legendaire:100 };
+const XP_BY_RARITY = { commun:10, rare:25, epique:50, legendaire:100, secret:250 };
 
 /* ===== GRAVILLONS (monnaie du jeu) ===== */
-const GRAVILLON_BY_RARITY = { commun:5, rare:12, epique:25, legendaire:50, mythique:90, cosmique:160, galaxie:300 };
+const GRAVILLON_BY_RARITY = { commun:5, rare:12, epique:25, legendaire:50, mythique:90, cosmique:160, galaxie:300, secret:500 };
 // Gemmes gagnées en jouant (progression accessible sans payer)
-const GEM_BY_RARITY = { commun:0, rare:1, epique:2, legendaire:4, mythique:7, cosmique:12, galaxie:25 };
+const GEM_BY_RARITY = { commun:0, rare:1, epique:2, legendaire:4, mythique:7, cosmique:12, galaxie:25, secret:60 };
 const WIN_GEMS = 3;        // par combat gagné
 const CHALLENGE_GEMS = 5;  // défi du jour
-const RECYCLE_VALUE = { commun:3, rare:8, epique:18, legendaire:40, mythique:80, cosmique:150, galaxie:280 };
+const RECYCLE_VALUE = { commun:3, rare:8, epique:18, legendaire:40, mythique:80, cosmique:150, galaxie:280, secret:600 };
+
+/* ===== CAILLOUX SECRETS (très rares, mêmes pour tout le monde) =====
+   À chaque scan valide, infime chance de tomber sur l'un d'eux (parmi ceux
+   qu'on ne possède pas encore). Identité fixe → reconnaissables entre joueurs. */
+const SPECIAL_CHANCE = 0.006; // ~0.6% par scan qu'un secret apparaisse
+function specialArt(emoji,c1,c2){
+  const svg=`<svg xmlns='http://www.w3.org/2000/svg' width='320' height='200'><defs><radialGradient id='g' cx='50%' cy='40%' r='80%'><stop offset='0%' stop-color='${c1}'/><stop offset='60%' stop-color='${c1}'/><stop offset='100%' stop-color='${c2}'/></radialGradient></defs><rect width='320' height='200' fill='url(#g)'/><g opacity='.35' fill='#fff'><circle cx='40' cy='40' r='2'/><circle cx='280' cy='60' r='2.5'/><circle cx='300' cy='150' r='2'/><circle cx='60' cy='160' r='2'/><circle cx='160' cy='30' r='1.6'/></g><text x='160' y='142' font-size='104' text-anchor='middle'>${emoji}</text></svg>`;
+  return 'data:image/svg+xml,'+encodeURIComponent(svg);
+}
+const SPECIAL_ROCKS = [
+  { name:"Roch' le Tout Premier", emoji:'🪨', rockType:'neutre', hex:'#E8D9A0',
+    personality:"Le tout premier caillou de l'univers. Était là avant l'eau, avant les dinosaures, avant les mauvaises décisions.",
+    quip:"« J'ai vu des choses… »", specialMove:"BIG BANG (relance l'univers, par pure nostalgie)", atk:132, def:150, vit:6 },
+  { name:"Galactor 3000", emoji:'🌌', rockType:'chaos', hex:'#7C4DFF',
+    personality:"Un fragment de météorite qui a traversé douze galaxies juste pour finir dans ta poche.",
+    quip:"« Ta gravité est… mignonne. »", specialMove:"PLUIE D'ÉTOILES (esthétique ET mortelle)", atk:146, def:120, vit:20 },
+  { name:"Mémé Granite", emoji:'👵', rockType:'nature', hex:'#9AE86B',
+    personality:"A élevé quatre générations de gravier. Ne rigole pas avec le respect.",
+    quip:"« De mon temps, on était de la vraie roche. »", specialMove:"COUP DE CANNE TECTONIQUE", atk:118, def:150, vit:4 },
+  { name:"Le Doré de la Loose", emoji:'🥇', rockType:'lumiere', hex:'#FFD700',
+    personality:"Brille tellement fort que c'en est gênant. Surtout pour lui.",
+    quip:"« Regarde-moi. Non, arrête. Non, regarde. »", specialMove:"ÉBLOUISSEMENT NARCISSIQUE", atk:140, def:128, vit:14 },
+  { name:"Diamantesque", emoji:'💎', rockType:'glace', hex:'#8FE9FF',
+    personality:"Techniquement pas un diamant. Émotionnellement, absolument un diamant.",
+    quip:"« Je vaux cher. Fais-moi confiance. »", specialMove:"FACETTE INFINIE (te renvoie ton reflet, en pire)", atk:135, def:135, vit:10 },
+];
+function maybeSpecialRock(revealRock){
+  if(Math.random()>=SPECIAL_CHANCE) return false;
+  const owned=new Set(dex.map(r=>r.name));
+  const pool=SPECIAL_ROCKS.filter(s=>!owned.has(s.name));
+  if(!pool.length) return false;
+  const sp=pool[Math.floor(Math.random()*pool.length)];
+  const ti=ROCK_TYPES.find(t=>t.key===sp.rockType)||ROCK_TYPES[ROCK_TYPES.length-1];
+  Object.assign(revealRock,{
+    name:sp.name, personality:sp.personality, quip:sp.quip, specialMove:sp.specialMove,
+    rockType:sp.rockType, typeLabel:ti.label, typeColor:ti.color,
+    rarity:'secret', rarityLabel:'✨ SECRET', hex:sp.hex,
+    atk:sp.atk, def:sp.def, vit:sp.vit,
+    characterPhoto:specialArt(sp.emoji, sp.hex, '#0a0a1a'),
+    confettiCount:160, _special:true,
+  });
+  return true;
+}
 const STAT_DB_FIELD={ xp:'xp', gravillons:'gravillons', gems:'gems', wins:'wins', losses:'losses', streakFreezeCount:'streak_freeze_count' };
 function incrementStat(key,amount){
   if(!amount) return;
@@ -2592,7 +2635,7 @@ function tcardStat(label,val,color){
   </div>`;
 }
 function specimenCard(rock,pop){
-  const flashy=(rock.rarity==='epique'||rock.rarity==='legendaire')?'shine':'';
+  const flashy=['epique','legendaire','mythique','cosmique','galaxie','secret'].includes(rock.rarity)?'shine':'';
   const typeInfo=ROCK_TYPES.find(t=>t.key===rock.rockType)||null;
   const photoSrc=rock.characterPhoto||rock.animePhoto||rock.photo;
   const hasAlt=!!(rock.characterPhoto||rock.animePhoto);
@@ -2697,7 +2740,7 @@ function dexCard(r){
   const pv=combatMaxHP(r.def||10);
   const img=r.characterPhoto||r.animePhoto||r.photo;
   const atts=rockAttacks(r);
-  return `<div class="dexc${r.rarity==='galaxie'?' galaxie-holo':''}" style="border-color:${r.hex}77;" data-action="detail" data-id="${r.id}">
+  return `<div class="dexc${(r.rarity==='galaxie'||r.rarity==='secret')?' galaxie-holo':''}" style="border-color:${r.hex}77;" data-action="detail" data-id="${r.id}">
     <div class="dexc-imgwrap">
       <img class="dexc-img" src="${img}" alt="${r.name}">
       <div class="dexc-no">N°${String(r.catalogNumber).padStart(4,'0')}</div>
@@ -4560,10 +4603,14 @@ async function handleFile(file){
       shiny: !!aiResult?.shiny,
     };
 
-    animePhoto=await createAnimeArt(dataUrl,tier.hex);
+    // Caillou SECRET (très rare) : remplace l'identité par un spécial non possédé
+    const gotSpecial=maybeSpecialRock(revealRock);
+
+    animePhoto=await createAnimeArt(dataUrl,revealRock.hex);
     revealRock.animePhoto=animePhoto;
 
-    if(navigator.vibrate) navigator.vibrate([30,50,30]);
+    if(navigator.vibrate) navigator.vibrate(gotSpecial?[40,60,40,60,120]:[30,50,30]);
+    if(gotSpecial) setTimeout(()=>showToast('✨✨ CAILLOU SECRET DÉCOUVERT ! ✨✨'),500);
     screen='anime'; render();
     spawnConfetti(revealRock.confettiCount,revealRock.hex);
 
@@ -4815,6 +4862,7 @@ async function recycleRock(rockId){
 async function rerollRockAI(rockId){
   const rock=dex.find(r=>r.id===rockId);
   if(!rock||!session) return;
+  if(rock.rarity==='secret'){ showToast('✨ Un caillou secret ne se réanalyse pas !'); return; }
   if((meta.inventory?.reroll||0)<=0){ showToast('Tu n\'as pas de Re-roll IA. Achète-en à la boutique !'); return; }
   showToast('🔄 Nouvelle analyse en cours...');
   const aiResult=await analyzeWithAI(rock.photo);
