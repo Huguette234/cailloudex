@@ -961,6 +961,17 @@ nav{display:flex;gap:8px;padding:8px 16px max(12px,env(safe-area-inset-bottom));
 @keyframes dvGlint{0%,100%{opacity:.5;transform:scale(.92);}50%{opacity:.85;transform:scale(1.08);}}
 .dv-depth{position:absolute;inset:0;z-index:2;pointer-events:none;
   background:radial-gradient(circle at 50% 46%,transparent 34%,rgba(6,26,44,.32) 68%,rgba(4,18,32,.62) 100%);}
+/* Pont vu du dessus (planches + rambarde) : on est dessus, on jette par-dessus bord */
+.dv-bridge{position:absolute;left:0;right:0;bottom:0;height:33%;z-index:4;transform-origin:50% 100%;
+  background:linear-gradient(180deg,#a9763e 0%,#95683a 44%,#7a5230 100%);
+  box-shadow:0 -12px 26px rgba(0,0,0,.42);}
+.dv-bridge::before{content:'';position:absolute;inset:0;background:repeating-linear-gradient(90deg,rgba(0,0,0,.24) 0 2px,transparent 2px 48px);}
+.dv-bridge::after{content:'';position:absolute;inset:0;background:repeating-linear-gradient(90deg,transparent 0 11px,rgba(255,255,255,.06) 11px 13px,transparent 13px 24px);}
+.dv-rail{position:absolute;left:0;right:0;top:0;height:11px;border-radius:0 0 3px 3px;
+  background:linear-gradient(180deg,#d8a862 0%,#b8813f 60%,#946530 100%);
+  box-shadow:0 4px 9px rgba(0,0,0,.42),0 1px 0 rgba(255,255,255,.32) inset;}
+.dv-rail::before,.dv-rail::after{content:'';position:absolute;top:2px;width:9px;height:7px;border-radius:2px;background:linear-gradient(180deg,#c69551,#93632f);}
+.dv-rail::before{left:20%;}.dv-rail::after{right:20%;}
 /* Traînées de vitesse pendant la chute (flou radial) */
 .dv-speed{position:absolute;inset:-30%;z-index:5;opacity:0;pointer-events:none;
   background:repeating-conic-gradient(from 0deg,rgba(255,255,255,.11) 0deg 1.4deg,transparent 1.4deg 7deg);
@@ -977,6 +988,8 @@ nav{display:flex;gap:8px;padding:8px 16px max(12px,env(safe-area-inset-bottom));
 .splash-scene.diving .dv-speed{animation:dvSpeed 2.8s cubic-bezier(.5,.02,.86,.5) forwards;}
 .splash-scene.diving .dv-shadow{animation:dvShadow 2.8s cubic-bezier(.5,.02,.86,.5) forwards;}
 .splash-scene.diving .dv-rock{animation:dvRock 2.8s cubic-bezier(.5,.02,.86,.5) forwards;}
+.splash-scene.diving .dv-bridge{animation:dvBridge 2.8s cubic-bezier(.5,.02,.86,.5) forwards;}
+@keyframes dvBridge{0%{transform:translateY(0) scale(1);opacity:1;}22%{transform:translateY(-3%) scale(.86);opacity:.95;}62%{transform:translateY(-12%) scale(.48);opacity:0;}100%{transform:translateY(-16%) scale(.4);opacity:0;}}
 @keyframes dvZoom{0%{transform:scale(.9) translateY(-2%);filter:brightness(.72) saturate(.9);}70%{filter:brightness(.96) saturate(1);}100%{transform:scale(1.7) translateY(3%);filter:brightness(1.12) saturate(1.08);}}
 @keyframes dvSpeed{0%{opacity:0;transform:scale(.5);}25%{opacity:.15;}60%{opacity:.55;}100%{opacity:.72;transform:scale(1.9);}}
 @keyframes dvShadow{0%{opacity:0;transform:translate(-50%,-50%) scale(.16);}30%{opacity:.25;}100%{opacity:.6;transform:translate(-50%,-50%) scale(1.15);}}
@@ -2761,6 +2774,7 @@ function splashScreen(){
     <div class="splash-scene" id="splashScene">
       <div class="dv-water" id="dvWater"><div class="dv-caustics"></div><div class="dv-glint"></div></div>
       <div class="dv-depth"></div>
+      <div class="dv-bridge" id="dvBridge"><div class="dv-rail"></div></div>
       <div class="dv-speed" id="dvSpeed"></div>
       <div class="dv-shadow" id="dvShadow"></div>
       <div class="dv-rock" id="dvRock"><img src="${img}" alt="${r.name}"></div>
