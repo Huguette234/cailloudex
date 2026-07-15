@@ -1175,19 +1175,19 @@ function specialArt(emoji,c1,c2){
   return 'data:image/svg+xml,'+encodeURIComponent(svg);
 }
 const SPECIAL_ROCKS = [
-  { name:"Roch' le Tout Premier", emoji:'🪨', rockType:'neutre', hex:'#E8D9A0',
+  { name:"Roch' le Tout Premier", emoji:'🪨', rockType:'neutre', hex:'#E8D9A0', img:'./secrets/roch.jpg',
     personality:"Le tout premier caillou de l'univers. Était là avant l'eau, avant les dinosaures, avant les mauvaises décisions.",
     quip:"« J'ai vu des choses… »", specialMove:"BIG BANG (relance l'univers, par pure nostalgie)", atk:132, def:150, vit:6 },
-  { name:"Galactor 3000", emoji:'🌌', rockType:'chaos', hex:'#7C4DFF',
+  { name:"Galactor 3000", emoji:'🌌', rockType:'chaos', hex:'#7C4DFF', img:'./secrets/galactor.jpg',
     personality:"Un fragment de météorite qui a traversé douze galaxies juste pour finir dans ta poche.",
     quip:"« Ta gravité est… mignonne. »", specialMove:"PLUIE D'ÉTOILES (esthétique ET mortelle)", atk:146, def:120, vit:20 },
-  { name:"Mémé Granite", emoji:'👵', rockType:'nature', hex:'#9AE86B',
+  { name:"Mémé Granite", emoji:'👵', rockType:'nature', hex:'#9AE86B', img:'./secrets/meme.jpg',
     personality:"A élevé quatre générations de gravier. Ne rigole pas avec le respect.",
     quip:"« De mon temps, on était de la vraie roche. »", specialMove:"COUP DE CANNE TECTONIQUE", atk:118, def:150, vit:4 },
-  { name:"Le Doré de la Loose", emoji:'🥇', rockType:'lumiere', hex:'#FFD700',
+  { name:"Le Doré de la Loose", emoji:'🥇', rockType:'lumiere', hex:'#FFD700', img:'./secrets/dore.jpg',
     personality:"Brille tellement fort que c'en est gênant. Surtout pour lui.",
     quip:"« Regarde-moi. Non, arrête. Non, regarde. »", specialMove:"ÉBLOUISSEMENT NARCISSIQUE", atk:140, def:128, vit:14 },
-  { name:"Diamantesque", emoji:'💎', rockType:'glace', hex:'#8FE9FF',
+  { name:"Diamantesque", emoji:'💎', rockType:'glace', hex:'#8FE9FF', img:'./secrets/diamant.jpg',
     personality:"Techniquement pas un diamant. Émotionnellement, absolument un diamant.",
     quip:"« Je vaux cher. Fais-moi confiance. »", specialMove:"FACETTE INFINIE (te renvoie ton reflet, en pire)", atk:135, def:135, vit:10 },
 ];
@@ -1203,7 +1203,7 @@ function maybeSpecialRock(revealRock){
     rockType:sp.rockType, typeLabel:ti.label, typeColor:ti.color,
     rarity:'secret', rarityLabel:'✨ SECRET', hex:sp.hex,
     atk:sp.atk, def:sp.def, vit:sp.vit,
-    characterPhoto:specialArt(sp.emoji, sp.hex, '#0a0a1a'),
+    characterPhoto:sp.img||specialArt(sp.emoji, sp.hex, '#0a0a1a'),
     confettiCount:160, _special:true,
   });
   return true;
