@@ -947,32 +947,66 @@ nav{display:flex;gap:8px;padding:8px 16px max(12px,env(safe-area-inset-bottom));
 .splash-head{width:100%;display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
 .splash-title{font-family:'Playfair Display',Georgia,serif;font-weight:800;font-size:24px;color:#fff;}
 .splash-record{font-family:'Baloo 2',sans-serif;font-weight:800;font-size:11px;color:rgba(255,255,255,.7);background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:999px;padding:4px 11px;max-width:55%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.splash-scene{position:relative;width:100%;height:52vh;min-height:350px;max-height:500px;border-radius:22px;overflow:hidden;border:2px solid rgba(255,255,255,.1);box-shadow:0 10px 30px rgba(0,0,0,.4);
-  background:linear-gradient(180deg,#7cc0ea 0%,#a9daf2 38%,#c9ebf6 53%,#4b93cf 54%,#2a6ca8 78%,#164e82 100%);}
-.sp-cloud{position:absolute;background:rgba(255,255,255,.55);border-radius:50%;filter:blur(3px);box-shadow:26px 6px 0 -4px rgba(255,255,255,.5),-22px 4px 0 -6px rgba(255,255,255,.45);}
-.sp-cloud.c1{width:46px;height:20px;top:8%;left:16%;animation:spCloud 14s ease-in-out infinite;}
-.sp-cloud.c2{width:34px;height:15px;top:16%;right:18%;animation:spCloud 18s ease-in-out infinite reverse;}
-@keyframes spCloud{0%,100%{transform:translateX(0);}50%{transform:translateX(18px);}}
-.sp-bridge{position:absolute;top:15%;left:0;right:0;height:52px;z-index:2;}
-.sp-plank{position:absolute;bottom:0;left:0;right:0;height:18px;background:linear-gradient(180deg,#b57b45,#7c4f28);box-shadow:0 3px 0 #5e3a1c,0 7px 12px rgba(0,0,0,.3);}
-.sp-plank::after{content:'';position:absolute;inset:0;background:repeating-linear-gradient(90deg,transparent 0 30px,rgba(0,0,0,.14) 30px 32px);}
-.sp-rail{position:absolute;top:0;left:0;right:0;height:6px;background:#8a5a30;border-radius:3px;}
-.sp-bridge::before,.sp-bridge::after{content:'';position:absolute;top:6px;width:6px;height:30px;background:#8a5a30;border-radius:2px;}
-.sp-bridge::before{left:24%;}.sp-bridge::after{right:24%;}
-.sp-rock{position:absolute;top:20%;left:50%;width:52px;height:52px;z-index:3;transform:translateX(-50%);}
-.sp-rock img{width:100%;height:100%;border-radius:12px;object-fit:cover;border:2px solid rgba(255,255,255,.7);box-shadow:0 5px 10px rgba(0,0,0,.4);}
+.splash-scene{position:relative;width:100%;height:52vh;min-height:350px;max-height:500px;border-radius:22px;overflow:hidden;border:2px solid rgba(255,255,255,.14);box-shadow:0 14px 38px rgba(0,0,0,.45),inset 0 0 0 1px rgba(255,255,255,.06);
+  background:linear-gradient(180deg,#7ec2ee 0%,#a3d6f2 26%,#c9e9f6 44%,#e8f5f6 52%,#eef7f7 54%);}
+/* Soleil + halo */
+.sp-sun{position:absolute;top:8%;right:21%;width:46px;height:46px;border-radius:50%;z-index:1;background:radial-gradient(circle,#fffdf0 32%,#ffe9a6 60%,rgba(255,221,130,0) 74%);box-shadow:0 0 50px 26px rgba(255,238,180,.5);animation:spSun 5s ease-in-out infinite;}
+@keyframes spSun{0%,100%{filter:brightness(1);}50%{filter:brightness(1.12);}}
+/* Collines lointaines (profondeur, brume) */
+.sp-hills{position:absolute;left:0;right:0;top:47%;height:7%;z-index:1;overflow:hidden;}
+.sp-hills::before,.sp-hills::after{content:'';position:absolute;bottom:-42%;border-radius:50%;filter:blur(2px);}
+.sp-hills::before{left:-15%;width:82%;height:100%;background:#93afc7;opacity:.42;}
+.sp-hills::after{right:-12%;width:66%;height:80%;background:#809eb8;opacity:.48;}
+/* Nuages doux */
+.sp-cloud{position:absolute;height:15px;border-radius:999px;background:rgba(255,255,255,.92);filter:blur(1px);z-index:1;}
+.sp-cloud::before,.sp-cloud::after{content:'';position:absolute;background:inherit;border-radius:50%;}
+.sp-cloud::before{width:58%;height:190%;top:-75%;left:12%;}
+.sp-cloud::after{width:42%;height:150%;top:-46%;right:12%;}
+.sp-cloud.c1{width:62px;top:9%;left:13%;animation:spCloud 24s ease-in-out infinite;}
+.sp-cloud.c2{width:44px;top:20%;right:15%;opacity:.85;animation:spCloud 30s ease-in-out infinite reverse;}
+.sp-cloud.c3{width:34px;top:14%;left:53%;opacity:.68;animation:spCloud 27s ease-in-out infinite;}
+@keyframes spCloud{0%,100%{transform:translateX(0);}50%{transform:translateX(20px);}}
+/* Eau réaliste */
+.sp-water{position:absolute;left:0;right:0;top:54%;bottom:0;z-index:2;overflow:hidden;
+  background:linear-gradient(180deg,#66add9 0%,#4189bd 24%,#2a6798 58%,#164f7d 100%);}
+.sp-water::before{content:'';position:absolute;top:0;left:0;right:0;height:5px;background:linear-gradient(180deg,rgba(255,255,255,.55),transparent);}
+.sp-caustics{position:absolute;inset:0;opacity:.55;
+  background-image:repeating-linear-gradient(112deg,transparent 0 22px,rgba(255,255,255,.07) 22px 26px),repeating-linear-gradient(66deg,transparent 0 28px,rgba(255,255,255,.045) 28px 32px);
+  -webkit-mask:linear-gradient(180deg,#000,transparent 74%);mask:linear-gradient(180deg,#000,transparent 74%);animation:spCaustics 9s linear infinite;}
+@keyframes spCaustics{from{background-position:0 0,0 0;}to{background-position:90px 0,-90px 0;}}
+.sp-glint{position:absolute;top:0;right:18%;width:66px;height:64%;
+  background:radial-gradient(ellipse at 50% 0%,rgba(255,246,205,.6),transparent 62%);
+  -webkit-mask:linear-gradient(180deg,#000,transparent 88%);mask:linear-gradient(180deg,#000,transparent 88%);animation:spGlint 3.6s ease-in-out infinite;}
+@keyframes spGlint{0%,100%{opacity:.45;transform:scaleX(.88);}50%{opacity:.85;transform:scaleX(1.14);}}
+.sp-waves{position:absolute;top:0;left:0;right:0;height:44%;opacity:.5;background:repeating-linear-gradient(180deg,transparent 0 7px,rgba(255,255,255,.06) 7px 8px);animation:spWaves 5s linear infinite;}
+@keyframes spWaves{from{background-position:0 0;}to{background-position:0 15px;}}
+.sp-surface{position:absolute;top:54%;left:0;right:0;height:2px;z-index:3;background:linear-gradient(90deg,transparent,rgba(255,255,255,.9),transparent);box-shadow:0 0 9px rgba(255,255,255,.5);}
+/* Pont travaillé */
+.sp-bridge{position:absolute;top:15%;left:0;right:0;height:56px;z-index:4;}
+.sp-plank{position:absolute;bottom:0;left:0;right:0;height:20px;border-radius:2px;
+  background:linear-gradient(180deg,#cf9457 0%,#a5703c 42%,#7c4f28 100%);
+  box-shadow:0 2px 0 rgba(255,255,255,.18) inset,0 5px 0 #5e3a1c,0 12px 16px rgba(0,0,0,.35);}
+.sp-plank::before{content:'';position:absolute;inset:0;background:repeating-linear-gradient(90deg,rgba(0,0,0,.16) 0 1.5px,transparent 1.5px 36px);}
+.sp-plank::after{content:'';position:absolute;inset:0;background:repeating-linear-gradient(90deg,transparent 0 7px,rgba(255,255,255,.06) 7px 8px,transparent 8px 15px);}
+.sp-rail{position:absolute;top:2px;left:0;right:0;height:7px;border-radius:4px;background:linear-gradient(180deg,#b8814b,#8a5a30);box-shadow:0 2px 4px rgba(0,0,0,.28);}
+.sp-bridge::before,.sp-bridge::after{content:'';position:absolute;top:9px;width:7px;height:32px;border-radius:3px;background:linear-gradient(90deg,#a06c39,#7c4f28);box-shadow:0 3px 5px rgba(0,0,0,.3);}
+.sp-bridge::before{left:23%;}.sp-bridge::after{right:23%;}
+.sp-bridge-shadow{position:absolute;left:5%;right:5%;top:100%;height:14px;margin-top:3px;background:radial-gradient(ellipse at 50% 0%,rgba(0,0,0,.3),transparent 72%);filter:blur(2px);}
+/* Caillou */
+.sp-rock{position:absolute;top:20%;left:50%;width:52px;height:52px;z-index:5;transform:translateX(-50%);}
+.sp-rock img{width:100%;height:100%;border-radius:12px;object-fit:cover;border:2px solid rgba(255,255,255,.75);box-shadow:0 6px 12px rgba(0,0,0,.45);}
 .sp-rock.sp-hidden{opacity:0;}
-@keyframes spFall{0%{top:20%;transform:translateX(-50%) rotate(0) scale(1);}70%{transform:translateX(-50%) rotate(200deg) scale(1);}100%{top:50%;transform:translateX(-50%) rotate(260deg) scale(.72);}}
+@keyframes spFall{0%{top:20%;transform:translateX(-50%) rotate(0) scale(1);}70%{transform:translateX(-50%) rotate(200deg) scale(1);}100%{top:51%;transform:translateX(-50%) rotate(262deg) scale(.7);}}
 .sp-rock.sp-falling{animation:spFall .82s cubic-bezier(.45,0,.85,.5) forwards;}
-.sp-surface{position:absolute;top:53%;left:0;right:0;height:3px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.6),transparent);z-index:1;}
-.sp-splash-layer{position:absolute;top:53.5%;left:50%;transform:translateX(-50%);z-index:4;pointer-events:none;}
+.sp-vignette{position:absolute;inset:0;z-index:8;pointer-events:none;box-shadow:inset 0 0 55px rgba(0,22,44,.28),inset 0 -26px 40px rgba(0,12,30,.22);}
+.sp-splash-layer{position:absolute;top:54%;left:50%;transform:translateX(-50%);z-index:6;pointer-events:none;}
 .sp-burst{position:absolute;left:0;top:0;width:66px;height:34px;border-radius:50%;background:radial-gradient(ellipse at 50% 45%,#fff,var(--col) 58%,transparent 74%);animation:spBurst .55s ease-out forwards;}
 @keyframes spBurst{0%{transform:translate(-50%,-20%) scale(.2);opacity:.95;}55%{opacity:.9;}100%{transform:translate(-50%,-95%) scale(var(--sc));opacity:0;}}
 .sp-ripple{position:absolute;left:0;top:0;width:44px;height:15px;border:2px solid rgba(255,255,255,.75);border-radius:50%;animation:spRipple 1.15s ease-out forwards;}
 @keyframes spRipple{0%{transform:translate(-50%,-50%) scale(.3);opacity:.85;}100%{transform:translate(-50%,-50%) scale(calc(var(--sc)*2.4));opacity:0;}}
 .sp-drop{position:absolute;left:0;top:0;width:8px;height:8px;border-radius:50%;background:radial-gradient(circle at 40% 35%,#fff,#bfe6f2);animation:spDrop .82s cubic-bezier(.25,-.2,.7,1) forwards;}
 @keyframes spDrop{0%{transform:translate(-50%,-50%);opacity:1;}75%{opacity:1;}100%{transform:translate(calc(-50% + var(--dx)),calc(-50% + var(--dy)));opacity:0;}}
-.sp-result{position:absolute;top:28%;left:50%;z-index:6;width:88%;text-align:center;line-height:1.12;font-family:'Playfair Display',Georgia,serif;font-weight:900;font-size:21px;color:#fff;text-shadow:0 2px 12px rgba(0,0,0,.7),0 0 18px rgba(255,255,255,.4);opacity:0;transform:translateX(-50%);}
+.sp-result{position:absolute;top:28%;left:50%;z-index:7;width:88%;text-align:center;line-height:1.12;font-family:'Playfair Display',Georgia,serif;font-weight:900;font-size:21px;color:#fff;text-shadow:0 2px 12px rgba(0,0,0,.7),0 0 18px rgba(255,255,255,.4);opacity:0;transform:translateX(-50%);}
 .sp-result.show{animation:spResult 1.5s ease both;}
 @keyframes spResult{0%{opacity:0;transform:translateX(-50%) scale(.4);}18%{opacity:1;transform:translateX(-50%) scale(1.12);}32%{transform:translateX(-50%) scale(1);}80%{opacity:1;}100%{opacity:0;transform:translateX(-50%) translateY(-22px) scale(1);}}
 .sp-pick-label{font-family:'Nunito',sans-serif;font-size:11px;color:rgba(255,255,255,.5);margin:14px 0 6px;text-align:center;}
@@ -2739,12 +2773,16 @@ function splashScreen(){
       <span class="splash-record">🏆 ${rec>=0?(SPLASH_TIERS[rec].label.replace(/[💧💦🌊✨]/g,'').trim()):'Aucun record'}</span>
     </div>
     <div class="splash-scene" id="splashScene">
-      <span class="sp-cloud c1"></span><span class="sp-cloud c2"></span>
-      <div class="sp-bridge"><div class="sp-rail"></div><div class="sp-plank"></div></div>
-      <div class="sp-rock" id="spRock"><img src="${img}" alt="${r.name}"></div>
+      <div class="sp-sun"></div>
+      <div class="sp-hills"></div>
+      <span class="sp-cloud c1"></span><span class="sp-cloud c2"></span><span class="sp-cloud c3"></span>
+      <div class="sp-water"><div class="sp-glint"></div><div class="sp-caustics"></div><div class="sp-waves"></div></div>
       <div class="sp-surface"></div>
+      <div class="sp-bridge"><div class="sp-rail"></div><div class="sp-plank"></div><div class="sp-bridge-shadow"></div></div>
+      <div class="sp-rock" id="spRock"><img src="${img}" alt="${r.name}"></div>
       <div class="sp-splash-layer" id="spSplashLayer"></div>
       <div class="sp-result" id="spResult"></div>
+      <div class="sp-vignette"></div>
     </div>
     <button class="btn btn-gold" id="spDropBtn" style="margin-top:14px;" data-action="dropRock">💧 LÂCHER LE CAILLOU</button>
     <div class="sp-pick-label">Choisis ton caillou (plus il est rare, plus ça éclabousse) :</div>
