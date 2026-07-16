@@ -85,7 +85,6 @@ body.theme-soir{
 
 /* --- SKY DECORATIONS --- */
 #skyDeco{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;}
-#homeFx{position:fixed;inset:0;z-index:0;pointer-events:none;display:none;mix-blend-mode:screen;}
 
 /* Soleil (matin/aprem) */
 .sky-sun{position:absolute;border-radius:50%;animation:sunPulse 4s ease-in-out infinite alternate;}
@@ -1030,7 +1029,6 @@ nav{display:flex;gap:8px;padding:8px 16px max(12px,env(safe-area-inset-bottom));
 <div id="skyDeco"></div>
 <div class="stars" id="stars"></div>
 <svg class="ground-svg" id="groundSvg" viewBox="0 0 400 130" preserveAspectRatio="none"></svg>
-<canvas id="homeFx"></canvas>
 <div class="frame" id="app"></div>
 <div class="grain-overlay"></div>
 <div class="vignette-overlay"></div>
@@ -1954,74 +1952,77 @@ function applyTimeTheme(){
   /* ----- SOL ----- */
   const g = document.getElementById('groundSvg');
   const grassColors = {
-    nuit:  {top:'#1A3A1A', bot:'#0A1A0A', stone:'#0F280F', stroke:'#0A1E0A', hillA:'rgba(20,50,20,.5)', haze:'rgba(120,140,210,.14)', rim:'rgba(150,170,230,.18)', foliage:'#1C4420', trunk:'#12240E'},
-    matin: {top:'#3A7A1A', bot:'#1E4A08', stone:'#2A5010', stroke:'#1A3A06', hillA:'rgba(50,100,20,.5)', haze:'rgba(255,220,160,.38)', rim:'rgba(255,235,180,.4)', foliage:'#2E6A18', trunk:'#3A2410'},
-    aprem: {top:'#4A9A20', bot:'#2A6A0A', stone:'#2E6012', stroke:'#1A4206', hillA:'rgba(60,130,20,.5)', haze:'rgba(200,235,255,.34)', rim:'rgba(230,250,255,.4)', foliage:'#35801A', trunk:'#3E2A12'},
-    soir:  {top:'#5A3010', bot:'#1A0A02', stone:'#3A1A08', stroke:'#1A0A02', hillA:'rgba(70,30,10,.5)', haze:'rgba(255,150,80,.32)', rim:'rgba(255,180,110,.42)', foliage:'#2C2410', trunk:'#241206'},
+    nuit:  {top:'#1A3A1A', bot:'#0A1A0A', stone:'#0F280F', stroke:'#0A1E0A', haze:'rgba(120,140,210,.14)', rim:'rgba(150,170,230,.30)', foliage:'#1C4420', trunk:'#12240E', flower:null, sunX:356, reflect:'rgba(220,228,255,.5)'},
+    matin: {top:'#3A7A1A', bot:'#1E4A08', stone:'#2A5010', stroke:'#1A3A06', haze:'rgba(255,220,160,.38)', rim:'rgba(255,235,180,.5)', foliage:'#2E6A18', trunk:'#3A2410', flower:'#FFE38A', sunX:360, reflect:'rgba(255,225,170,.6)'},
+    aprem: {top:'#4A9A20', bot:'#2A6A0A', stone:'#2E6012', stroke:'#1A4206', haze:'rgba(200,235,255,.34)', rim:'rgba(235,252,255,.55)', foliage:'#35801A', trunk:'#3E2A12', flower:'#FFFFFF', sunX:328, reflect:'rgba(255,255,255,.65)'},
+    soir:  {top:'#5A3010', bot:'#1A0A02', stone:'#3A1A08', stroke:'#1A0A02', haze:'rgba(255,150,80,.32)', rim:'rgba(255,185,120,.55)', foliage:'#2C2410', trunk:'#241206', flower:null, sunX:60, reflect:'rgba(255,180,110,.6)'},
   };
   const mountainColors = {
-    nuit:  { far:'rgba(58,66,86,.55)',  mid:'rgba(42,49,64,.8)',  near:'#262C3A' },
-    matin: { far:'rgba(150,148,160,.45)', mid:'rgba(115,113,128,.72)', near:'#6E6C7A' },
-    aprem: { far:'rgba(168,172,182,.4)', mid:'rgba(132,137,148,.68)', near:'#7C828C' },
-    soir:  { far:'rgba(112,90,102,.5)', mid:'rgba(80,63,76,.78)', near:'#463A46' },
+    nuit:  { far:'#3A4256', mid:'#2A3140', near:'#262C3A', snow:'#4A5470' },
+    matin: { far:'#96949E', mid:'#737180', near:'#6E6C7A', snow:'#EAD8C0' },
+    aprem: { far:'#A8ACB6', mid:'#848994', near:'#7C828C', snow:'#F2F6FA' },
+    soir:  { far:'#705A66', mid:'#503F4C', near:'#463A46', snow:'#C08A72' },
   };
   const waterColors = {
-    nuit:  { a:'#1E3E60', b:'#0D2038', glint:'rgba(210,220,255,.4)' },
-    matin: { a:'#8FB4D6', b:'#E0A468', glint:'rgba(255,240,210,.55)' },
-    aprem: { a:'#8FD2F2', b:'#3F92C4', glint:'rgba(255,255,255,.6)' },
-    soir:  { a:'#C56A84', b:'#7A2E44', glint:'rgba(255,190,120,.55)' },
+    nuit:  { a:'#2A4E72', b:'#0D2038', glint:'rgba(210,220,255,.5)' },
+    matin: { a:'#9FC0DE', b:'#C88A56', glint:'rgba(255,240,210,.6)' },
+    aprem: { a:'#9FDAF6', b:'#2F7CB0', glint:'rgba(255,255,255,.7)' },
+    soir:  { a:'#D07A92', b:'#5A2038', glint:'rgba(255,200,140,.6)' },
   };
   const mc = mountainColors[key];
   const gc = grassColors[key];
   const wc = waterColors[key];
   // Fond de la zone "safe area" du bas (iPhone) accorde a la couleur du sol.
   document.documentElement.style.backgroundColor = gc.bot;
-  const pine=(x,b,h,col)=>{const w=h*0.62;return `<path d="M${x-w},${b} L${x},${b-h} L${x+w},${b} Z M${x-w*0.8},${b-h*0.42} L${x},${b-h*1.05} L${x+w*0.8},${b-h*0.42} Z" fill="${col}"/><rect x="${x-h*0.07}" y="${b}" width="${h*0.14}" height="${h*0.16}" fill="${col}"/>`;};
-  const tree=(x,b,s,fol,trk)=>`<rect x="${x-s*0.11}" y="${b-s*0.5}" width="${s*0.22}" height="${s*0.55}" rx="${s*0.05}" fill="${trk}"/><circle cx="${x}" cy="${b-s*0.72}" r="${s*0.5}" fill="${fol}"/><circle cx="${x-s*0.36}" cy="${b-s*0.54}" r="${s*0.33}" fill="${fol}"/><circle cx="${x+s*0.36}" cy="${b-s*0.54}" r="${s*0.33}" fill="${fol}"/><circle cx="${x-s*0.14}" cy="${b-s*0.9}" r="${s*0.28}" fill="${fol}"/>`;
-  const rock=(x,y,r)=>`<ellipse cx="${x}" cy="${y}" rx="${r}" ry="${r*0.62}" fill="${gc.stone}" stroke="${gc.stroke}" stroke-width="0.5"/><path d="M${x-r*0.8},${y-r*0.1} Q${x},${y-r*0.7} ${x+r*0.8},${y-r*0.1}" fill="none" stroke="${gc.rim}" stroke-width="0.4" opacity="0.5"/>`;
-  g.innerHTML = `
-    <defs>
-      <linearGradient id="gG2" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0%" stop-color="${gc.top}"/>
-        <stop offset="100%" stop-color="${gc.bot}"/>
-      </linearGradient>
-      <linearGradient id="hazeG" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0%" stop-color="${gc.haze}"/>
-        <stop offset="100%" stop-color="transparent"/>
-      </linearGradient>
-      <linearGradient id="waterG" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0%" stop-color="${wc.a}"/>
-        <stop offset="100%" stop-color="${wc.b}"/>
-      </linearGradient>
+  const hexShade=(hex,amt)=>{hex=hex.replace('#','');let r=parseInt(hex.slice(0,2),16),g2=parseInt(hex.slice(2,4),16),b2=parseInt(hex.slice(4,6),16);const tt=amt<0?0:255,pp=Math.abs(amt);r=Math.round(r+(tt-r)*pp);g2=Math.round(g2+(tt-g2)*pp);b2=Math.round(b2+(tt-b2)*pp);return '#'+[r,g2,b2].map(v=>v.toString(16).padStart(2,'0')).join('');};
+  const folL=hexShade(gc.foliage,0.34), folD=hexShade(gc.foliage,-0.4), trkL=hexShade(gc.trunk,0.3);
+  const grassLit=hexShade(gc.top,0.28), grassHi=hexShade(gc.top,0.5);
+  const pine=(x,b,h,col,lit)=>{const w=h*0.6;let s='';for(let i=0;i<3;i++){const ty=b-i*h*0.3, th=h*(0.5-i*0.1), tw=w*(1-i*0.22);s+=`<path d="M${x-tw},${ty} L${x},${ty-th} L${x+tw},${ty} Z" fill="${col}"/><path d="M${x},${ty-th} L${x+tw},${ty} L${x+tw*0.3},${ty}" fill="${lit}" opacity="0.4"/>`;}return `<rect x="${x-h*0.05}" y="${b}" width="${h*0.1}" height="${h*0.14}" fill="${hexShade(col,-0.2)}"/>`+s;};
+  const tree=(x,b,s)=>{const tw=s*0.18;return `<g><ellipse cx="${x}" cy="${b+s*0.03}" rx="${s*0.55}" ry="${s*0.12}" fill="#000" opacity="0.18"/><rect x="${x-tw/2}" y="${b-s*0.5}" width="${tw}" height="${s*0.55}" rx="${tw*0.3}" fill="${gc.trunk}"/><rect x="${x-tw/2}" y="${b-s*0.5}" width="${tw*0.42}" height="${s*0.55}" rx="${tw*0.2}" fill="${trkL}" opacity="0.6"/><circle cx="${x}" cy="${b-s*0.74}" r="${s*0.52}" fill="${folD}"/><circle cx="${x-s*0.34}" cy="${b-s*0.56}" r="${s*0.34}" fill="${folD}"/><circle cx="${x+s*0.36}" cy="${b-s*0.56}" r="${s*0.34}" fill="${folD}"/><circle cx="${x}" cy="${b-s*0.78}" r="${s*0.46}" fill="${gc.foliage}"/><circle cx="${x-s*0.3}" cy="${b-s*0.6}" r="${s*0.3}" fill="${gc.foliage}"/><circle cx="${x+s*0.32}" cy="${b-s*0.6}" r="${s*0.3}" fill="${gc.foliage}"/><circle cx="${x-s*0.16}" cy="${b-s*0.94}" r="${s*0.26}" fill="${gc.foliage}"/><circle cx="${x+s*0.14}" cy="${b-s*0.9}" r="${s*0.28}" fill="${folL}" opacity="0.85"/><circle cx="${x+s*0.28}" cy="${b-s*0.72}" r="${s*0.18}" fill="${folL}" opacity="0.7"/><circle cx="${x-s*0.05}" cy="${b-s*0.82}" r="${s*0.14}" fill="${folL}" opacity="0.5"/></g>`;};
+  const rock=(x,y,r)=>`<ellipse cx="${x}" cy="${y+r*0.5}" rx="${r*1.2}" ry="${r*0.34}" fill="#000" opacity="0.18"/><ellipse cx="${x}" cy="${y}" rx="${r}" ry="${r*0.7}" fill="${gc.stone}"/><ellipse cx="${x-r*0.28}" cy="${y-r*0.28}" rx="${r*0.55}" ry="${r*0.34}" fill="${hexShade(gc.stone,0.3)}" opacity="0.6"/><path d="M${x-r*0.8},${y-r*0.05} Q${x},${y-r*0.65} ${x+r*0.8},${y-r*0.05}" fill="none" stroke="${gc.rim}" stroke-width="0.4" opacity="0.6"/>`;
+  const tuft=(x,y,c)=>`<path d="M${x},${y} Q${x-1},${y-5} ${x-2},${y} M${x+1.5},${y} Q${x+1.5},${y-6} ${x+3},${y} M${x+3.5},${y} Q${x+4},${y-4.5} ${x+5},${y}" stroke="${c}" stroke-width="0.9" fill="none" stroke-linecap="round"/>`;
+  const flowers = gc.flower? [[70,109],[120,113],[300,111],[340,116],[95,120],[355,119]].map(([fx,fy])=>`<circle cx="${fx}" cy="${fy}" r="1.1" fill="${gc.flower}"/><circle cx="${fx}" cy="${fy}" r="0.4" fill="#E8A030"/>`).join('') : '';
+  const lrx=Math.max(180,Math.min(320,gc.sunX));
+  g.innerHTML = `<defs>
+      <linearGradient id="gG2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${grassLit}"/><stop offset="0.3" stop-color="${gc.top}"/><stop offset="1" stop-color="${gc.bot}"/></linearGradient>
+      <linearGradient id="hazeG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${gc.haze}"/><stop offset="1" stop-color="transparent"/></linearGradient>
+      <linearGradient id="mFar" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${hexShade(mc.far,0.12)}"/><stop offset="1" stop-color="${mc.far}"/></linearGradient>
+      <linearGradient id="mMid" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${hexShade(mc.mid,0.1)}"/><stop offset="1" stop-color="${mc.mid}"/></linearGradient>
+      <linearGradient id="mNear" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${hexShade(mc.near,0.14)}"/><stop offset="1" stop-color="${hexShade(mc.near,-0.15)}"/></linearGradient>
+      <linearGradient id="waterG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${wc.a}"/><stop offset="1" stop-color="${wc.b}"/></linearGradient>
+      <radialGradient id="waterHi" cx="50%" cy="0%" r="80%"><stop offset="0" stop-color="${gc.reflect}"/><stop offset="100%" stop-color="transparent"/></radialGradient>
+      <filter id="grassTx" x="0" y="0" width="100%" height="100%"><feTurbulence type="fractalNoise" baseFrequency="0.16 0.5" numOctaves="2" seed="9" result="n"/><feColorMatrix in="n" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.16 0"/></filter>
+      <clipPath id="lakeClip"><ellipse cx="250" cy="113" rx="83" ry="6.4"/></clipPath>
     </defs>
-    <rect x="0" y="30" width="400" height="52" fill="url(#hazeG)"/>
-    <path d="M0,60 C55,50 110,57 165,50 C225,42 285,55 345,48 C370,45 400,50 400,52 L400,130 L0,130 Z" fill="${mc.far}"/>
-    <path d="M0,76 C50,65 105,73 165,63 C230,53 290,70 350,61 C375,57 400,64 400,66 L400,130 L0,130 Z" fill="${mc.mid}"/>
-    ${pine(60,79,11,mc.far)}${pine(300,74,10,mc.far)}
-    <path d="M0,92 C70,80 130,90 200,80 C265,71 325,88 385,79 C392,78 400,80 400,82 L400,130 L0,130 Z" fill="${mc.near}"/>
-    <path d="M0,92 C70,80 130,90 200,80 C265,71 325,88 385,79 C392,78 400,80 400,82" fill="none" stroke="${gc.rim}" stroke-width="1.2" opacity="0.9"/>
-    ${pine(110,90,14,gc.stroke)}${pine(128,90,10,gc.stroke)}${pine(255,88,13,gc.stroke)}
-    ${tree(180,84,11,gc.foliage,gc.trunk)}${tree(348,85,10,gc.foliage,gc.trunk)}
+    <rect x="0" y="28" width="400" height="56" fill="url(#hazeG)"/>
+    <path d="M0,60 C55,50 110,57 165,50 C225,42 285,55 345,48 C370,45 400,50 400,52 L400,130 L0,130 Z" fill="url(#mFar)"/>
+    <path d="M0,76 C50,65 105,73 165,63 C230,53 290,70 350,61 C375,57 400,64 400,66 L400,130 L0,130 Z" fill="url(#mMid)"/>
+    <path d="M0,76 C50,65 105,73 165,63 C230,53 290,70 350,61 C375,57 400,64 400,66" fill="none" stroke="${mc.snow}" stroke-width="0.8" opacity="0.5"/>
+    ${pine(60,79,11,mc.mid,mc.snow)}${pine(300,74,10,mc.mid,mc.snow)}
+    <path d="M0,92 C70,80 130,90 200,80 C265,71 325,88 385,79 C392,78 400,80 400,82 L400,130 L0,130 Z" fill="url(#mNear)"/>
+    <path d="M0,92 C70,80 130,90 200,80 C265,71 325,88 385,79 C392,78 400,80 400,82" fill="none" stroke="${mc.snow}" stroke-width="1" opacity="0.65"/>
+    ${pine(110,90,14,gc.stroke,folL)}${pine(128,90,10,gc.stroke,folL)}${pine(255,88,13,gc.stroke,folL)}
+    ${tree(180,84,11)}${tree(348,85,10)}
     <path d="M0,105 C60,97 120,109 200,101 C270,94 330,107 400,99 L400,130 L0,130 Z" fill="url(#gG2)"/>
-    <path d="M0,105 C60,97 120,109 200,101 C270,94 330,107 400,99" fill="none" stroke="${gc.rim}" stroke-width="1" opacity="0.7"/>
-    <!-- Lac -->
+    <path d="M0,105 C60,97 120,109 200,101 C270,94 330,107 400,99 L400,130 L0,130 Z" fill="url(#grassTx)"/>
+    <path d="M0,105 C60,97 120,109 200,101 C270,94 330,107 400,99" fill="none" stroke="${gc.rim}" stroke-width="1" opacity="0.8"/>
     <g>
-      <ellipse cx="250" cy="114" rx="86" ry="7" fill="${gc.bot}" opacity="0.6"/>
-      <ellipse cx="250" cy="113" rx="83" ry="6.2" fill="url(#waterG)"/>
-      <ellipse cx="250" cy="113" rx="83" ry="6.2" fill="none" stroke="${gc.rim}" stroke-width="0.7" opacity="0.5"/>
-      <line x1="205" y1="111.5" x2="242" y2="111.5" stroke="${wc.glint}" stroke-width="0.9" stroke-linecap="round" opacity="0.8"/>
-      <line x1="255" y1="114" x2="292" y2="114" stroke="${wc.glint}" stroke-width="0.7" stroke-linecap="round" opacity="0.55"/>
-      <line x1="225" y1="115.5" x2="248" y2="115.5" stroke="${wc.glint}" stroke-width="0.6" stroke-linecap="round" opacity="0.4"/>
+      <ellipse cx="250" cy="114.5" rx="88" ry="8" fill="${gc.bot}" opacity="0.5"/>
+      <ellipse cx="250" cy="113" rx="83" ry="6.4" fill="url(#waterG)"/>
+      <g clip-path="url(#lakeClip)">
+        <ellipse cx="${lrx}" cy="109" rx="26" ry="7" fill="url(#waterHi)"/>
+        <ellipse cx="${lrx}" cy="110.5" rx="7" ry="4.5" fill="${gc.reflect}" opacity="0.9"/>
+        <line x1="180" y1="111" x2="235" y2="111" stroke="${wc.glint}" stroke-width="0.8" stroke-linecap="round" opacity="0.7"/>
+        <line x1="255" y1="113.5" x2="300" y2="113.5" stroke="${wc.glint}" stroke-width="0.7" stroke-linecap="round" opacity="0.5"/>
+        <line x1="210" y1="115" x2="255" y2="115" stroke="${wc.glint}" stroke-width="0.6" stroke-linecap="round" opacity="0.4"/>
+        <line x1="285" y1="115.8" x2="318" y2="115.8" stroke="${wc.glint}" stroke-width="0.5" stroke-linecap="round" opacity="0.35"/>
+      </g>
+      <ellipse cx="250" cy="113" rx="83" ry="6.4" fill="none" stroke="${gc.rim}" stroke-width="0.7" opacity="0.55"/>
+      <path d="M168,110 q-3,2 -1,4 M330,110 q3,2 1,4" stroke="${folD}" stroke-width="2" fill="none" opacity="0.5" stroke-linecap="round"/>
     </g>
-    <!-- Arbres de la prairie (premier plan) -->
-    ${tree(42,114,17,gc.foliage,gc.trunk)}${tree(372,113,15,gc.foliage,gc.trunk)}
-    <!-- Petits cailloux eparpilles (tailles proportionnelles) -->
-    <g opacity="0.92">
-      ${rock(30,118,3.4)}${rock(96,120,2.6)}${rock(140,116,2.2)}${rock(350,119,3)}${rock(378,121,2.4)}${rock(115,113,2)}${rock(72,89,1.8)}
-      <path d="M64,108 Q65,101 66,108 M67,108 Q68.5,100 70,108 M71,108 Q72,102.5 73,108" stroke="${gc.top}" stroke-width="1" fill="none" stroke-linecap="round"/>
-      <path d="M158,118 Q159,112 160,118 M161,118 Q162.5,111 164,118" stroke="${gc.top}" stroke-width="0.9" fill="none" stroke-linecap="round"/>
-      <path d="M338,116 Q339,109 340,116 M341,116 Q342.5,108 344,116 M345,116 Q346,110.5 347,116" stroke="${gc.top}" stroke-width="1" fill="none" stroke-linecap="round"/>
-    </g>`;
+    ${tree(42,114,17)}${tree(372,113,15)}
+    <g opacity="0.95">${rock(30,118,3.6)}${rock(96,120,2.6)}${rock(140,116,2.2)}${rock(350,119,3.1)}${rock(378,121,2.4)}${rock(115,113,2)}</g>
+    <g>${tuft(64,108,grassHi)}${tuft(158,118,grassHi)}${tuft(338,116,grassHi)}${tuft(20,122,grassLit)}${tuft(390,120,grassLit)}${flowers}</g>`;
 
   /* ----- DÉCO CIEL ----- */
   const sky = document.getElementById('skyDeco');
@@ -2985,91 +2986,6 @@ function startSplashWater(){
     if(st.impactStart){ const dt=(performance.now()-st.impactStart)/1000; if(dt<2.8) it=dt; else st.impactStart=0; }
     gl.uniform1f(uImpactT,it);
     gl.uniform1f(uImpactX,st.impactX);
-    gl.drawArrays(gl.TRIANGLES,0,3);
-    st.raf=requestAnimationFrame(frame);
-  }
-  st.raf=requestAnimationFrame(frame);
-}
-/* ===== Ciel vivant de l'accueil (WebGL) — poussières lumineuses + rayons + halo, selon l'heure ===== */
-let homeFx=null;
-const SKY_FX_FS=`precision highp float;
-uniform vec2 uRes; uniform float uTime; uniform float uTheme; uniform vec2 uSun;
-float hash(vec2 p){ p=fract(p*vec2(123.34,456.21)); p+=dot(p,p+45.32); return fract(p.x*p.y); }
-float noise(vec2 p){ vec2 i=floor(p),f=fract(p); float a=hash(i),b=hash(i+vec2(1.0,0.0)),c=hash(i+vec2(0.0,1.0)),d=hash(i+vec2(1.0,1.0)); vec2 u=f*f*(3.0-2.0*f); return mix(mix(a,b,u.x),mix(c,d,u.x),u.y); }
-float fbm(vec2 p){ float s=0.0,a=0.5; for(int i=0;i<3;i++){ s+=a*noise(p); p*=2.03; a*=0.5; } return s; }
-float motes(vec2 uv, float scale, float speed, float seed){
-  vec2 g=uv*scale; g.y-=uTime*speed; g.x+=uTime*speed*0.3;
-  vec2 cell=floor(g), f=fract(g); float acc=0.0;
-  for(int j=-1;j<=1;j++){ for(int i=-1;i<=1;i++){
-    vec2 nb=vec2(float(i),float(j)); vec2 id=cell+nb; float rnd=hash(id+seed);
-    vec2 pos=nb+vec2(hash(id+seed+3.1),hash(id+seed+7.3));
-    float d=length(f-pos);
-    float tw=0.45+0.55*sin(uTime*(1.2+rnd*3.0)+rnd*30.0);
-    acc+=smoothstep(0.09,0.0,d)*tw*step(0.55,rnd);
-  }}
-  return acc;
-}
-void main(){
-  vec2 uv=gl_FragCoord.xy/uRes.xy;
-  vec2 p=uv; p.x*=uRes.x/uRes.y;
-  vec3 warm=vec3(1.0,0.85,0.55), cool=vec3(0.66,0.82,1.0), ember=vec3(1.0,0.6,0.3);
-  bool night=uTheme<0.5; bool eve=uTheme>2.5;
-  vec3 moteCol = night? cool : (eve? ember : warm);
-  vec3 col=vec3(0.0);
-  vec2 d=uv-uSun; float ang=atan(d.y,d.x); float dist=length(d);
-  float rays=fbm(vec2(ang*3.0,uTime*0.12))*0.55 + fbm(vec2(ang*7.0-uTime*0.09,1.7))*0.45;
-  rays=pow(rays,2.2);
-  float rayFall=smoothstep(1.15,0.04,dist)*smoothstep(0.0,0.28,dist);
-  vec3 rayCol = night? vec3(0.72,0.8,1.0) : (eve? ember : vec3(1.0,0.88,0.6));
-  col += rayCol*rays*rayFall*(night?0.09:0.20);
-  col += rayCol*smoothstep(0.45,0.0,dist)*(0.35+0.25*sin(uTime*0.7))*0.14;
-  float mo=motes(p,6.5,0.03,1.0)*1.0 + motes(p,3.6,0.021,9.0)*0.7;
-  col += moteCol*mo*(night?0.9:0.8);
-  gl_FragColor=vec4(col,1.0);
-}`;
-function homeThemeParams(){
-  const k=getThemeKey();
-  if(k==='nuit') return {t:0.0, sun:[0.89,0.92]};
-  if(k==='matin') return {t:1.0, sun:[0.90,0.18]};
-  if(k==='aprem') return {t:2.0, sun:[0.82,0.90]};
-  return {t:3.0, sun:[0.10,0.20]};
-}
-function stopHomeFx(){
-  if(!homeFx) return;
-  try{ cancelAnimationFrame(homeFx.raf); }catch(e){}
-  try{ const l=homeFx.gl.getExtension('WEBGL_lose_context'); if(l) l.loseContext(); }catch(e){}
-  const cv=document.getElementById('homeFx'); if(cv) cv.style.display='none';
-  homeFx=null;
-}
-function startHomeFx(){
-  if(screen!=='home'||homeFx) return;
-  const cv=document.getElementById('homeFx'); if(!cv) return;
-  let gl=null; try{ gl=cv.getContext('webgl')||cv.getContext('experimental-webgl'); }catch(e){}
-  if(!gl){ return; }
-  function mkSh(t,s){ const o=gl.createShader(t); gl.shaderSource(o,s); gl.compileShader(o); return gl.getShaderParameter(o,gl.COMPILE_STATUS)?o:null; }
-  const vs=mkSh(gl.VERTEX_SHADER,'attribute vec2 p;void main(){gl_Position=vec4(p,0.0,1.0);}');
-  const fs=mkSh(gl.FRAGMENT_SHADER,SKY_FX_FS);
-  if(!vs||!fs){ return; }
-  const pr=gl.createProgram(); gl.attachShader(pr,vs); gl.attachShader(pr,fs); gl.linkProgram(pr);
-  if(!gl.getProgramParameter(pr,gl.LINK_STATUS)){ return; }
-  gl.useProgram(pr);
-  const buf=gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER,buf);
-  gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,3,-1,-1,3]),gl.STATIC_DRAW);
-  const lp=gl.getAttribLocation(pr,'p'); gl.enableVertexAttribArray(lp); gl.vertexAttribPointer(lp,2,gl.FLOAT,false,0,0);
-  const uRes=gl.getUniformLocation(pr,'uRes'), uTime=gl.getUniformLocation(pr,'uTime'), uTheme=gl.getUniformLocation(pr,'uTheme'), uSun=gl.getUniformLocation(pr,'uSun');
-  const tp=homeThemeParams();
-  cv.style.display='block';
-  const st={gl:gl,raf:0,start:performance.now(),cv:cv,uRes:uRes,uTime:uTime,w:0,h:0};
-  homeFx=st;
-  function frame(){
-    if(homeFx!==st||screen!=='home') return;
-    const dpr=Math.min(window.devicePixelRatio||1,1.75);
-    const w=Math.max(1,Math.round(cv.clientWidth*dpr)), h=Math.max(1,Math.round(cv.clientHeight*dpr));
-    if(w!==st.w||h!==st.h){ cv.width=w; cv.height=h; st.w=w; st.h=h; gl.viewport(0,0,w,h); }
-    gl.uniform2f(uRes,st.w,st.h);
-    gl.uniform1f(uTime,(performance.now()-st.start)/1000);
-    gl.uniform1f(uTheme,tp.t);
-    gl.uniform2f(uSun,tp.sun[0],tp.sun[1]);
     gl.drawArrays(gl.TRIANGLES,0,3);
     st.raf=requestAnimationFrame(frame);
   }
@@ -4897,7 +4813,6 @@ function maybeShowConsent(){
 function render(){
   const app=document.getElementById('app');
   stopSplashWater();
-  stopHomeFx();
   // Mémorise la position de défilement de l'overlay (fiche caillou) pour la restaurer
   // après reconstruction — évite que l'écran remonte en haut à chaque clic (+/- d'amélioration).
   const _ovPrev=document.querySelector('.overlay');
@@ -4952,7 +4867,6 @@ function render(){
   maybeShowConsent();
   maybeShowAnnouncement();
   if(screen==='splash') requestAnimationFrame(startSplashWater);
-  if(screen==='home') requestAnimationFrame(startHomeFx);
 
   if(generatingCharacter){
     const ESTIMATED_MS=10000;
