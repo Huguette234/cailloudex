@@ -2910,18 +2910,24 @@ void main(){
   vec2 wp=vec2((uv.x-0.5)*persp*1.1, persp*1.2);
   float h=H(wp);
   float dh=(h-H(wp+vec2(0.0,0.03)));
-  /* --- Plouf : ondes concentriques à l'impact (dans la surface) --- */
+  /* --- Plouf : train de vagues concentriques en relief à l'impact --- */
   float foam=0.0;
   if(uImpactT>=0.0){
     float iy=0.10; float ip=1.0/(iy+0.11);
     vec2 iwp=vec2((uImpactX-0.5)*ip*1.1, ip*1.2);
     float d=distance(wp,iwp);
-    float R=uImpactT*3.6;
-    float fade=smoothstep(2.6,0.0,uImpactT);
-    float shell=smoothstep(0.0,0.6,R-d)*smoothstep(1.5,0.0,R-d);
-    float rip=sin(d*6.5-uImpactT*12.0)*shell*fade;
-    h+=rip*0.9; dh+=rip*0.85;
-    foam=smoothstep(0.18,0.0,abs(R-d))*fade;
+    float t=uImpactT;
+    float R=t*3.2;                                  /* rayon de la vague de tête */
+    float fade=smoothstep(2.9,0.0,t);
+    float inside=smoothstep(0.0,0.35,R-d);          /* anneaux uniquement dans le cercle en expansion */
+    float rings=sin(d*7.5 - t*13.0);                /* plusieurs ondes concentriques */
+    float damp=exp(-max(R-d,0.0)*0.7);              /* les ondes arrière plus faibles */
+    float amp=rings*inside*damp*fade;
+    h += amp*1.15;                                  /* soulève la surface -> capte ciel/soleil */
+    dh += amp*1.6;                                  /* crêtes éclairées / creux ombrés (relief 3D) */
+    float lead=smoothstep(0.34,0.0,abs(R-d))*fade;  /* écume sur le front de la vague */
+    float center=smoothstep(0.55,0.0,d)*smoothstep(0.0,0.22,t)*smoothstep(1.3,0.0,t);
+    foam=max(lead,center*0.85);
   }
   /* --- couleur de base + profondeur --- */
   vec3 top=vec3(0.28,0.60,0.76), deep=vec3(0.02,0.15,0.33);
