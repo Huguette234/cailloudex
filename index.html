@@ -4294,16 +4294,31 @@ async function generateBotCharacter(botRock){
   }catch(e){ console.error('generateBotCharacter',e); }
 }
 
-function makeBotRock(){
+function makeBotRock(playerRock){
   const base=BOT_POOL[Math.floor(Math.random()*BOT_POOL.length)];
-  const tier=rollRarity(0);
-  return Object.assign({},base,{
-    rarity:tier.key, rarityLabel:tier.label, hex:tier.hex,
-    atk:rollStat(tier.range), def:rollStat(tier.range), vit:rollStat([1,8]),
-  });
+  let atk,def,vit,rk,lbl,hx;
+  if(playerRock){
+    // Adversaire calibré sur la puissance du caillou du joueur (± un peu de variance)
+    const f=()=>0.82+Math.random()*0.36;   // 0.82 .. 1.18
+    atk=Math.max(1,Math.round((playerRock.atk||30)*f()));
+    def=Math.max(1,Math.round((playerRock.def||30)*f()));
+    vit=Math.max(1,Math.round((playerRock.vit||4)*(0.7+Math.random()*0.6)));
+    const tier=RARITY_TIERS.find(t=>t.key===playerRock.rarity);
+    if(tier){ rk=tier.key; lbl=tier.label; hx=tier.hex; }
+    else { const rt=rollRarity(0); rk=rt.key; lbl=rt.label; hx=rt.hex; }
+  } else {
+    const tier=rollRarity(0); rk=tier.key; lbl=tier.label; hx=tier.hex;
+    atk=rollStat(tier.range); def=rollStat(tier.range); vit=rollStat([1,8]);
+  }
+  return Object.assign({},base,{ rarity:rk, rarityLabel:lbl, hex:hx, atk, def, vit });
 }
 
-function combatMaxHP(def){ return 120+def*7; }
+function combatMaxHP(def){ return 70+def*6; }
+// Chance d'esquive du défenseur selon sa vitesse (et l'écart de vitesse)
+function dodgeChance(defRock,atkRock){
+  const dv=defRock.vit||0, av=atkRock.vit||0;
+  return Math.max(0, Math.min(0.22, dv*0.02 + (dv-av)*0.015));
+}
 
 function calcDmg(atkStat,defStat,multiplier=1){
   const raw=Math.max(1, atkStat - Math.floor(defStat/6) + Math.floor(Math.random()*16) - 8);
@@ -4440,7 +4455,6 @@ function timingChallenge(kind){
 }
 
 async function initBattle(playerRock){
-  const bot=makeBotRock();
   const playerSpriteUrl=await makeRockSprite(playerRock.photo,playerRock.id);
   let effRock=playerRock;
   const usedBuffs=[];
@@ -4449,6 +4463,7 @@ async function initBattle(playerRock){
     effRock={...playerRock, atk:Math.round(playerRock.atk*1.2), def:Math.round(playerRock.def*1.2)};
     usedBuffs.push('💪 Caillou Costaud');
   }
+  const bot=makeBotRock(effRock);
   battleState={
     playerRock:effRock, botRock:bot,
     playerHP:combatMaxHP(effRock.def), botHP:combatMaxHP(bot.def),
@@ -4463,12 +4478,20 @@ async function initBattle(playerRock){
   if((meta.inventory?.shield||0)>0){ meta.inventory.shield--; battleState.shieldActive=true; usedBuffs.push('🛡️ Bouclier'); }
   if((meta.inventory?.crit||0)>0){ meta.inventory.crit--; battleState.critPending=true; usedBuffs.push('💥 Frappe Critique'); }
   if(usedBuffs.length){ saveMeta(); setTimeout(()=>showToast('✨ Objets activés : '+usedBuffs.join(', ')),250); }
+  // Ordre du tour : le plus rapide attaque en premier (égalité → joueur)
+  const playerFirst=(effRock.vit||0)>=(bot.vit||0);
+  battleState.playerFirst=playerFirst;
   screen='combat-fight'; render();
   generateBotCharacter(bot);
   setTimeout(async()=>{
     if(!battleState||battleState.turn==='end'||screen!=='combat-fight') return;
-    await announceTurn('player');
-    if(battleState&&battleState.turn==='animating'){ battleState.turn='player'; render(); }
+    if(playerFirst){
+      await announceTurn('player');
+      if(battleState&&battleState.turn==='animating'){ battleState.turn='player'; render(); }
+    } else {
+      addCombatLog(`⚡ ${bot.name} est plus rapide et attaque en premier !`,'neutral');
+      beginBotTurn();
+    }
   },900);
 }
 
@@ -4537,19 +4560,21 @@ async function playerAction(moveId){
   const elemental=move.kind!=='basic';
   const tMult=elemental?typeMultiplier(pr.rockType,battleState.botRock.rockType):1;
   const miss=hasStatus('player','aveugle')&&Math.random()<0.35;
+  const dodged=!miss && Math.random()<dodgeChance(battleState.botRock,pr);
+  const evaded=miss||dodged;
   let dmg=0, crit=false;
-  if(!miss){
+  if(!evaded){
     dmg=calcDmg(pr.atk,battleState.botRock.def,move.mult*tMult);
     if(battleState.critPending){ dmg=Math.round(dmg*2); crit=true; battleState.critPending=false; }
     dmg=Math.round(dmg*outgoingMult('player')*timing);
     if(move.kind!=='ultimate') dmg=Math.round(dmg*incomingMult('bot'));
     dmg=Math.max(1,dmg);
   }
-  await playAttackAnim('playerSprite','botSprite',{dmg:miss?null:dmg,crit:crit||timing>=1.6,ultimate:move.kind==='ultimate',effective:tMult>1?'super':tMult<1?'weak':null,color:attackColor(pr,moveId)});
+  await playAttackAnim('playerSprite','botSprite',{dmg:evaded?null:dmg,crit:crit||timing>=1.6,ultimate:move.kind==='ultimate',effective:tMult>1?'super':tMult<1?'weak':null,color:attackColor(pr,moveId)});
   battleState.playerEnergy=Math.min(100,(battleState.playerEnergy||0)-move.cost+ENERGY_ACT);
   battleState.botEnergy=Math.min(100,(battleState.botEnergy||0)+ENERGY_HIT);
-  if(miss){
-    addCombatLog(`✨ ${pr.name} est aveuglé et rate son attaque !`,'neutral');
+  if(evaded){
+    addCombatLog(dodged?`💨 ${battleState.botRock.name} esquive l'attaque !`:`✨ ${pr.name} est aveuglé et rate son attaque !`,'neutral');
   } else {
     battleState.botHP=Math.max(0,battleState.botHP-dmg);
     if(elemental) applyMoveStatus('player','bot',pr, move.kind==='ultimate'?((TYPE_STATUS[pr.rockType]||{}).turns||2)+1:null);
@@ -4611,25 +4636,27 @@ async function botAct(){
   const elemental=move.kind!=='basic';
   const tMult=elemental?typeMultiplier(bot.rockType,battleState.playerRock.rockType):1;
   const miss=hasStatus('bot','aveugle')&&Math.random()<0.35;
-  const shieldBlock=!!battleState.shieldActive;
+  const dodged=!miss && Math.random()<dodgeChance(battleState.playerRock,bot);
+  const evaded=miss||dodged;
+  const shieldBlock=!!battleState.shieldActive && !evaded;
   let dmg=0;
-  if(!miss){
+  if(!evaded){
     dmg=calcDmg(bot.atk,battleState.playerRock.def,move.mult*tMult);
     dmg=Math.round(dmg*outgoingMult('bot'));
     if(move.kind!=='ultimate') dmg=Math.round(dmg*incomingMult('player'));
     dmg=Math.max(1,dmg);
   }
   let parry=1;
-  if(!miss && !shieldBlock) parry=await timingChallenge('parry');
-  if(shieldBlock) dmg=0; else if(!miss) dmg=Math.max(1,Math.round(dmg*parry));
-  await playAttackAnim('botSprite','playerSprite',{dmg:(miss)?null:dmg,ultimate:move.kind==='ultimate',effective:tMult>1?'super':tMult<1?'weak':null,color:attackColor(bot,move.id)});
+  if(!evaded && !shieldBlock) parry=await timingChallenge('parry');
+  if(shieldBlock) dmg=0; else if(!evaded) dmg=Math.max(1,Math.round(dmg*parry));
+  await playAttackAnim('botSprite','playerSprite',{dmg:evaded?null:dmg,ultimate:move.kind==='ultimate',effective:tMult>1?'super':tMult<1?'weak':null,color:attackColor(bot,move.id)});
   battleState.botEnergy=Math.min(100,(battleState.botEnergy||0)-move.cost+ENERGY_ACT);
   battleState.playerEnergy=Math.min(100,(battleState.playerEnergy||0)+ENERGY_HIT);
   if(shieldBlock){
     battleState.shieldActive=false;
     addCombatLog(`🛡️ Le bouclier absorbe l'attaque de ${bot.name} !`,'neutral');
-  } else if(miss){
-    addCombatLog(`✨ ${bot.name} est aveuglé et rate son attaque !`,'neutral');
+  } else if(evaded){
+    addCombatLog(dodged?`💨 ${battleState.playerRock.name} esquive l'attaque !`:`✨ ${bot.name} est aveuglé et rate son attaque !`,'neutral');
   } else {
     battleState.playerHP=Math.max(0,battleState.playerHP-dmg);
     if(elemental) applyMoveStatus('bot','player',bot, move.kind==='ultimate'?((TYPE_STATUS[bot.rockType]||{}).turns||2)+1:null);
