@@ -1014,8 +1014,20 @@ nav{display:flex;gap:8px;padding:8px 16px max(12px,env(safe-area-inset-bottom));
 @keyframes spBurst{0%{transform:translate(-50%,-20%) scale(.2);opacity:.95;}55%{opacity:.9;}100%{transform:translate(-50%,-95%) scale(var(--sc));opacity:0;}}
 .sp-ripple{position:absolute;left:0;top:0;width:44px;height:15px;border:2px solid rgba(255,255,255,.75);border-radius:50%;animation:spRipple 1.15s ease-out forwards;}
 @keyframes spRipple{0%{transform:translate(-50%,-50%) scale(.3);opacity:.85;}100%{transform:translate(-50%,-50%) scale(calc(var(--sc)*2.4));opacity:0;}}
-.sp-drop{position:absolute;left:0;top:0;width:8px;height:8px;border-radius:50%;background:radial-gradient(circle at 40% 35%,#fff,#bfe6f2);animation:spDrop .82s cubic-bezier(.25,-.2,.7,1) forwards;}
+.sp-drop{position:absolute;left:0;top:0;width:8px;height:8px;border-radius:50%;background:radial-gradient(circle at 38% 32%,#fff,#a7d4ee 72%,#6ba8d0);box-shadow:0 1px 3px rgba(20,60,100,.45);animation:spDrop .82s cubic-bezier(.25,-.2,.7,1) forwards;}
 @keyframes spDrop{0%{transform:translate(-50%,-50%);opacity:1;}75%{opacity:1;}100%{transform:translate(calc(-50% + var(--dx)),calc(-50% + var(--dy)));opacity:0;}}
+/* ===== Éclaboussure 3D : gerbe centrale + goutte + couronne + dôme ===== */
+.sp-jet{position:absolute;left:0;top:0;width:calc(14px*var(--sc));height:calc(46px*var(--sc));transform:translate(-50%,-100%) scaleY(0);transform-origin:bottom center;
+  background:linear-gradient(to top,rgba(92,155,194,.92),rgba(150,206,236,.94) 46%,rgba(242,251,255,.98));
+  border-radius:46% 46% 44% 44%;
+  box-shadow:0 0 8px rgba(20,65,105,.5),inset -2px 0 3px rgba(20,60,100,.4),inset 2px 0 4px rgba(255,255,255,.55);
+  animation:spJet .6s cubic-bezier(.2,.7,.4,1) forwards;}
+@keyframes spJet{0%{transform:translate(-50%,-100%) scaleY(0) scaleX(.55);opacity:.9;}34%{transform:translate(-50%,-100%) scaleY(1.15) scaleX(1);opacity:1;}62%{transform:translate(-50%,-100%) scaleY(.8) scaleX(.85);opacity:.9;}100%{transform:translate(-50%,-100%) scaleY(0) scaleX(.45);opacity:0;}}
+.sp-bead{position:absolute;left:0;top:0;width:calc(11px*var(--sc));height:calc(11px*var(--sc));border-radius:50%;background:radial-gradient(circle at 38% 32%,#fff,#b6def5 66%,#6ba8d0);box-shadow:0 1px 5px rgba(20,60,100,.5);animation:spBead .62s cubic-bezier(.25,.6,.5,1) forwards;}
+@keyframes spBead{0%{transform:translate(-50%,-150%) scale(.3);opacity:0;}28%{opacity:1;}46%{transform:translate(-50%,calc(-150% - 44px*var(--sc))) scale(1);opacity:1;}100%{transform:translate(-50%,calc(-150% - 20px*var(--sc))) scale(.5);opacity:0;}}
+.sp-dome{position:absolute;left:0;top:0;width:calc(48px*var(--sc));height:calc(24px*var(--sc));transform:translate(-50%,-64%) scale(.3);transform-origin:bottom center;
+  background:radial-gradient(ellipse at 50% 100%,rgba(255,255,255,.96),rgba(164,212,240,.78) 48%,rgba(80,145,188,.32) 70%,transparent 80%);border-radius:50%;filter:drop-shadow(0 1px 2px rgba(20,60,100,.42));animation:spDome .5s ease-out forwards;}
+@keyframes spDome{0%{transform:translate(-50%,-64%) scale(.28);opacity:.95;}100%{transform:translate(-50%,-64%) scale(1.35);opacity:0;}}
 .sp-result{position:absolute;top:28%;left:50%;z-index:7;width:88%;text-align:center;line-height:1.12;font-family:'Playfair Display',Georgia,serif;font-weight:900;font-size:21px;color:#fff;text-shadow:0 2px 12px rgba(0,0,0,.7),0 0 18px rgba(255,255,255,.4);opacity:0;transform:translateX(-50%);}
 .sp-result.show{animation:spResult 1.5s ease both;}
 @keyframes spResult{0%{opacity:0;transform:translateX(-50%) scale(.4);}18%{opacity:1;transform:translateX(-50%) scale(1.12);}32%{transform:translateX(-50%) scale(1);}80%{opacity:1;}100%{opacity:0;transform:translateX(-50%) translateY(-22px) scale(1);}}
@@ -2852,13 +2864,17 @@ function splashScreen(){
   </div>`;
 }
 function doSplash(tier){
-  // La surface (ondes concentriques en relief) est rendue par le shader WebGL.
-  // Ici on n'ajoute que la gerbe de gouttelettes 3D qui jaillit au-dessus de l'eau.
+  // Les ondes concentriques en relief de la SURFACE sont rendues par le shader WebGL.
+  // Ici on ajoute l'éclaboussure 3D qui jaillit AU-DESSUS de l'eau :
+  // dôme d'écume + gerbe centrale + goutte au sommet + couronne de gouttelettes.
   const layer=document.getElementById('spSplashLayer'); if(!layer) return;
-  const sc=1+tier*0.24;
-  const drops=9+tier*4;
-  for(let i=0;i<drops;i++){ const d=document.createElement('div'); d.className='sp-drop'; const ang=-90+(Math.random()*130-65); const dist=(42+Math.random()*82)*sc;
-    d.style.setProperty('--dx',(Math.cos(ang*Math.PI/180)*dist).toFixed(0)+'px'); d.style.setProperty('--dy',(-Math.abs(Math.sin(ang*Math.PI/180))*dist*1.15-16).toFixed(0)+'px'); d.style.animationDelay=(Math.random()*0.08).toFixed(2)+'s'; layer.appendChild(d); }
+  const sc=1+tier*0.22;
+  const dome=document.createElement('div'); dome.className='sp-dome'; dome.style.setProperty('--sc',sc.toFixed(2)); layer.appendChild(dome);
+  const jet=document.createElement('div'); jet.className='sp-jet'; jet.style.setProperty('--sc',sc.toFixed(2)); layer.appendChild(jet);
+  const bead=document.createElement('div'); bead.className='sp-bead'; bead.style.setProperty('--sc',sc.toFixed(2)); layer.appendChild(bead);
+  const drops=10+tier*4;
+  for(let i=0;i<drops;i++){ const d=document.createElement('div'); d.className='sp-drop'; const ang=-90+(Math.random()*140-70); const dist=(44+Math.random()*84)*sc;
+    d.style.setProperty('--dx',(Math.cos(ang*Math.PI/180)*dist).toFixed(0)+'px'); d.style.setProperty('--dy',(-Math.abs(Math.sin(ang*Math.PI/180))*dist*1.2-18).toFixed(0)+'px'); d.style.animationDelay=(Math.random()*0.1).toFixed(2)+'s'; layer.appendChild(d); }
   setTimeout(()=>{ if(layer) layer.innerHTML=''; },1400);
 }
 function dropRock(){
