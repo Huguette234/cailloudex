@@ -5406,7 +5406,12 @@ async function generateCharacterForRock(rock){
         rock_name:rock.name, rock_type:rock.rockType, rock_personality:rock.personality,
         rock_size_cm:rock.sizeCm, rock_rarity:rock.rarity, rock_atk:rock.atk, rock_def:rock.def, rock_vit:rock.vit } });
       if(!error && data && data.image){ rawUrl=`data:${data.mime_type||'image/jpeg'};base64,${data.image}`; }
-      else { errDetail='serveur: '+(error?error.message:((data&&(data.details||data.error))||'?')); console.warn('generate-character', errDetail); }
+      else {
+        let d=error?error.message:((data&&(data.details||data.error))||'?');
+        // Récupère le vrai détail renvoyé par la fonction (code HTTP réel de Pollinations)
+        try{ if(error&&error.context&&typeof error.context.json==='function'){ const b=await error.context.json(); if(b&&(b.details||b.error)) d=((b.error||'')+' '+(b.details||'')).trim(); } }catch(_){}
+        errDetail='serveur: '+d; console.warn('generate-character', errDetail);
+      }
     }catch(e){ errDetail='serveur: '+(e&&e.message); console.warn('generate-character invoke', e); }
     // 2) Secours : Pollinations directement depuis le navigateur
     if(!rawUrl){ rawUrl=await callPollinations(buildCharacterPrompt(rock)); if(!rawUrl&&!errDetail) errDetail='navigateur: échec Pollinations'; }
