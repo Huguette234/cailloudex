@@ -4719,6 +4719,57 @@ function combatPickScreen(){
   </div>`;
 }
 
+// Boutons d'action (rebâtis sans images -> pas de scintillement)
+function combatMovesHtml(){
+  const s=battleState; const busy=s.turn!=='player'; const isSolo=!s.online;
+  if(isSolo) return soloMoves(s.playerRock).map(m=>{
+    const e=s.playerEnergy||0; const locked=e<m.cost; const dis=busy||locked;
+    const cls=m.kind==='ultimate'?'btn-ultimate':m.kind==='special'?'btn-purple':'btn-gold';
+    return `<button class="btn ${cls} mv-btn" ${dis?'disabled':''} style="${dis?'opacity:.42;':''}" data-action="combatMove" data-move="${m.id}">${m.label}${m.cost?`<span class="mv-cost${locked?'':' ready'}">${m.cost}⚡</span>`:''}</button>`;
+  }).join('');
+  return getAvailableMoves(s.playerRock).map(m=>{
+    const used=(m.id==='special'&&s.playerSpecialUsed)||(m.id==='ultimate'&&s.playerUltimateUsed);
+    const cls=m.id==='ultimate'?'btn-ultimate':m.id==='special'?'btn-purple':'btn-gold';
+    return `<button class="btn ${cls}" ${busy||used?'disabled style="opacity:.4;"':''} data-action="combatMove" data-move="${m.id}">${m.label}</button>`;
+  }).join('');
+}
+function combatSecondaryHtml(){
+  const s=battleState; const busy=s.turn!=='player'; const f=bestAvailableFood();
+  return `<button class="btn-feed" ${busy||!f?'disabled style="opacity:.35;"':''} data-action="combatMove" data-move="feed">${f?f.emoji+' Nourrir ('+f.name+')':'🍖 Nourrir (vide)'}</button>`
+    +`<button class="btn btn-flee" ${busy?'disabled':''} data-action="combatMove" data-move="flee">🏃 Fuir lâchement</button>`;
+}
+// Met à jour SEULEMENT les parties dynamiques du combat, sans reconstruire la scène
+// (évite le clignotement / rechargement des sprites à chaque changement d'état).
+function patchCombat(){
+  const s=battleState; if(!s) return false;
+  const root=document.querySelector('.cfx'); if(!root) return false;
+  const isSolo=!s.online;
+  [['foe','bot'],['mine','player']].forEach(([cls,side])=>{
+    const card=root.querySelector('.bcard-'+cls); if(!card) return;
+    const hp=s[side+'HP'], max=s[side+'MaxHP'], pct=max?hp/max:0;
+    const hprow=card.querySelector('.bcard-hprow'); if(hprow) hprow.innerHTML=`<b>${hp}</b>/<span>${max} PV</span>`;
+    const fill=card.querySelector('.arena-bar-fill'); if(fill){ fill.style.width=(pct*100)+'%'; fill.style.background=hpBarColor(pct); }
+    if(isSolo){
+      const e=Math.max(0,Math.min(100,s[side+'Energy']||0)), full=e>=100;
+      const nf=card.querySelector('.nrg-fill'); if(nf){ nf.style.width=e+'%'; nf.classList.toggle('full',full); }
+      const nl=card.querySelector('.nrg-lbl'); if(nl){ nl.textContent='⚡'+e; nl.classList.toggle('full',full); }
+      const sb=card.querySelector('.stbadges'); if(sb){ const arr=s[side+'Status']||[]; sb.innerHTML=arr.map(st=>{const d=STATUS_DEFS[st.kind]||{icon:'?',color:'#fff'};return `<span class="stbadge" style="border-color:${d.color};color:${d.color};">${d.icon}<i>${st.turns}</i></span>`;}).join(''); }
+    }
+  });
+  // Sprite : ne change QUE si l'image a réellement changé (ex. portrait du bot généré en cours de route)
+  const updSprite=(id,rock,spriteUrl)=>{
+    const el=document.getElementById(id); if(!el) return;
+    const src=rock.characterPhoto||spriteUrl||null; if(!src) return;
+    if(el.tagName==='IMG'){ if(el.getAttribute('src')!==src){ el.setAttribute('src',src); if(rock.characterPhoto) el.classList.add('char-photo'); } }
+    else { const img=document.createElement('img'); img.id=id; img.className='combatant-visual '+(rock.characterPhoto?'char-photo ':'')+'sprite-idle'; img.src=src; img.alt=rock.name||''; el.parentNode.replaceChild(img,el); }
+  };
+  updSprite('botSprite',s.botRock,s.botSpriteUrl);
+  updSprite('playerSprite',s.playerRock,s.playerSpriteUrl);
+  const log=root.querySelector('.combat-log'); if(log) log.innerHTML=s.log.slice(0,3).map((l,i)=>`<div class="log-line ${l.cls}" style="opacity:${1-i*0.28};">${l.text}</div>`).join('');
+  const mv=root.querySelector('#cbMoves'); if(mv) mv.innerHTML=combatMovesHtml();
+  const sc=root.querySelector('#cbSecondary'); if(sc) sc.innerHTML=combatSecondaryHtml();
+  return true;
+}
 function combatFightScreen(){
   const s=battleState;
   const pPct=s.playerHP/s.playerMaxHP, bPct=s.botHP/s.botMaxHP;
@@ -4785,22 +4836,8 @@ function combatFightScreen(){
     <div class="combat-log">
       ${s.log.slice(0,3).map((l,i)=>`<div class="log-line ${l.cls}" style="opacity:${1-i*0.28};">${l.text}</div>`).join('')}
     </div>
-    <div class="arena-actions">
-      ${isSolo?soloMoves(s.playerRock).map(m=>{
-        const e=s.playerEnergy||0; const locked=e<m.cost; const dis=busy||locked;
-        const cls=m.kind==='ultimate'?'btn-ultimate':m.kind==='special'?'btn-purple':'btn-gold';
-        return `<button class="btn ${cls} mv-btn" ${dis?'disabled':''} style="${dis?'opacity:.42;':''}" data-action="combatMove" data-move="${m.id}">${m.label}${m.cost?`<span class="mv-cost${locked?'':' ready'}">${m.cost}⚡</span>`:''}</button>`;
-      }).join('')
-      :getAvailableMoves(s.playerRock).map(m=>{
-        const used=(m.id==='special'&&s.playerSpecialUsed)||(m.id==='ultimate'&&s.playerUltimateUsed);
-        const cls=m.id==='ultimate'?'btn-ultimate':m.id==='special'?'btn-purple':'btn-gold';
-        return `<button class="btn ${cls}" ${busy||used?'disabled style="opacity:.4;"':''} data-action="combatMove" data-move="${m.id}">${m.label}</button>`;
-      }).join('')}
-    </div>
-    <div class="arena-actions" style="margin-top:8px;">
-      ${(()=>{ const f=bestAvailableFood(); return `<button class="btn-feed" ${busy||!f?'disabled style="opacity:.35;"':''} data-action="combatMove" data-move="feed">${f?f.emoji+' Nourrir ('+f.name+')':'🍖 Nourrir (vide)'}</button>`; })()}
-      <button class="btn btn-flee" ${busy?'disabled':''} data-action="combatMove" data-move="flee">🏃 Fuir lâchement</button>
-    </div>
+    <div class="arena-actions" id="cbMoves">${combatMovesHtml()}</div>
+    <div class="arena-actions" id="cbSecondary" style="margin-top:8px;">${combatSecondaryHtml()}</div>
     ${(waitMsg&&s.online)?`<div style="text-align:center;font-family:'Nunito',sans-serif;font-size:12px;color:rgba(255,255,255,.45);margin-top:6px;">${waitMsg}</div>`:''}
     </div>
   </div>`;
@@ -4863,6 +4900,8 @@ function maybeShowConsent(){
 }
 function render(){
   const app=document.getElementById('app');
+  // Combat en cours : mise à jour en place (pas de reconstruction -> plus de clignotement)
+  if(screen==='combat-fight' && battleState && document.querySelector('.cfx')){ patchCombat(); return; }
   stopSplashWater();
   // Mémorise la position de défilement de l'overlay (fiche caillou) pour la restaurer
   // après reconstruction — évite que l'écran remonte en haut à chaque clic (+/- d'amélioration).
