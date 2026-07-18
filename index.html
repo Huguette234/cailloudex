@@ -5366,17 +5366,28 @@ function stopCharGenTimer(){
 }
 
 async function callPollinations(prompt, retries=3){
-  const url=`https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=512&height=512&model=turbo&nologo=true&seed=${Date.now()}`;
+  const base=`https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}`;
+  // Plusieurs variantes de modèle : 'turbo' a été retiré côté Pollinations, 'flux'
+  // est le modèle actuel ; on tente aussi le modèle par défaut en secours.
+  const variants=[
+    '?width=512&height=512&model=flux&nologo=true&referrer=cailloudex',
+    '?width=512&height=512&nologo=true&referrer=cailloudex',
+    '?width=512&height=512&model=flux&nologo=true',
+  ];
   for(let i=1;i<=retries;i++){
-    try{
-      const res=await fetch(url,{signal:AbortSignal.timeout(15000)});
-      if(res.ok){
-        const blob=await res.blob();
-        return await new Promise((ok,ko)=>{ const r=new FileReader(); r.onload=()=>ok(r.result); r.onerror=ko; r.readAsDataURL(blob); });
-      }
-      console.warn(`Pollinations attempt ${i}: HTTP ${res.status}`);
-    }catch(e){ console.warn(`Pollinations attempt ${i} failed:`,e.message); }
-    if(i<retries) await new Promise(r=>setTimeout(r,1000));
+    for(const v of variants){
+      try{
+        const res=await fetch(`${base}${v}&seed=${Date.now()}`,{signal:AbortSignal.timeout(20000)});
+        if(res.ok){
+          const blob=await res.blob();
+          if(blob && blob.type && blob.type.indexOf('image/')===0 && blob.size>500){
+            return await new Promise((ok,ko)=>{ const r=new FileReader(); r.onload=()=>ok(r.result); r.onerror=ko; r.readAsDataURL(blob); });
+          }
+          console.warn('Pollinations: réponse non-image',blob&&blob.type,blob&&blob.size);
+        } else console.warn(`Pollinations HTTP ${res.status} (${v})`);
+      }catch(e){ console.warn('Pollinations échec:',e.message); }
+    }
+    if(i<retries) await new Promise(r=>setTimeout(r,1200));
   }
   return null;
 }
