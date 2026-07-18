@@ -1249,6 +1249,20 @@ let characterResult = null;
 let generatingCharacter = false;
 let charGenStartTime = null;
 let charGenTimerInterval = null;
+const CHAR_GEN_MSGS=["L'IA choisit la couleur parfaite...","Dessin des yeux expressifs...","Ajout de l'armure et des muscles...","Application du style de combat...","Touches finales artistiques...","Presque prêt, encore un instant..."];
+// Met à jour SEULEMENT la barre/le message de génération (pas de reconstruction de page)
+function updateCharGenOverlay(){
+  if(!generatingCharacter) return;
+  const fill=document.getElementById('cgFill'); if(!fill) return;
+  const ESTIMATED_MS=10000;
+  const elapsed=charGenStartTime?Date.now()-charGenStartTime:0;
+  const pct=Math.min(95, Math.round(elapsed/ESTIMATED_MS*100));
+  const secLeft=Math.max(1, Math.round((ESTIMATED_MS-elapsed)/1000));
+  const msgIdx=Math.floor(elapsed/6000)%CHAR_GEN_MSGS.length;
+  fill.style.width=pct+'%';
+  const msg=document.getElementById('cgMsg'); if(msg) msg.textContent=CHAR_GEN_MSGS[msgIdx];
+  const tm=document.getElementById('cgTime'); if(tm) tm.textContent=pct<95?`~${secLeft} seconde${secLeft>1?'s':''} restante${secLeft>1?'s':''}...`:'Finalisation...';
+}
 let scanMsgInterval = null;
 let battleState = null;
 let onlineState = null;
@@ -1958,8 +1972,12 @@ function getThemeKey(){
   return 'nuit';
 }
 
+let _lastThemeAppliedKey=null;
 function applyTimeTheme(){
   const key = getThemeKey();
+  // Ne rien reconstruire si l'ambiance (heure) n'a pas changé -> pas de clignotement du décor
+  if(key===_lastThemeAppliedKey) return;
+  _lastThemeAppliedKey=key;
   const t = THEMES[key];
   document.body.className = 'theme-'+key;
 
@@ -3762,7 +3780,7 @@ async function createOnlineSalle(){
   peer.on('open',()=>{
     onlineState.cdTimer=setInterval(()=>{
       onlineState.cd--;
-      if(screen==='online-wait') render();
+      if(screen==='online-wait'){ const cdEl=document.getElementById('onlineCd'); if(cdEl) cdEl.textContent=onlineState.cd; }
       if(onlineState.cd<=0){
         clearInterval(onlineState.cdTimer);
         showToast('⏱️ Personne... un bot prend la relève !');
@@ -4108,7 +4126,7 @@ function onlineWaitScreen(){
         ?`<p style="font-family:'Nunito',sans-serif;font-size:13px;color:rgba(255,255,255,.5);margin:8px 0;">Défi envoyé à <b>${onlineState.targetUsername||'ton ami'}</b> — en attente qu'il accepte...</p>`
         :`<div class="room-code">${onlineState.roomCode}</div>
       <p style="font-family:'Nunito',sans-serif;font-size:12px;color:rgba(255,255,255,.4);margin:4px 0 2px;">Partage ce code à ton ami.</p>
-      <p style="font-family:'Nunito',sans-serif;font-size:11px;color:rgba(255,255,255,.25);">Bot de secours dans ${onlineState.cd||30}s.</p>`}
+      <p style="font-family:'Nunito',sans-serif;font-size:11px;color:rgba(255,255,255,.25);">Bot de secours dans <span id="onlineCd">${onlineState.cd||30}</span>s.</p>`}
       ${onlineDiagLine()}
       <button class="btn btn-ghost" style="margin-top:18px;" data-action="onlineCancel">Annuler</button>
     </div>`;
@@ -4431,26 +4449,27 @@ function timingChallenge(kind){
     const posNow=()=>{ const e=((performance.now()-start)%DUR)/DUR; return e<0.5?e*2:2-e*2; };
     function frame(){ if(done) return; marker.style.left=(posNow()*100)+'%'; raf=requestAnimationFrame(frame); }
     raf=requestAnimationFrame(frame);
-    function finish(){
+    function finish(timedOut){
       if(done) return; done=true; cancelAnimationFrame(raf);
-      const d=Math.abs(posNow()-0.5);
+      // Si le joueur n'a pas réagi à temps → traité comme hors zone (échec), pas de résultat au hasard.
+      const d=timedOut===true?1:Math.abs(posNow()-0.5);
       let mult,txt,cls;
       if(isAtk){
         if(d<0.07){mult=1.6;txt='PARFAIT ! +60%';cls='perfect';}
         else if(d<0.17){mult=1.25;txt='Bien ! +25%';cls='good';}
-        else {mult=0.85;txt='Raté... -15%';cls='miss';}
+        else {mult=0.85;txt=timedOut===true?'⏱️ Trop lent ! -15%':'Raté... -15%';cls='miss';}
       } else {
         if(d<0.07){mult=0.15;txt='BLOCAGE PARFAIT !';cls='perfect';}
         else if(d<0.18){mult=0.5;txt='Paré ! -50%';cls='good';}
-        else {mult=1.0;txt='Trop tard !';cls='miss';}
+        else {mult=1.0;txt=timedOut===true?'⏱️ Trop lent !':'Trop tard !';cls='miss';}
       }
       marker.classList.add(cls);
       const res=ov.querySelector('#tResult'); res.textContent=txt; res.className='timing-result '+cls;
       if(navigator.vibrate) navigator.vibrate(cls==='perfect'?[15,25,35]:15);
       setTimeout(()=>{ ov.remove(); resolve(mult); },480);
     }
-    ov.addEventListener('pointerdown',finish);
-    setTimeout(finish,2400);
+    ov.addEventListener('pointerdown',()=>finish(false));
+    setTimeout(()=>finish(true),2400);
   });
 }
 
@@ -4960,18 +4979,10 @@ function render(){
 
   if(generatingCharacter){
     const ESTIMATED_MS=10000;
-    const MSGS=[
-      "L'IA choisit la couleur parfaite...",
-      "Dessin des yeux expressifs...",
-      "Ajout de l'armure et des muscles...",
-      "Application du style de combat...",
-      "Touches finales artistiques...",
-      "Presque prêt, encore un instant...",
-    ];
     const elapsed=charGenStartTime?Date.now()-charGenStartTime:0;
     const pct=Math.min(95, Math.round(elapsed/ESTIMATED_MS*100));
     const secLeft=Math.max(1, Math.round((ESTIMATED_MS-elapsed)/1000));
-    const msgIdx=Math.floor(elapsed/6000)%MSGS.length;
+    const msgIdx=Math.floor(elapsed/6000)%CHAR_GEN_MSGS.length;
     const ov=document.createElement('div');
     ov.className='overlay';
     ov.style.cssText='background:rgba(10,10,20,.97);z-index:9999;display:flex;align-items:center;justify-content:center;';
@@ -4979,11 +4990,11 @@ function render(){
       <div style="text-align:center;padding:32px 24px;max-width:320px;width:100%;">
         <div style="font-family:'Playfair Display',Georgia,serif;font-size:13px;letter-spacing:.2em;color:#C45CFF;margin-bottom:24px;">✨ CRÉATION DU PERSONNAGE ✨</div>
         <div style="font-size:72px;animation:charGenFloat 2s ease-in-out infinite;display:block;margin-bottom:20px;">🪨</div>
-        <div style="font-family:'Nunito',sans-serif;font-size:14px;color:rgba(255,255,255,.85);margin-bottom:20px;min-height:40px;line-height:1.4;">${MSGS[msgIdx]}</div>
+        <div id="cgMsg" style="font-family:'Nunito',sans-serif;font-size:14px;color:rgba(255,255,255,.85);margin-bottom:20px;min-height:40px;line-height:1.4;">${CHAR_GEN_MSGS[msgIdx]}</div>
         <div style="background:rgba(255,255,255,.1);border-radius:999px;height:10px;width:100%;overflow:hidden;margin-bottom:10px;">
-          <div style="height:100%;width:${pct}%;background:linear-gradient(90deg,#7B2FBE,#C45CFF);border-radius:999px;transition:width .8s ease;box-shadow:0 0 12px #C45CFF80;"></div>
+          <div id="cgFill" style="height:100%;width:${pct}%;background:linear-gradient(90deg,#7B2FBE,#C45CFF);border-radius:999px;transition:width .8s ease;box-shadow:0 0 12px #C45CFF80;"></div>
         </div>
-        <div style="font-family:'Nunito',sans-serif;font-size:12px;color:rgba(255,255,255,.4);">
+        <div id="cgTime" style="font-family:'Nunito',sans-serif;font-size:12px;color:rgba(255,255,255,.4);">
           ${pct<95?`~${secLeft} seconde${secLeft>1?'s':''} restante${secLeft>1?'s':''}...`:'Finalisation...'}
         </div>
       </div>`;
@@ -5374,8 +5385,8 @@ async function generateCharacterForRock(rock){
   if(!rock||!session||generatingCharacter) return;
   if((rock.charGenCount||0)>=CHAR_GEN_MAX){ showToast(`🔒 Maximum ${CHAR_GEN_MAX} générations atteint pour ce caillou`); return; }
   generatingCharacter=true; charGenStartTime=Date.now();
-  charGenTimerInterval=setInterval(render, 1000);
   render();
+  charGenTimerInterval=setInterval(updateCharGenOverlay, 1000);
   try{
     const rawUrl=await callPollinations(buildCharacterPrompt(rock));
     if(!rawUrl){ showToast('❌ Génération échouée — service indisponible, réessaie dans un instant'); stopCharGenTimer(); render(); return; }
