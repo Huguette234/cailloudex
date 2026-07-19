@@ -5409,25 +5409,20 @@ async function generateCharacterForRock(rock){
   charGenTimerInterval=setInterval(updateCharGenOverlay, 1000);
   try{
     let rawUrl=null, errDetail='';
-    // 1) Pollinations depuis le navigateur avec un PROMPT COURT + plusieurs modèles
-    //    (les prompts longs / un seul modèle -> HTTP 500). Le navigateur a toujours
-    //    su joindre Pollinations, donc c'est le chemin le plus fiable ici.
-    rawUrl=await callPollinations(buildShortCharPrompt(rock));
-    if(!rawUrl) errDetail='navigateur: Pollinations indisponible';
-    // 2) Secours : la fonction serveur
-    if(!rawUrl){
-      try{
-        const { data, error }=await sb.functions.invoke('generate-character', { body:{
-          rock_name:rock.name, rock_type:rock.rockType, rock_personality:rock.personality,
-          rock_size_cm:rock.sizeCm, rock_rarity:rock.rarity, rock_atk:rock.atk, rock_def:rock.def, rock_vit:rock.vit } });
-        if(!error && data && data.image){ rawUrl=`data:${data.mime_type||'image/jpeg'};base64,${data.image}`; }
-        else {
-          let d=error?error.message:((data&&(data.details||data.error))||'?');
-          try{ if(error&&error.context&&typeof error.context.json==='function'){ const b=await error.context.json(); if(b&&(b.details||b.error)) d=((b.error||'')+' '+(b.details||'')).trim(); } }catch(_){}
-          errDetail='serveur: '+d; console.warn('generate-character', errDetail);
-        }
-      }catch(e){ errDetail='serveur: '+(e&&e.message); console.warn('generate-character invoke', e); }
-    }
+    // 1) Fonction serveur (fal.ai FLUX si configuré, sinon Pollinations serveur)
+    try{
+      const { data, error }=await sb.functions.invoke('generate-character', { body:{
+        rock_name:rock.name, rock_type:rock.rockType, rock_personality:rock.personality,
+        rock_size_cm:rock.sizeCm, rock_rarity:rock.rarity, rock_atk:rock.atk, rock_def:rock.def, rock_vit:rock.vit } });
+      if(!error && data && data.image){ rawUrl=`data:${data.mime_type||'image/jpeg'};base64,${data.image}`; }
+      else {
+        let d=error?error.message:((data&&(data.details||data.error))||'?');
+        try{ if(error&&error.context&&typeof error.context.json==='function'){ const b=await error.context.json(); if(b&&(b.details||b.error)) d=((b.error||'')+' '+(b.details||'')).trim(); } }catch(_){}
+        errDetail='serveur: '+d; console.warn('generate-character', errDetail);
+      }
+    }catch(e){ errDetail='serveur: '+(e&&e.message); console.warn('generate-character invoke', e); }
+    // 2) Secours : Pollinations depuis le navigateur (prompt court)
+    if(!rawUrl){ const u=await callPollinations(buildShortCharPrompt(rock)); if(u) rawUrl=u; }
     if(!rawUrl){ showToast('❌ Génération échouée'+(errDetail?` (${errDetail.slice(0,60)})`:'')+' — réessaie'); stopCharGenTimer(); render(); return; }
     rock.charGenCount=(rock.charGenCount||0)+1;
     if(dex.find(r=>r.id===rock.id)&&session&&sb){
