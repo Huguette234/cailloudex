@@ -3,6 +3,7 @@ import { encodeBase64 } from 'https://deno.land/std@0.208.0/encoding/base64.ts';
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+const FAL_KEY = Deno.env.get('FAL_KEY') || Deno.env.get('FAL_API_KEY') || '';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -95,30 +96,61 @@ Deno.serve(async (req) => {
       ? `friendly hero chibi anime character that is a kind anthropomorphized rock named ${name}, ${sizeDesc}, ${rarityDesc}, ${personality}, ${typeStyle}, ${statDesc}, big sparkling cute eyes, warm happy smile, cheerful heroic pose, wholesome and adorable, unique individual look, full body, white background, manga art style`
       : `fierce chibi anime character that is an intense anthropomorphized rock named ${name}, ${sizeDesc}, ${rarityDesc}, ${personality}, ${typeStyle}, ${statDesc}, determined sharp eyes, serious expression, battle-ready pose, comically serious and powerful, unique individual look, full body, white background, manga art style`;
 
+    // ---- 1) fal.ai (FLUX schnell) — fiable, si une clé FAL_KEY est configurée ----
+    if (FAL_KEY) {
+      try {
+        const falRes = await fetch('https://fal.run/fal-ai/flux/schnell', {
+          method: 'POST',
+          headers: { 'Authorization': `Key ${FAL_KEY}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ prompt, image_size: 'square', num_inference_steps: 4, num_images: 1, enable_safety_checker: false, sync_mode: true }),
+          signal: AbortSignal.timeout(60000),
+        });
+        if (falRes.ok) {
+          const j = await falRes.json();
+          const img = j?.images?.[0];
+          if (img?.url) {
+            let base64 = '', mimeType = img.content_type || 'image/jpeg';
+            if (String(img.url).startsWith('data:')) {
+              const parts = String(img.url).split(',');
+              mimeType = (parts[0].match(/data:([^;]+)/) || [])[1] || mimeType;
+              base64 = parts[1] || '';
+            } else {
+              const r2 = await fetch(img.url, { signal: AbortSignal.timeout(30000) });
+              base64 = encodeBase64(new Uint8Array(await r2.arrayBuffer()));
+              mimeType = r2.headers.get('content-type') || mimeType;
+            }
+            if (base64) {
+              return new Response(JSON.stringify({ image: base64, mime_type: mimeType }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+            }
+          }
+        } else {
+          const t = await falRes.text().catch(() => '');
+          console.log('fal error', falRes.status, t.slice(0, 200));
+        }
+      } catch (e) {
+        console.log('fal exception', String(e));
+      }
+    }
+
+    // ---- 2) Secours : Pollinations (plusieurs modèles) ----
     const encoded = encodeURIComponent(prompt);
-    const url = `https://image.pollinations.ai/prompt/${encoded}?width=512&height=512&model=flux&nologo=true&seed=${Date.now()}`;
-
-    console.log('Calling Pollinations:', url.slice(0, 150));
-
     let pollRes: Response | null = null;
     let lastError = '';
-    for (let attempt = 1; attempt <= 3; attempt++) {
-      try {
-        pollRes = await fetch(url, { signal: AbortSignal.timeout(45000) });
-        console.log(`Attempt ${attempt}: status ${pollRes.status}`);
-        if (pollRes.ok) break;
-        lastError = `HTTP ${pollRes.status}`;
-        pollRes = null;
-      } catch (e) {
-        lastError = String(e);
-        console.log(`Attempt ${attempt} failed: ${lastError}`);
-        pollRes = null;
+    for (let attempt = 1; attempt <= 3 && !pollRes; attempt++) {
+      for (const model of ['flux', 'turbo', '']) {
+        const modelQ = model ? `&model=${model}` : '';
+        const url = `https://image.pollinations.ai/prompt/${encoded}?width=512&height=512${modelQ}&nologo=true&seed=${Date.now()}`;
+        try {
+          const r = await fetch(url, { signal: AbortSignal.timeout(45000) });
+          if (r.ok && (r.headers.get('content-type') || '').startsWith('image/')) { pollRes = r; break; }
+          lastError = `HTTP ${r.status}`;
+        } catch (e) { lastError = String(e); }
       }
-      if (attempt < 3) await new Promise(r => setTimeout(r, 2000));
+      if (!pollRes && attempt < 3) await new Promise(r => setTimeout(r, 2000));
     }
 
     if (!pollRes) {
-      return new Response(JSON.stringify({ error: 'pollinations_unavailable', details: lastError }), { status: 502, headers: corsHeaders });
+      return new Response(JSON.stringify({ error: FAL_KEY ? 'image_gen_failed' : 'pollinations_unavailable', details: lastError, fal: !!FAL_KEY }), { status: 502, headers: corsHeaders });
     }
 
     const buffer = await pollRes.arrayBuffer();
