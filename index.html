@@ -5417,13 +5417,13 @@ async function generateCharacterForRock(rock){
       if(!error && data && data.image){ rawUrl=`data:${data.mime_type||'image/jpeg'};base64,${data.image}`; }
       else {
         let d=error?error.message:((data&&(data.details||data.error))||'?');
-        try{ if(error&&error.context&&typeof error.context.json==='function'){ const b=await error.context.json(); if(b&&(b.details||b.error)) d=((b.error||'')+' '+(b.details||'')).trim(); } }catch(_){}
+        try{ if(error&&error.context&&typeof error.context.json==='function'){ const b=await error.context.json(); if(b){ d=((b.error||'')+' '+(b.details||'')).trim(); d+=('fal' in b)?(' · fal='+b.fal):' · ANCIEN CODE'; } } }catch(_){}
         errDetail='serveur: '+d; console.warn('generate-character', errDetail);
       }
     }catch(e){ errDetail='serveur: '+(e&&e.message); console.warn('generate-character invoke', e); }
     // 2) Secours : Pollinations depuis le navigateur (prompt court)
     if(!rawUrl){ const u=await callPollinations(buildShortCharPrompt(rock)); if(u) rawUrl=u; }
-    if(!rawUrl){ showToast('❌ Génération échouée'+(errDetail?` (${errDetail.slice(0,60)})`:'')+' — réessaie'); stopCharGenTimer(); render(); return; }
+    if(!rawUrl){ showToast('❌ Génération échouée'+(errDetail?` (${errDetail.slice(0,110)})`:'')+' — réessaie'); stopCharGenTimer(); render(); return; }
     rock.charGenCount=(rock.charGenCount||0)+1;
     if(dex.find(r=>r.id===rock.id)&&session&&sb){
       sb.from('rocks').update({ char_gen_count: rock.charGenCount }).eq('id',rock.id).eq('user_id',session.user.id).then(()=>{});
