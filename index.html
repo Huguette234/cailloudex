@@ -89,7 +89,7 @@ body.theme-soir{
 /* --- STARS BG (visibles seulement la nuit) --- */
 .stars{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;transition:opacity 1.5s;}
 .stars.hidden{opacity:0;pointer-events:none;}
-.star{position:absolute;background:#fff;border-radius:50%;animation:twinkle ease-in-out infinite alternate;}
+.star{position:absolute;background:#9C8FC4;border-radius:50%;animation:twinkle ease-in-out infinite alternate;}
 @keyframes twinkle{0%{opacity:.15;transform:scale(.8);}100%{opacity:.9;transform:scale(1.2);}}
 
 /* --- SKY DECORATIONS --- */
@@ -1990,195 +1990,61 @@ function applyTimeTheme(){
   const t = THEMES[key];
   document.body.className = 'theme-'+key;
 
-  /* ----- SOL ----- */
-  const g = document.getElementById('groundSvg');
-  const grassColors = {
-    nuit:  {top:'#1A3A1A', bot:'#0A1A0A', stone:'#0F280F', stroke:'#0A1E0A', haze:'rgba(120,140,210,.14)', rim:'rgba(150,170,230,.30)', foliage:'#1C4420', trunk:'#12240E', flower:null, sunX:356, reflect:'rgba(220,228,255,.5)'},
-    matin: {top:'#3A7A1A', bot:'#1E4A08', stone:'#2A5010', stroke:'#1A3A06', haze:'rgba(255,220,160,.38)', rim:'rgba(255,235,180,.5)', foliage:'#2E6A18', trunk:'#3A2410', flower:'#FFE38A', sunX:360, reflect:'rgba(255,225,170,.6)'},
-    aprem: {top:'#4A9A20', bot:'#2A6A0A', stone:'#2E6012', stroke:'#1A4206', haze:'rgba(200,235,255,.34)', rim:'rgba(235,252,255,.55)', foliage:'#35801A', trunk:'#3E2A12', flower:'#FFFFFF', sunX:328, reflect:'rgba(255,255,255,.65)'},
-    soir:  {top:'#5A3010', bot:'#1A0A02', stone:'#3A1A08', stroke:'#1A0A02', haze:'rgba(255,150,80,.32)', rim:'rgba(255,185,120,.55)', foliage:'#2C2410', trunk:'#241206', flower:null, sunX:60, reflect:'rgba(255,180,110,.6)'},
+  /* ----- DÉCOR ÉPURÉ : fond clair + collines douces ----- */
+  const SCENE = {
+    nuit:  { hills:['#DBD4E7','#CFC6E1','#C2B6D8'], haze:'rgba(150,140,205,.14)', orb:'moon', glow:'rgba(205,198,238,.6)',  body:'#F1EEFB', cloud:'rgba(221,214,239,.68)', bg:'#C2B6D8' },
+    matin: { hills:['#F4E5C8','#ECD8B2','#E3CA9C'], haze:'rgba(255,214,150,.22)', orb:'sun',  glow:'rgba(255,216,150,.62)', body:'#FFE7A6', cloud:'rgba(255,237,206,.82)', bg:'#E3CA9C' },
+    aprem: { hills:['#E8EDD7','#DBE3C5','#CDD8B3'], haze:'rgba(200,225,180,.2)',  orb:'sun',  glow:'rgba(255,235,168,.6)',  body:'#FFEE9E', cloud:'rgba(255,255,255,.86)', bg:'#CDD8B3' },
+    soir:  { hills:['#F2DECC','#EACDB5','#E0BBA0'], haze:'rgba(255,175,130,.2)',  orb:'sun',  glow:'rgba(255,158,108,.55)', body:'#FFB889', cloud:'rgba(255,220,199,.75)', bg:'#E0BBA0' },
   };
-  const mountainColors = {
-    nuit:  { far:'#3A4256', mid:'#2A3140', near:'#262C3A', snow:'#4A5470' },
-    matin: { far:'#96949E', mid:'#737180', near:'#6E6C7A', snow:'#EAD8C0' },
-    aprem: { far:'#A8ACB6', mid:'#848994', near:'#7C828C', snow:'#F2F6FA' },
-    soir:  { far:'#705A66', mid:'#503F4C', near:'#463A46', snow:'#C08A72' },
-  };
-  const waterColors = {
-    nuit:  { a:'#2A4E72', b:'#0D2038', glint:'rgba(210,220,255,.5)' },
-    matin: { a:'#9FC0DE', b:'#C88A56', glint:'rgba(255,240,210,.6)' },
-    aprem: { a:'#9FDAF6', b:'#2F7CB0', glint:'rgba(255,255,255,.7)' },
-    soir:  { a:'#D07A92', b:'#5A2038', glint:'rgba(255,200,140,.6)' },
-  };
-  const mc = mountainColors[key];
-  const gc = grassColors[key];
-  const wc = waterColors[key];
-  // Fond de la zone "safe area" du bas (iPhone) accorde a la couleur du sol.
-  document.documentElement.style.backgroundColor = gc.bot;
-  const hexShade=(hex,amt)=>{hex=hex.replace('#','');let r=parseInt(hex.slice(0,2),16),g2=parseInt(hex.slice(2,4),16),b2=parseInt(hex.slice(4,6),16);const tt=amt<0?0:255,pp=Math.abs(amt);r=Math.round(r+(tt-r)*pp);g2=Math.round(g2+(tt-g2)*pp);b2=Math.round(b2+(tt-b2)*pp);return '#'+[r,g2,b2].map(v=>v.toString(16).padStart(2,'0')).join('');};
-  const folL=hexShade(gc.foliage,0.34), folD=hexShade(gc.foliage,-0.4), trkL=hexShade(gc.trunk,0.3);
-  const grassLit=hexShade(gc.top,0.28), grassHi=hexShade(gc.top,0.5);
-  const pine=(x,b,h,col,lit)=>{const w=h*0.6;let s='';for(let i=0;i<3;i++){const ty=b-i*h*0.3, th=h*(0.5-i*0.1), tw=w*(1-i*0.22);s+=`<path d="M${x-tw},${ty} L${x},${ty-th} L${x+tw},${ty} Z" fill="${col}"/><path d="M${x},${ty-th} L${x+tw},${ty} L${x+tw*0.3},${ty}" fill="${lit}" opacity="0.4"/>`;}return `<rect x="${x-h*0.05}" y="${b}" width="${h*0.1}" height="${h*0.14}" fill="${hexShade(col,-0.2)}"/>`+s;};
-  const tree=(x,b,s)=>{const tw=s*0.18;return `<g><ellipse cx="${x}" cy="${b+s*0.03}" rx="${s*0.55}" ry="${s*0.12}" fill="#000" opacity="0.18"/><rect x="${x-tw/2}" y="${b-s*0.5}" width="${tw}" height="${s*0.55}" rx="${tw*0.3}" fill="${gc.trunk}"/><rect x="${x-tw/2}" y="${b-s*0.5}" width="${tw*0.42}" height="${s*0.55}" rx="${tw*0.2}" fill="${trkL}" opacity="0.6"/><circle cx="${x}" cy="${b-s*0.74}" r="${s*0.52}" fill="${folD}"/><circle cx="${x-s*0.34}" cy="${b-s*0.56}" r="${s*0.34}" fill="${folD}"/><circle cx="${x+s*0.36}" cy="${b-s*0.56}" r="${s*0.34}" fill="${folD}"/><circle cx="${x}" cy="${b-s*0.78}" r="${s*0.46}" fill="${gc.foliage}"/><circle cx="${x-s*0.3}" cy="${b-s*0.6}" r="${s*0.3}" fill="${gc.foliage}"/><circle cx="${x+s*0.32}" cy="${b-s*0.6}" r="${s*0.3}" fill="${gc.foliage}"/><circle cx="${x-s*0.16}" cy="${b-s*0.94}" r="${s*0.26}" fill="${gc.foliage}"/><circle cx="${x+s*0.14}" cy="${b-s*0.9}" r="${s*0.28}" fill="${folL}" opacity="0.85"/><circle cx="${x+s*0.28}" cy="${b-s*0.72}" r="${s*0.18}" fill="${folL}" opacity="0.7"/><circle cx="${x-s*0.05}" cy="${b-s*0.82}" r="${s*0.14}" fill="${folL}" opacity="0.5"/></g>`;};
-  const rock=(x,y,r)=>`<ellipse cx="${x}" cy="${y+r*0.5}" rx="${r*1.2}" ry="${r*0.34}" fill="#000" opacity="0.18"/><ellipse cx="${x}" cy="${y}" rx="${r}" ry="${r*0.7}" fill="${gc.stone}"/><ellipse cx="${x-r*0.28}" cy="${y-r*0.28}" rx="${r*0.55}" ry="${r*0.34}" fill="${hexShade(gc.stone,0.3)}" opacity="0.6"/><path d="M${x-r*0.8},${y-r*0.05} Q${x},${y-r*0.65} ${x+r*0.8},${y-r*0.05}" fill="none" stroke="${gc.rim}" stroke-width="0.4" opacity="0.6"/>`;
-  const tuft=(x,y,c)=>`<path d="M${x},${y} Q${x-1},${y-5} ${x-2},${y} M${x+1.5},${y} Q${x+1.5},${y-6} ${x+3},${y} M${x+3.5},${y} Q${x+4},${y-4.5} ${x+5},${y}" stroke="${c}" stroke-width="0.9" fill="none" stroke-linecap="round"/>`;
-  const flowers = gc.flower? [[70,109],[120,113],[300,111],[340,116],[95,120],[355,119]].map(([fx,fy])=>`<circle cx="${fx}" cy="${fy}" r="1.1" fill="${gc.flower}"/><circle cx="${fx}" cy="${fy}" r="0.4" fill="#E8A030"/>`).join('') : '';
-  const lrx=Math.max(180,Math.min(320,gc.sunX));
-  g.innerHTML = `<defs>
-      <linearGradient id="gG2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${grassLit}"/><stop offset="0.3" stop-color="${gc.top}"/><stop offset="1" stop-color="${gc.bot}"/></linearGradient>
-      <linearGradient id="hazeG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${gc.haze}"/><stop offset="1" stop-color="transparent"/></linearGradient>
-      <linearGradient id="mFar" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${hexShade(mc.far,0.12)}"/><stop offset="1" stop-color="${mc.far}"/></linearGradient>
-      <linearGradient id="mMid" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${hexShade(mc.mid,0.1)}"/><stop offset="1" stop-color="${mc.mid}"/></linearGradient>
-      <linearGradient id="mNear" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${hexShade(mc.near,0.14)}"/><stop offset="1" stop-color="${hexShade(mc.near,-0.15)}"/></linearGradient>
-      <linearGradient id="waterG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${wc.a}"/><stop offset="1" stop-color="${wc.b}"/></linearGradient>
-      <radialGradient id="waterHi" cx="50%" cy="0%" r="80%"><stop offset="0" stop-color="${gc.reflect}"/><stop offset="100%" stop-color="transparent"/></radialGradient>
-      <filter id="grassTx" x="0" y="0" width="100%" height="100%"><feTurbulence type="fractalNoise" baseFrequency="0.16 0.5" numOctaves="2" seed="9" result="n"/><feColorMatrix in="n" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.16 0"/></filter>
-      <clipPath id="lakeClip"><ellipse cx="250" cy="113" rx="83" ry="6.4"/></clipPath>
-    </defs>
-    <rect x="0" y="28" width="400" height="56" fill="url(#hazeG)"/>
-    <path d="M0,60 C55,50 110,57 165,50 C225,42 285,55 345,48 C370,45 400,50 400,52 L400,130 L0,130 Z" fill="url(#mFar)"/>
-    <path d="M0,76 C50,65 105,73 165,63 C230,53 290,70 350,61 C375,57 400,64 400,66 L400,130 L0,130 Z" fill="url(#mMid)"/>
-    <path d="M0,76 C50,65 105,73 165,63 C230,53 290,70 350,61 C375,57 400,64 400,66" fill="none" stroke="${mc.snow}" stroke-width="0.8" opacity="0.5"/>
-    ${pine(60,79,11,mc.mid,mc.snow)}${pine(300,74,10,mc.mid,mc.snow)}
-    <path d="M0,92 C70,80 130,90 200,80 C265,71 325,88 385,79 C392,78 400,80 400,82 L400,130 L0,130 Z" fill="url(#mNear)"/>
-    <path d="M0,92 C70,80 130,90 200,80 C265,71 325,88 385,79 C392,78 400,80 400,82" fill="none" stroke="${mc.snow}" stroke-width="1" opacity="0.65"/>
-    ${pine(110,90,14,gc.stroke,folL)}${pine(128,90,10,gc.stroke,folL)}${pine(255,88,13,gc.stroke,folL)}
-    ${tree(180,84,11)}${tree(348,85,10)}
-    <path d="M0,105 C60,97 120,109 200,101 C270,94 330,107 400,99 L400,130 L0,130 Z" fill="url(#gG2)"/>
-    <path d="M0,105 C60,97 120,109 200,101 C270,94 330,107 400,99 L400,130 L0,130 Z" fill="url(#grassTx)"/>
-    <path d="M0,105 C60,97 120,109 200,101 C270,94 330,107 400,99" fill="none" stroke="${gc.rim}" stroke-width="1" opacity="0.8"/>
-    <g>
-      <ellipse cx="250" cy="114.5" rx="88" ry="8" fill="${gc.bot}" opacity="0.5"/>
-      <ellipse cx="250" cy="113" rx="83" ry="6.4" fill="url(#waterG)"/>
-      <g clip-path="url(#lakeClip)">
-        <ellipse cx="${lrx}" cy="109" rx="26" ry="7" fill="url(#waterHi)"/>
-        <ellipse cx="${lrx}" cy="110.5" rx="7" ry="4.5" fill="${gc.reflect}" opacity="0.9"/>
-        <line x1="180" y1="111" x2="235" y2="111" stroke="${wc.glint}" stroke-width="0.8" stroke-linecap="round" opacity="0.7"/>
-        <line x1="255" y1="113.5" x2="300" y2="113.5" stroke="${wc.glint}" stroke-width="0.7" stroke-linecap="round" opacity="0.5"/>
-        <line x1="210" y1="115" x2="255" y2="115" stroke="${wc.glint}" stroke-width="0.6" stroke-linecap="round" opacity="0.4"/>
-        <line x1="285" y1="115.8" x2="318" y2="115.8" stroke="${wc.glint}" stroke-width="0.5" stroke-linecap="round" opacity="0.35"/>
-      </g>
-      <ellipse cx="250" cy="113" rx="83" ry="6.4" fill="none" stroke="${gc.rim}" stroke-width="0.7" opacity="0.55"/>
-      <path d="M168,110 q-3,2 -1,4 M330,110 q3,2 1,4" stroke="${folD}" stroke-width="2" fill="none" opacity="0.5" stroke-linecap="round"/>
-    </g>
-    ${tree(42,114,17)}${tree(372,113,15)}
-    <g opacity="0.95">${rock(30,118,3.6)}${rock(96,120,2.6)}${rock(140,116,2.2)}${rock(350,119,3.1)}${rock(378,121,2.4)}${rock(115,113,2)}</g>
-    <g>${tuft(64,108,grassHi)}${tuft(158,118,grassHi)}${tuft(338,116,grassHi)}${tuft(20,122,grassLit)}${tuft(390,120,grassLit)}${flowers}</g>`;
+  const sc = SCENE[key] || SCENE.aprem;
+  const shade=(hex,amt)=>{hex=hex.replace('#','');let r=parseInt(hex.slice(0,2),16),g2=parseInt(hex.slice(2,4),16),b2=parseInt(hex.slice(4,6),16);const tt=amt<0?0:255,pp=Math.abs(amt);r=Math.round(r+(tt-r)*pp);g2=Math.round(g2+(tt-g2)*pp);b2=Math.round(b2+(tt-b2)*pp);return '#'+[r,g2,b2].map(v=>v.toString(16).padStart(2,'0')).join('');};
+  document.documentElement.style.backgroundColor = sc.bg;
 
-  /* ----- DÉCO CIEL ----- */
+  /* ----- collines douces (bas de l'écran) ----- */
+  const g = document.getElementById('groundSvg');
+  const treeCol = shade(sc.hills[2],-0.16), treeTrunk = shade(sc.hills[2],-0.34);
+  const tree=(x,b,h)=>`<rect x="${x-h*0.06}" y="${b-h*0.28}" width="${h*0.12}" height="${h*0.32}" rx="${h*0.05}" fill="${treeTrunk}"/><ellipse cx="${x}" cy="${b-h*0.5}" rx="${h*0.5}" ry="${h*0.56}" fill="${treeCol}"/><ellipse cx="${x-h*0.3}" cy="${b-h*0.34}" rx="${h*0.32}" ry="${h*0.36}" fill="${treeCol}"/><ellipse cx="${x+h*0.3}" cy="${b-h*0.34}" rx="${h*0.32}" ry="${h*0.36}" fill="${treeCol}"/>`;
+  const bush=(x,y,r)=>`<ellipse cx="${x}" cy="${y}" rx="${r}" ry="${r*0.8}" fill="${treeCol}" opacity="0.85"/><ellipse cx="${x-r*0.6}" cy="${y+r*0.1}" rx="${r*0.62}" ry="${r*0.5}" fill="${treeCol}" opacity="0.85"/><ellipse cx="${x+r*0.6}" cy="${y+r*0.1}" rx="${r*0.62}" ry="${r*0.5}" fill="${treeCol}" opacity="0.85"/>`;
+  g.innerHTML = `<defs>
+      <linearGradient id="hzG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${sc.haze}"/><stop offset="1" stop-color="transparent"/></linearGradient>
+    </defs>
+    <rect x="0" y="0" width="400" height="66" fill="url(#hzG)"/>
+    <path d="M0,74 C70,61 132,73 200,65 C268,57 332,71 400,61 L400,130 L0,130 Z" fill="${sc.hills[0]}" opacity="0.85"/>
+    <path d="M0,92 C64,83 140,95 212,87 C284,79 342,93 400,85 L400,130 L0,130 Z" fill="${sc.hills[1]}" opacity="0.92"/>
+    ${tree(64,96,15)}${bush(150,101,7)}
+    <path d="M0,110 C82,101 152,113 222,106 C292,99 350,111 400,105 L400,130 L0,130 Z" fill="${sc.hills[2]}"/>
+    ${tree(330,116,18)}${bush(250,115,8)}${bush(40,118,6)}`;
+
+  /* ----- ciel : astre doux + nuages ----- */
   const sky = document.getElementById('skyDeco');
   const stars = document.getElementById('stars');
-
-  if(key==='nuit'){
-    stars.classList.remove('hidden');
-    sky.innerHTML = `
-      <!-- Lune -->
-      <svg style="position:absolute;top:7%;right:11%;width:116px;height:116px;" viewBox="0 0 116 116">
-        <defs><radialGradient id="moonGlow" cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stop-color="rgba(255,248,220,.5)"/>
-          <stop offset="38%" stop-color="rgba(230,238,255,.16)"/>
-          <stop offset="100%" stop-color="transparent"/>
-        </radialGradient></defs>
-        <circle cx="58" cy="58" r="55" fill="url(#moonGlow)"/>
-        <circle cx="58" cy="58" r="27" fill="#FFF8DC" opacity=".95"/>
-        <circle cx="48" cy="49" r="4" fill="rgba(200,180,120,.3)"/>
-        <circle cx="66" cy="62" r="3" fill="rgba(200,180,120,.25)"/>
-        <circle cx="53" cy="68" r="2" fill="rgba(200,180,120,.2)"/>
-      </svg>
-      <!-- Étoiles filantes -->
-      <div class="shooting-star" style="top:12%;left:20%;animation-duration:6s;animation-delay:2s;"></div>
-      <div class="shooting-star" style="top:22%;left:60%;animation-duration:8s;animation-delay:5s;"></div>`;
-  } else {
-    stars.classList.add('hidden');
-    if(key==='matin'){
-      sky.innerHTML = `
-        <!-- Soleil levant -->
-        <svg style="position:absolute;bottom:14%;right:8%;width:90px;height:90px;" viewBox="0 0 90 90">
-          <circle cx="45" cy="45" r="40" fill="#FFD700" opacity=".15"/>
-          <circle cx="45" cy="45" r="32" fill="#FFD700" opacity=".3"/>
-          <circle cx="45" cy="45" r="24" fill="#FFE44A" opacity=".9"/>
-        </svg>
-        <!-- Nuages -->
-        <svg style="position:absolute;top:8%;left:5%;width:130px;height:50px;animation:cloudDrift 18s ease-in-out infinite alternate;" viewBox="0 0 130 50">
-          <ellipse cx="65" cy="34" rx="60" ry="16" fill="rgba(255,220,160,.7)"/>
-          <ellipse cx="45" cy="28" rx="38" ry="18" fill="rgba(255,230,180,.8)"/>
-          <ellipse cx="85" cy="26" rx="34" ry="16" fill="rgba(255,225,170,.75)"/>
-        </svg>
-        <svg style="position:absolute;top:20%;right:5%;width:100px;height:40px;animation:cloudDrift 24s ease-in-out infinite alternate-reverse;" viewBox="0 0 100 40">
-          <ellipse cx="50" cy="28" rx="46" ry="12" fill="rgba(255,200,130,.6)"/>
-          <ellipse cx="35" cy="22" rx="28" ry="14" fill="rgba(255,210,150,.7)"/>
-          <ellipse cx="65" cy="20" rx="26" ry="12" fill="rgba(255,205,140,.65)"/>
-        </svg>
-        <!-- Oiseaux -->
-        <svg style="position:absolute;top:32%;left:26%;width:96px;height:34px;opacity:.55;animation:cloudDrift 16s ease-in-out infinite alternate;" viewBox="0 0 96 34">
-          <path d="M5,16 Q12,9 19,16 Q26,9 33,16" stroke="#1A1A1A" stroke-width="1.6" fill="none" stroke-linecap="round"/>
-          <path d="M40,10 Q46,4 52,10 Q58,4 64,10" stroke="#1A1A1A" stroke-width="1.4" fill="none" stroke-linecap="round"/>
-          <path d="M70,20 Q76,14 82,20 Q88,14 94,20" stroke="#1A1A1A" stroke-width="1.3" fill="none" stroke-linecap="round"/>
-        </svg>`;
-    } else if(key==='aprem'){
-      sky.innerHTML = `
-        <!-- Soleil haut -->
-        <svg style="position:absolute;top:6%;right:15%;width:70px;height:70px;" viewBox="0 0 70 70">
-          <circle cx="35" cy="35" r="32" fill="#FFD700" opacity=".12"/>
-          <circle cx="35" cy="35" r="25" fill="#FFE135" opacity=".9"/>
-          <g stroke="#FFD700" stroke-width="2" opacity=".5">
-            ${Array.from({length:8},(_,i)=>{const a=i*45*Math.PI/180;const x1=35+28*Math.cos(a);const y1=35+28*Math.sin(a);const x2=35+36*Math.cos(a);const y2=35+36*Math.sin(a);return `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"/>`;}).join('')}
-          </g>
-        </svg>
-        <!-- Nuages blancs -->
-        <svg style="position:absolute;top:15%;left:8%;width:140px;height:55px;animation:cloudDrift 20s ease-in-out infinite alternate;" viewBox="0 0 140 55">
-          <ellipse cx="70" cy="38" rx="65" ry="17" fill="rgba(255,255,255,.85)"/>
-          <ellipse cx="50" cy="30" rx="42" ry="22" fill="rgba(255,255,255,.9)"/>
-          <ellipse cx="92" cy="28" rx="38" ry="20" fill="rgba(255,255,255,.88)"/>
-        </svg>
-        <svg style="position:absolute;top:28%;right:4%;width:110px;height:44px;animation:cloudDrift 26s ease-in-out infinite alternate-reverse;" viewBox="0 0 110 44">
-          <ellipse cx="55" cy="30" rx="50" ry="14" fill="rgba(255,255,255,.8)"/>
-          <ellipse cx="38" cy="24" rx="32" ry="17" fill="rgba(255,255,255,.85)"/>
-          <ellipse cx="74" cy="22" rx="30" ry="16" fill="rgba(255,255,255,.82)"/>
-        </svg>
-        <!-- Oiseaux -->
-        <svg style="position:absolute;top:22%;left:22%;width:104px;height:36px;opacity:.5;animation:cloudDrift 15s ease-in-out infinite alternate;" viewBox="0 0 104 36">
-          <path d="M5,18 Q12,11 19,18 Q26,11 33,18" stroke="#26333F" stroke-width="1.6" fill="none" stroke-linecap="round"/>
-          <path d="M42,12 Q49,5 56,12 Q63,5 70,12" stroke="#26333F" stroke-width="1.5" fill="none" stroke-linecap="round"/>
-          <path d="M76,22 Q83,16 89,22 Q95,16 101,22" stroke="#26333F" stroke-width="1.3" fill="none" stroke-linecap="round"/>
-        </svg>
-        <svg style="position:absolute;top:14%;right:22%;width:64px;height:24px;opacity:.4;animation:cloudDrift 21s ease-in-out infinite alternate-reverse;" viewBox="0 0 64 24">
-          <path d="M4,14 Q10,8 16,14 Q22,8 28,14" stroke="#26333F" stroke-width="1.4" fill="none" stroke-linecap="round"/>
-          <path d="M36,10 Q42,5 48,10 Q54,5 60,10" stroke="#26333F" stroke-width="1.3" fill="none" stroke-linecap="round"/>
-        </svg>`;
-    } else if(key==='soir'){
-      sky.innerHTML = `
-        <!-- Soleil couchant -->
-        <svg style="position:absolute;bottom:14%;left:6%;width:80px;height:80px;" viewBox="0 0 80 80">
-          <circle cx="40" cy="40" r="36" fill="#FF4500" opacity=".12"/>
-          <circle cx="40" cy="40" r="28" fill="#FF6030" opacity=".25"/>
-          <circle cx="40" cy="40" r="20" fill="#FF8040" opacity=".88"/>
-        </svg>
-        <!-- Nuages dramatiques -->
-        <svg style="position:absolute;top:10%;left:0%;width:200px;height:70px;animation:cloudDrift 22s ease-in-out infinite alternate;" viewBox="0 0 200 70">
-          <ellipse cx="100" cy="48" rx="95" ry="22" fill="rgba(120,30,60,.6)"/>
-          <ellipse cx="70" cy="38" rx="60" ry="26" fill="rgba(150,40,70,.55)"/>
-          <ellipse cx="130" cy="34" rx="55" ry="24" fill="rgba(130,35,65,.58)"/>
-        </svg>
-        <svg style="position:absolute;top:25%;right:0%;width:160px;height:55px;animation:cloudDrift 30s ease-in-out infinite alternate-reverse;" viewBox="0 0 160 55">
-          <ellipse cx="80" cy="38" rx="75" ry="17" fill="rgba(180,60,30,.5)"/>
-          <ellipse cx="55" cy="30" rx="48" ry="20" fill="rgba(200,70,35,.52)"/>
-          <ellipse cx="108" cy="28" rx="44" ry="18" fill="rgba(190,65,32,.48)"/>
-        </svg>
-        <!-- Lueurs oranges -->
-        <div style="position:absolute;bottom:12%;left:0;right:0;height:80px;background:linear-gradient(0deg,rgba(255,100,30,.35),transparent);pointer-events:none;"></div>`;
-    }
-  }
+  const orbSvg = sc.orb==='moon'
+    ? `<svg style="position:absolute;top:7%;right:12%;width:116px;height:116px;" viewBox="0 0 116 116">
+        <defs><radialGradient id="orbG" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="${sc.glow}"/><stop offset="46%" stop-color="${sc.glow}" stop-opacity="0.22"/><stop offset="100%" stop-color="transparent"/></radialGradient></defs>
+        <circle cx="58" cy="58" r="55" fill="url(#orbG)"/>
+        <circle cx="58" cy="58" r="26" fill="${sc.body}"/>
+        <circle cx="49" cy="51" r="4" fill="rgba(170,160,205,.4)"/><circle cx="66" cy="63" r="3" fill="rgba(170,160,205,.32)"/><circle cx="54" cy="66" r="2.4" fill="rgba(170,160,205,.28)"/>
+      </svg>`
+    : `<svg style="position:absolute;top:6%;right:13%;width:124px;height:124px;" viewBox="0 0 124 124">
+        <defs><radialGradient id="orbG" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="${sc.glow}"/><stop offset="42%" stop-color="${sc.glow}" stop-opacity="0.28"/><stop offset="100%" stop-color="transparent"/></radialGradient></defs>
+        <circle cx="62" cy="62" r="60" fill="url(#orbG)"/>
+        <circle cx="62" cy="62" r="29" fill="${sc.body}"/>
+        <circle cx="52" cy="53" r="8" fill="rgba(255,255,255,.5)"/>
+      </svg>`;
+  const cloud=(top,left,w,dur,op)=>`<svg style="position:absolute;top:${top};left:${left};width:${w}px;height:${(w*0.4)|0}px;animation:cloudDrift ${dur}s ease-in-out infinite alternate;opacity:${op};" viewBox="0 0 130 52"><ellipse cx="65" cy="37" rx="60" ry="14" fill="${sc.cloud}"/><ellipse cx="46" cy="28" rx="34" ry="17" fill="${sc.cloud}"/><ellipse cx="86" cy="27" rx="30" ry="15" fill="${sc.cloud}"/></svg>`;
+  sky.innerHTML = orbSvg + cloud('11%','5%',132,24,'.9') + cloud('23%','60%',96,30,'.68') + cloud('15%','34%',72,27,'.55');
+  if(key==='nuit'){ stars.classList.remove('hidden'); } else { stars.classList.add('hidden'); }
 }
 
 /* ===== STARS ===== */
 function initStars(){
   const cont = document.getElementById('stars');
-  for(let i=0;i<80;i++){
+  for(let i=0;i<46;i++){
     const s = document.createElement('div');
     s.className = 'star';
-    const sz = .8+Math.random()*2.4;
-    s.style.cssText = `left:${Math.random()*100}%;top:${Math.random()*80}%;width:${sz}px;height:${sz}px;animation-duration:${2+Math.random()*4}s;animation-delay:${-Math.random()*4}s;opacity:${.1+Math.random()*.5}`;
+    const sz = .8+Math.random()*2.2;
+    s.style.cssText = `left:${Math.random()*100}%;top:${Math.random()*62}%;width:${sz}px;height:${sz}px;animation-duration:${2+Math.random()*4}s;animation-delay:${-Math.random()*4}s;opacity:${.12+Math.random()*.35}`;
     cont.appendChild(s);
   }
 }
