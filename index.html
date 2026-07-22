@@ -1990,51 +1990,12 @@ function applyTimeTheme(){
   const t = THEMES[key];
   document.body.className = 'theme-'+key;
 
-  /* ----- DÉCOR ÉPURÉ : fond clair + collines douces ----- */
-  const SCENE = {
-    nuit:  { hills:['#DBD4E7','#CFC6E1','#C2B6D8'], haze:'rgba(150,140,205,.14)', orb:'moon', glow:'rgba(205,198,238,.6)',  body:'#F1EEFB', cloud:'rgba(221,214,239,.68)', bg:'#C2B6D8' },
-    matin: { hills:['#F4E5C8','#ECD8B2','#E3CA9C'], haze:'rgba(255,214,150,.22)', orb:'sun',  glow:'rgba(255,216,150,.62)', body:'#FFE7A6', cloud:'rgba(255,237,206,.82)', bg:'#E3CA9C' },
-    aprem: { hills:['#E8EDD7','#DBE3C5','#CDD8B3'], haze:'rgba(200,225,180,.2)',  orb:'sun',  glow:'rgba(255,235,168,.6)',  body:'#FFEE9E', cloud:'rgba(255,255,255,.86)', bg:'#CDD8B3' },
-    soir:  { hills:['#F2DECC','#EACDB5','#E0BBA0'], haze:'rgba(255,175,130,.2)',  orb:'sun',  glow:'rgba(255,158,108,.55)', body:'#FFB889', cloud:'rgba(255,220,199,.75)', bg:'#E0BBA0' },
-  };
-  const sc = SCENE[key] || SCENE.aprem;
-  const shade=(hex,amt)=>{hex=hex.replace('#','');let r=parseInt(hex.slice(0,2),16),g2=parseInt(hex.slice(2,4),16),b2=parseInt(hex.slice(4,6),16);const tt=amt<0?0:255,pp=Math.abs(amt);r=Math.round(r+(tt-r)*pp);g2=Math.round(g2+(tt-g2)*pp);b2=Math.round(b2+(tt-b2)*pp);return '#'+[r,g2,b2].map(v=>v.toString(16).padStart(2,'0')).join('');};
-  document.documentElement.style.backgroundColor = sc.bg;
-
-  /* ----- collines douces (bas de l'écran) ----- */
-  const g = document.getElementById('groundSvg');
-  const treeCol = shade(sc.hills[2],-0.16), treeTrunk = shade(sc.hills[2],-0.34);
-  const tree=(x,b,h)=>`<rect x="${x-h*0.06}" y="${b-h*0.28}" width="${h*0.12}" height="${h*0.32}" rx="${h*0.05}" fill="${treeTrunk}"/><ellipse cx="${x}" cy="${b-h*0.5}" rx="${h*0.5}" ry="${h*0.56}" fill="${treeCol}"/><ellipse cx="${x-h*0.3}" cy="${b-h*0.34}" rx="${h*0.32}" ry="${h*0.36}" fill="${treeCol}"/><ellipse cx="${x+h*0.3}" cy="${b-h*0.34}" rx="${h*0.32}" ry="${h*0.36}" fill="${treeCol}"/>`;
-  const bush=(x,y,r)=>`<ellipse cx="${x}" cy="${y}" rx="${r}" ry="${r*0.8}" fill="${treeCol}" opacity="0.85"/><ellipse cx="${x-r*0.6}" cy="${y+r*0.1}" rx="${r*0.62}" ry="${r*0.5}" fill="${treeCol}" opacity="0.85"/><ellipse cx="${x+r*0.6}" cy="${y+r*0.1}" rx="${r*0.62}" ry="${r*0.5}" fill="${treeCol}" opacity="0.85"/>`;
-  g.innerHTML = `<defs>
-      <linearGradient id="hzG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${sc.haze}"/><stop offset="1" stop-color="transparent"/></linearGradient>
-    </defs>
-    <rect x="0" y="0" width="400" height="66" fill="url(#hzG)"/>
-    <path d="M0,74 C70,61 132,73 200,65 C268,57 332,71 400,61 L400,130 L0,130 Z" fill="${sc.hills[0]}" opacity="0.85"/>
-    <path d="M0,92 C64,83 140,95 212,87 C284,79 342,93 400,85 L400,130 L0,130 Z" fill="${sc.hills[1]}" opacity="0.92"/>
-    ${tree(64,96,15)}${bush(150,101,7)}
-    <path d="M0,110 C82,101 152,113 222,106 C292,99 350,111 400,105 L400,130 L0,130 Z" fill="${sc.hills[2]}"/>
-    ${tree(330,116,18)}${bush(250,115,8)}${bush(40,118,6)}`;
-
-  /* ----- ciel : astre doux + nuages ----- */
-  const sky = document.getElementById('skyDeco');
-  const stars = document.getElementById('stars');
-  const orbSvg = sc.orb==='moon'
-    ? `<svg style="position:absolute;top:7%;right:12%;width:116px;height:116px;" viewBox="0 0 116 116">
-        <defs><radialGradient id="orbG" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="${sc.glow}"/><stop offset="46%" stop-color="${sc.glow}" stop-opacity="0.22"/><stop offset="100%" stop-color="transparent"/></radialGradient></defs>
-        <circle cx="58" cy="58" r="55" fill="url(#orbG)"/>
-        <circle cx="58" cy="58" r="26" fill="${sc.body}"/>
-        <circle cx="49" cy="51" r="4" fill="rgba(170,160,205,.4)"/><circle cx="66" cy="63" r="3" fill="rgba(170,160,205,.32)"/><circle cx="54" cy="66" r="2.4" fill="rgba(170,160,205,.28)"/>
-      </svg>`
-    : `<svg style="position:absolute;top:6%;right:13%;width:124px;height:124px;" viewBox="0 0 124 124">
-        <defs><radialGradient id="orbG" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="${sc.glow}"/><stop offset="42%" stop-color="${sc.glow}" stop-opacity="0.28"/><stop offset="100%" stop-color="transparent"/></radialGradient></defs>
-        <circle cx="62" cy="62" r="60" fill="url(#orbG)"/>
-        <circle cx="62" cy="62" r="29" fill="${sc.body}"/>
-        <circle cx="52" cy="53" r="8" fill="rgba(255,255,255,.5)"/>
-      </svg>`;
-  const cloud=(top,left,w,dur,op)=>`<svg style="position:absolute;top:${top};left:${left};width:${w}px;height:${(w*0.4)|0}px;animation:cloudDrift ${dur}s ease-in-out infinite alternate;opacity:${op};" viewBox="0 0 130 52"><ellipse cx="65" cy="37" rx="60" ry="14" fill="${sc.cloud}"/><ellipse cx="46" cy="28" rx="34" ry="17" fill="${sc.cloud}"/><ellipse cx="86" cy="27" rx="30" ry="15" fill="${sc.cloud}"/></svg>`;
-  sky.innerHTML = orbSvg + cloud('11%','5%',132,24,'.9') + cloud('23%','60%',96,30,'.68') + cloud('15%','34%',72,27,'.55');
-  if(key==='nuit'){ stars.classList.remove('hidden'); } else { stars.classList.add('hidden'); }
+  /* ----- Fond épuré : juste le dégradé teinté selon l'heure (aucun décor) ----- */
+  const BG = { nuit:'#E6DBC5', matin:'#F6E7CC', aprem:'#EEE7D6', soir:'#EFDDC8' };
+  document.documentElement.style.backgroundColor = BG[key] || '#EFE6D5';
+  const g = document.getElementById('groundSvg'); if(g) g.innerHTML='';
+  const sky = document.getElementById('skyDeco'); if(sky) sky.innerHTML='';
+  const stars = document.getElementById('stars'); if(stars) stars.classList.add('hidden');
 }
 
 /* ===== STARS ===== */
