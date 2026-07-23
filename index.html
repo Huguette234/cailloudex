@@ -1070,55 +1070,8 @@ nav{display:flex;gap:8px;padding:10px 14px max(14px,env(safe-area-inset-bottom))
 .sp-thumb{width:48px;height:48px;flex-shrink:0;border-radius:11px;object-fit:cover;border:2px solid;opacity:.55;cursor:pointer;transition:opacity .15s,transform .15s;}
 .sp-thumb.sel{opacity:1;box-shadow:0 0 0 2px #fff,0 0 12px currentColor;transform:scale(1.06);}
 
-/* ===== ÉCRAN DE CRÉATION : bonhomme qui avance sur un chemin infini (pseudo-3D) ===== */
-.cg-scene{position:relative;width:280px;height:186px;margin:0 auto 22px;border-radius:18px;overflow:hidden;
-  background:linear-gradient(180deg,#12203a 0%,#1c3357 33%,#274d5f 47%,#2f5a40 54%,#245234 100%);
-  box-shadow:0 14px 34px rgba(0,0,0,.55),inset 0 0 0 1px rgba(255,255,255,.06);}
-.cg-scene::before{content:'';position:absolute;left:0;right:0;top:40%;height:24%;pointer-events:none;z-index:1;
-  background:radial-gradient(ellipse 55% 100% at 50% 0,rgba(255,240,200,.4),transparent 72%);}
-.cg-ground{position:absolute;left:50%;bottom:0;width:160%;height:58%;overflow:hidden;z-index:2;
-  transform:translateX(-50%) perspective(190px) rotateX(65deg);transform-origin:bottom center;}
-.cg-ground-tex{position:absolute;left:-12%;right:-12%;top:-80%;bottom:-12%;
-  background:
-    repeating-linear-gradient(0deg,rgba(0,0,0,.17) 0 3px,rgba(255,255,255,.05) 3px 5px,transparent 5px 30px),
-    linear-gradient(90deg,#2f7a35 0 30%,#6e5330 30% 35%,#d7c390 35% 65%,#6e5330 65% 70%,#2f7a35 70% 100%);
-  animation:cgScroll .95s linear infinite;}
-@keyframes cgScroll{from{background-position:0 0,0 0;}to{background-position:0 30px,0 0;}}
-.cg-ground::after{content:'';position:absolute;inset:0;pointer-events:none;background:linear-gradient(0deg,transparent 52%,rgba(19,32,58,.9));}
-.cg-bush{position:absolute;width:26px;height:26px;border-radius:50% 50% 46% 54%/60% 60% 40% 40%;z-index:3;opacity:0;
-  background:radial-gradient(circle at 38% 30%,#63c463,#2f7a35 70%,#1f5525);box-shadow:0 3px 5px rgba(0,0,0,.35);
-  animation:cgApproachSide 2.2s linear infinite;}
-@keyframes cgApproachSide{0%{top:42%;transform:scale(.16);opacity:0;}16%{opacity:1;}88%{opacity:1;}100%{top:84%;transform:scale(1.3);opacity:0;}}
-.cg-rock{position:absolute;left:50%;z-index:4;opacity:0;border-radius:46% 54% 50% 50%/58% 58% 42% 42%;
-  background:radial-gradient(circle at 38% 30%,#eef1f4,#9aa2ac 66%,#6d7681);box-shadow:0 3px 5px rgba(0,0,0,.4);
-  animation:cgApproach 2.4s linear infinite;}
-@keyframes cgApproach{
-  0%{top:40%;transform:translate(calc(-50% + var(--lane,0px)*0.15),0) scale(.16);opacity:0;}
-  14%{opacity:1;}70%{opacity:1;}
-  84%{top:72%;transform:translate(calc(-50% + var(--lane,0px)),6px) scale(1);opacity:1;}
-  100%{top:76%;transform:translate(calc(-50% + var(--lane,0px)*1.05),10px) scale(1.06);opacity:0;}}
-.cg-capture{position:absolute;left:50%;top:69%;width:28px;height:28px;transform:translate(-50%,-50%);z-index:6;border-radius:50%;opacity:0;
-  background:radial-gradient(circle,rgba(196,92,255,.7),transparent 66%);animation:cgCapture 2.4s linear infinite;}
-@keyframes cgCapture{0%,78%{opacity:0;transform:translate(-50%,-50%) scale(.3);}85%{opacity:.95;transform:translate(-50%,-50%) scale(1);}100%{opacity:0;transform:translate(-50%,-50%) scale(1.6);}}
-.cg-hero-shadow{position:absolute;left:50%;bottom:13px;width:40px;height:9px;transform:translateX(-50%);border-radius:50%;z-index:6;
-  background:radial-gradient(ellipse,rgba(0,0,0,.42),transparent 72%);}
-.cg-hero{position:absolute;left:50%;bottom:20px;width:46px;height:54px;z-index:7;transform:translateX(-50%);animation:cgBob .46s ease-in-out infinite alternate;}
-@keyframes cgBob{from{transform:translateX(-50%) translateY(0);}to{transform:translateX(-50%) translateY(-3px);}}
-.cg-hero-body{position:absolute;left:7px;bottom:14px;width:32px;height:30px;border-radius:46% 54% 44% 56%/56% 56% 44% 44%;
-  background:radial-gradient(circle at 36% 28%,#d5dbe2,#9aa2ac 62%,#767f8a);
-  box-shadow:inset -3px -3px 6px rgba(0,0,0,.28),inset 2px 2px 5px rgba(255,255,255,.55),0 4px 7px rgba(0,0,0,.4);}
-.cg-hero-eye{position:absolute;top:9px;width:5px;height:6px;border-radius:50%;background:#22262c;}
-.cg-hero-eye.l{left:10px;}.cg-hero-eye.r{left:21px;}
-.cg-hero-arm{position:absolute;right:1px;top:17px;width:13px;height:5px;border-radius:3px;background:#8a929c;transform:rotate(-26deg);transform-origin:left center;z-index:8;}
-.cg-hero-phone{position:absolute;right:-5px;top:8px;width:9px;height:14px;border-radius:2px;background:#20242c;border:1px solid #3a3f48;box-shadow:0 0 9px rgba(140,200,255,.55);z-index:9;}
-.cg-hero-phone::after{content:'';position:absolute;inset:1.5px;border-radius:1px;background:linear-gradient(180deg,#8fd8ff,#4aa3ff);opacity:.9;animation:cgFlash 1.2s ease-in-out infinite;}
-@keyframes cgFlash{0%,100%{opacity:.75;}50%{opacity:1;box-shadow:0 0 6px #8fd8ff;}}
-.cg-hero-leg{position:absolute;bottom:2px;width:7px;height:13px;border-radius:3px;background:#7a828c;}
-.cg-hero-leg.l{left:12px;animation:cgStepL .46s ease-in-out infinite;}
-.cg-hero-leg.r{left:23px;animation:cgStepR .46s ease-in-out infinite;}
-@keyframes cgStepL{0%,100%{height:13px;transform:translateY(0) rotate(-7deg);}50%{height:10px;transform:translateY(-2px) rotate(11deg);}}
-@keyframes cgStepR{0%,100%{height:10px;transform:translateY(-2px) rotate(11deg);}50%{height:13px;transform:translateY(0) rotate(-7deg);}}
-
+/* ===== ÉCRAN DE CRÉATION : scène SVG (vue plongée, humain qui capture des cailloux) ===== */
+.cg-svg{width:280px;height:186px;display:block;margin:0 auto 22px;border-radius:18px;box-shadow:0 14px 34px rgba(0,0,0,.55),inset 0 0 0 1px rgba(255,255,255,.06);}
 /* ===== CARTE DES TROUVAILLES ===== */
 .map-overlay{position:fixed;inset:0;z-index:80;background:var(--paper);display:flex;flex-direction:column;animation:fadeup .2s ease both;}
 .map-head{display:flex;align-items:center;justify-content:space-between;padding:calc(env(safe-area-inset-top,0px) + 12px) 16px 12px;flex-shrink:0;}
@@ -5026,27 +4979,37 @@ function render(){
     ov.innerHTML=`
       <div style="text-align:center;padding:32px 24px;max-width:320px;width:100%;">
         <div style="font-family:'Playfair Display',Georgia,serif;font-size:13px;letter-spacing:.2em;color:#C45CFF;margin-bottom:24px;">✨ CRÉATION DU PERSONNAGE ✨</div>
-        <div class="cg-scene">
-          <div class="cg-ground"><div class="cg-ground-tex"></div></div>
-          <div class="cg-bush" style="left:13%;animation-delay:0s;"></div>
-          <div class="cg-bush" style="left:81%;animation-delay:.6s;"></div>
-          <div class="cg-bush" style="left:9%;animation-delay:1.3s;"></div>
-          <div class="cg-bush" style="left:85%;animation-delay:1.8s;"></div>
-          <div class="cg-rock" style="--lane:-34px;width:16px;height:13px;animation-delay:0s;"></div>
-          <div class="cg-rock" style="--lane:30px;width:14px;height:12px;animation-delay:.8s;"></div>
-          <div class="cg-rock" style="--lane:-6px;width:18px;height:15px;animation-delay:1.6s;"></div>
-          <div class="cg-capture" style="animation-delay:0s;"></div>
-          <div class="cg-capture" style="animation-delay:.8s;"></div>
-          <div class="cg-capture" style="animation-delay:1.6s;"></div>
-          <div class="cg-hero-shadow"></div>
-          <div class="cg-hero">
-            <div class="cg-hero-body"><span class="cg-hero-eye l"></span><span class="cg-hero-eye r"></span></div>
-            <div class="cg-hero-arm"></div>
-            <div class="cg-hero-phone"></div>
-            <div class="cg-hero-leg l"></div>
-            <div class="cg-hero-leg r"></div>
-          </div>
-        </div>
+        <svg class="cg-svg" viewBox="0 0 300 200" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<defs>
+<linearGradient id="cgGrass" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3c7f33"/><stop offset="1" stop-color="#5aa047"/></linearGradient>
+<linearGradient id="cgDirt" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#b3946280"/><stop offset="0.12" stop-color="#b89b6b"/><stop offset="1" stop-color="#cdb187"/></linearGradient>
+<radialGradient id="cgVin" cx="50%" cy="40%" r="72%"><stop offset="58%" stop-color="#000" stop-opacity="0"/><stop offset="100%" stop-color="#08131f" stop-opacity="0.5"/></radialGradient>
+<clipPath id="cgClip"><rect x="0" y="0" width="300" height="200"/></clipPath>
+<g id="cgTile"><ellipse cx="122" cy="14" rx="3" ry="2" fill="#b7bcc2"/><ellipse cx="121.1" cy="13.4" rx="1.5" ry="1.0" fill="#d8dce0"/><ellipse cx="170" cy="22" rx="2.5" ry="1.8" fill="#b7bcc2"/><ellipse cx="169.25" cy="21.46" rx="1.25" ry="0.9" fill="#d8dce0"/><ellipse cx="140" cy="40" rx="3.5" ry="2.4" fill="#b7bcc2"/><ellipse cx="138.95" cy="39.28" rx="1.75" ry="1.2" fill="#d8dce0"/><ellipse cx="182" cy="52" rx="2.2" ry="1.6" fill="#b7bcc2"/><ellipse cx="181.34" cy="51.52" rx="1.1" ry="0.8" fill="#d8dce0"/><ellipse cx="115" cy="66" rx="2.8" ry="2" fill="#b7bcc2"/><ellipse cx="114.16" cy="65.4" rx="1.4" ry="1.0" fill="#d8dce0"/><ellipse cx="158" cy="78" rx="3" ry="2.1" fill="#b7bcc2"/><ellipse cx="157.1" cy="77.37" rx="1.5" ry="1.05" fill="#d8dce0"/><ellipse cx="188" cy="88" rx="2.4" ry="1.7" fill="#b7bcc2"/><ellipse cx="187.28" cy="87.49" rx="1.2" ry="0.85" fill="#d8dce0"/><ellipse cx="132" cy="92" rx="2" ry="1.5" fill="#b7bcc2"/><ellipse cx="131.4" cy="91.55" rx="1.0" ry="0.75" fill="#d8dce0"/><ellipse cx="150" cy="58" rx="2.2" ry="1.6" fill="#b7bcc2"/><ellipse cx="149.34" cy="57.52" rx="1.1" ry="0.8" fill="#d8dce0"/><path d="M101,20 l1.2,-5 M102.6,20 l0.4,-6 M104,20 l1.4,-4.6" stroke="#4f9a3d" stroke-width="1.1" fill="none" stroke-linecap="round"/><path d="M199,34 l1.2,-5 M200.6,34 l0.4,-6 M202,34 l1.4,-4.6" stroke="#4f9a3d" stroke-width="1.1" fill="none" stroke-linecap="round"/><path d="M102,60 l1.2,-5 M103.6,60 l0.4,-6 M105,60 l1.4,-4.6" stroke="#4f9a3d" stroke-width="1.1" fill="none" stroke-linecap="round"/><path d="M198,74 l1.2,-5 M199.6,74 l0.4,-6 M201,74 l1.4,-4.6" stroke="#4f9a3d" stroke-width="1.1" fill="none" stroke-linecap="round"/><path d="M100,88 l1.2,-5 M101.6,88 l0.4,-6 M103,88 l1.4,-4.6" stroke="#4f9a3d" stroke-width="1.1" fill="none" stroke-linecap="round"/><path d="M200,12 l1.2,-5 M201.6,12 l0.4,-6 M203,12 l1.4,-4.6" stroke="#4f9a3d" stroke-width="1.1" fill="none" stroke-linecap="round"/><rect x="96.2" y="0" width="1.6" height="100" fill="#7d6338"/><rect x="202.2" y="0" width="1.6" height="100" fill="#7d6338"/><ellipse cx="97" cy="17" rx="4.5" ry="2" fill="#000" opacity=".18"/><rect x="94.4" y="8" width="5.2" height="10" rx="1.3" fill="#8a6d3f"/><rect x="94.4" y="8" width="2" height="10" rx="1" fill="#a5834e"/><ellipse cx="97" cy="37" rx="4.5" ry="2" fill="#000" opacity=".18"/><rect x="94.4" y="28" width="5.2" height="10" rx="1.3" fill="#8a6d3f"/><rect x="94.4" y="28" width="2" height="10" rx="1" fill="#a5834e"/><ellipse cx="97" cy="57" rx="4.5" ry="2" fill="#000" opacity=".18"/><rect x="94.4" y="48" width="5.2" height="10" rx="1.3" fill="#8a6d3f"/><rect x="94.4" y="48" width="2" height="10" rx="1" fill="#a5834e"/><ellipse cx="97" cy="77" rx="4.5" ry="2" fill="#000" opacity=".18"/><rect x="94.4" y="68" width="5.2" height="10" rx="1.3" fill="#8a6d3f"/><rect x="94.4" y="68" width="2" height="10" rx="1" fill="#a5834e"/><ellipse cx="97" cy="97" rx="4.5" ry="2" fill="#000" opacity=".18"/><rect x="94.4" y="88" width="5.2" height="10" rx="1.3" fill="#8a6d3f"/><rect x="94.4" y="88" width="2" height="10" rx="1" fill="#a5834e"/><ellipse cx="203" cy="27" rx="4.5" ry="2" fill="#000" opacity=".18"/><rect x="200.4" y="18" width="5.2" height="10" rx="1.3" fill="#8a6d3f"/><rect x="200.4" y="18" width="2" height="10" rx="1" fill="#a5834e"/><ellipse cx="203" cy="47" rx="4.5" ry="2" fill="#000" opacity=".18"/><rect x="200.4" y="38" width="5.2" height="10" rx="1.3" fill="#8a6d3f"/><rect x="200.4" y="38" width="2" height="10" rx="1" fill="#a5834e"/><ellipse cx="203" cy="67" rx="4.5" ry="2" fill="#000" opacity=".18"/><rect x="200.4" y="58" width="5.2" height="10" rx="1.3" fill="#8a6d3f"/><rect x="200.4" y="58" width="2" height="10" rx="1" fill="#a5834e"/><ellipse cx="203" cy="87" rx="4.5" ry="2" fill="#000" opacity=".18"/><rect x="200.4" y="78" width="5.2" height="10" rx="1.3" fill="#8a6d3f"/><rect x="200.4" y="78" width="2" height="10" rx="1" fill="#a5834e"/><ellipse cx="203" cy="107" rx="4.5" ry="2" fill="#000" opacity=".18"/><rect x="200.4" y="98" width="5.2" height="10" rx="1.3" fill="#8a6d3f"/><rect x="200.4" y="98" width="2" height="10" rx="1" fill="#a5834e"/></g>
+</defs>
+<g clip-path="url(#cgClip)">
+<rect x="0" y="0" width="300" height="200" fill="url(#cgGrass)"/>
+<!-- chemin -->
+<rect x="100" y="0" width="100" height="200" fill="url(#cgDirt)"/>
+<rect x="118" y="0" width="10" height="200" fill="#a68a5c" opacity="0.45"/>
+<rect x="172" y="0" width="10" height="200" fill="#a68a5c" opacity="0.45"/>
+<rect x="146" y="0" width="8" height="200" fill="#5f9e42" opacity="0.6"/>
+<!-- monde défilant (chemin + clôtures) -->
+<g class="cg-scroll">
+<use xlink:href="#cgTile" y="-100"/><use xlink:href="#cgTile" y="0"/><use xlink:href="#cgTile" y="100"/>
+<animateTransform attributeName="transform" type="translate" from="0 0" to="0 100" dur="1.15s" repeatCount="indefinite"/>
+</g>
+<!-- haie lointaine (le chemin apparaît de dessous) -->
+<rect x="0" y="0" width="300" height="20" fill="#274f24"/>
+<path d="M0,20 Q30,13 60,19 T120,18 T180,19 T240,18 T300,19 L300,26 L0,26 Z" fill="#316030"/>
+<!-- cailloux à capturer -->
+<g opacity="0"><ellipse cx="0" cy="3" rx="9" ry="3.4" fill="#000" opacity=".2"/><ellipse cx="-3" cy="0" rx="4" ry="3.2" fill="#c2c7cd"/><ellipse cx="-4" cy="-1" rx="1.8" ry="1.4" fill="#e6e9ec"/><ellipse cx="3" cy="1" rx="4.6" ry="3.6" fill="#aeb4ba"/><ellipse cx="1.6" cy="-0.4" rx="2" ry="1.6" fill="#d6dade"/><ellipse cx="0" cy="-3" rx="3.4" ry="2.8" fill="#b9bec4"/><animateTransform attributeName="transform" type="translate" additive="replace" from="150 30" to="150 86" begin="0s" dur="2.4s" repeatCount="indefinite"/><animateTransform attributeName="transform" type="scale" additive="sum" values="0.2;0.35;1;1.05" keyTimes="0;0.15;0.85;1" begin="0s" dur="2.4s" repeatCount="indefinite"/><animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.14;0.82;1" begin="0s" dur="2.4s" repeatCount="indefinite"/></g><g opacity="0"><ellipse cx="0" cy="3" rx="9" ry="3.4" fill="#000" opacity=".2"/><ellipse cx="-3" cy="0" rx="4" ry="3.2" fill="#c2c7cd"/><ellipse cx="-4" cy="-1" rx="1.8" ry="1.4" fill="#e6e9ec"/><ellipse cx="3" cy="1" rx="4.6" ry="3.6" fill="#aeb4ba"/><ellipse cx="1.6" cy="-0.4" rx="2" ry="1.6" fill="#d6dade"/><ellipse cx="0" cy="-3" rx="3.4" ry="2.8" fill="#b9bec4"/><animateTransform attributeName="transform" type="translate" additive="replace" from="144 30" to="144 86" begin="-0.8s" dur="2.4s" repeatCount="indefinite"/><animateTransform attributeName="transform" type="scale" additive="sum" values="0.2;0.35;1;1.05" keyTimes="0;0.15;0.85;1" begin="-0.8s" dur="2.4s" repeatCount="indefinite"/><animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.14;0.82;1" begin="-0.8s" dur="2.4s" repeatCount="indefinite"/></g><g opacity="0"><ellipse cx="0" cy="3" rx="9" ry="3.4" fill="#000" opacity=".2"/><ellipse cx="-3" cy="0" rx="4" ry="3.2" fill="#c2c7cd"/><ellipse cx="-4" cy="-1" rx="1.8" ry="1.4" fill="#e6e9ec"/><ellipse cx="3" cy="1" rx="4.6" ry="3.6" fill="#aeb4ba"/><ellipse cx="1.6" cy="-0.4" rx="2" ry="1.6" fill="#d6dade"/><ellipse cx="0" cy="-3" rx="3.4" ry="2.8" fill="#b9bec4"/><animateTransform attributeName="transform" type="translate" additive="replace" from="156 30" to="156 86" begin="-1.6s" dur="2.4s" repeatCount="indefinite"/><animateTransform attributeName="transform" type="scale" additive="sum" values="0.2;0.35;1;1.05" keyTimes="0;0.15;0.85;1" begin="-1.6s" dur="2.4s" repeatCount="indefinite"/><animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.14;0.82;1" begin="-1.6s" dur="2.4s" repeatCount="indefinite"/></g>
+<g transform="translate(150,86)" opacity="0"><circle r="12" fill="#7fdcff" opacity="0.5"/><circle r="6" fill="#fff"/><animate attributeName="opacity" values="0;0;0.9;0" keyTimes="0;0.78;0.86;1" begin="-0.8s" dur="2.4s" repeatCount="indefinite"/><animateTransform attributeName="transform" type="scale" additive="sum" values="0.3;0.3;1.4" keyTimes="0;0.8;1" begin="-0.8s" dur="2.4s" repeatCount="indefinite"/></g><g transform="translate(150,86)" opacity="0"><circle r="12" fill="#7fdcff" opacity="0.5"/><circle r="6" fill="#fff"/><animate attributeName="opacity" values="0;0;0.9;0" keyTimes="0;0.78;0.86;1" begin="-1.6s" dur="2.4s" repeatCount="indefinite"/><animateTransform attributeName="transform" type="scale" additive="sum" values="0.3;0.3;1.4" keyTimes="0;0.8;1" begin="-1.6s" dur="2.4s" repeatCount="indefinite"/></g><g transform="translate(150,86)" opacity="0"><circle r="12" fill="#7fdcff" opacity="0.5"/><circle r="6" fill="#fff"/><animate attributeName="opacity" values="0;0;0.9;0" keyTimes="0;0.78;0.86;1" begin="0s" dur="2.4s" repeatCount="indefinite"/><animateTransform attributeName="transform" type="scale" additive="sum" values="0.3;0.3;1.4" keyTimes="0;0.8;1" begin="0s" dur="2.4s" repeatCount="indefinite"/></g>
+<!-- humain -->
+<g class="cg-human" transform="translate(150,112)"><ellipse cx="0" cy="37" rx="18" ry="5.8" fill="#000" opacity="0.26"/><g transform="scale(1.14)"><g><rect x="-6.5" y="11" width="6.5" height="20" rx="3.2" fill="#c9b489"/><rect x="-6.5" y="11" width="2.6" height="20" rx="1.3" fill="#d8c79c"/><ellipse cx="-3.3" cy="32" rx="4.2" ry="2.8" fill="#4a3b2a"/><animateTransform attributeName="transform" type="translate" values="0 3;0 -1;0 3" keyTimes="0;0.5;1" dur="0.62s" repeatCount="indefinite"/></g><g><rect x="0" y="11" width="6.5" height="20" rx="3.2" fill="#c2ad81"/><rect x="0" y="11" width="2.6" height="20" rx="1.3" fill="#d3c194"/><ellipse cx="3.3" cy="32" rx="4.2" ry="2.8" fill="#443626"/><animateTransform attributeName="transform" type="translate" values="0 -1;0 3;0 -1" keyTimes="0;0.5;1" dur="0.62s" repeatCount="indefinite"/></g><ellipse cx="0" cy="9" rx="12" ry="9.5" fill="#233a63"/><g><rect x="-9.5" y="-4" width="19" height="18" rx="6.5" fill="#2d357a"/><rect x="-9.5" y="-4" width="19" height="6.5" rx="4.5" fill="#3a44a0"/><rect x="-7" y="-3" width="3" height="16" rx="1.5" fill="#1c234f"/><rect x="4" y="-3" width="3" height="16" rx="1.5" fill="#1c234f"/><rect x="-3" y="4" width="6" height="5" rx="1" fill="#20285e"/></g><ellipse cx="0" cy="-9" rx="9.2" ry="8.6" fill="#1f2c48"/><ellipse cx="0" cy="-9" rx="9.2" ry="8.6" fill="none" stroke="#2b3a5c" stroke-width="0.9"/><circle cx="0" cy="-10" r="1.5" fill="#2b3a5c"/><rect x="-8.5" y="-20" width="5" height="24" rx="2.5" fill="#26406e" transform="rotate(10 -6 2)"/><rect x="3.5" y="-20" width="5" height="24" rx="2.5" fill="#243a63" transform="rotate(-10 6 2)"/><circle cx="-5.5" cy="-20" r="2.9" fill="#e8b98f"/><circle cx="5.5" cy="-20" r="2.9" fill="#eec298"/><g transform="translate(0,-23)"><rect x="-8" y="-6.5" width="16" height="12" rx="2" fill="#12141b"/><rect x="-6.4" y="-5" width="12.8" height="9" rx="1.2" fill="#8fe0ff"/><rect x="-6.4" y="-5" width="12.8" height="3.6" rx="1.2" fill="#cdf2ff"/><circle cx="0" cy="7" r="1.4" fill="#12141b"/></g></g><animateTransform attributeName="transform" type="translate" additive="sum" values="0 0;0 -1.6;0 0" keyTimes="0;0.5;1" dur="0.62s" repeatCount="indefinite"/></g>
+<rect x="0" y="0" width="300" height="200" fill="url(#cgVin)" pointer-events="none"/>
+</g>
+</svg>
         <div id="cgMsg" style="font-family:'Nunito',sans-serif;font-size:14px;color:rgba(255,255,255,.85);margin-bottom:20px;min-height:40px;line-height:1.4;">${CHAR_GEN_MSGS[msgIdx]}</div>
         <div style="background:rgba(255,255,255,.1);border-radius:999px;height:10px;width:100%;overflow:hidden;margin-bottom:10px;">
           <div id="cgFill" style="height:100%;width:${pct}%;background:linear-gradient(90deg,#7B2FBE,#C45CFF);border-radius:999px;transition:width .8s ease;box-shadow:0 0 12px #C45CFF80;"></div>
