@@ -5327,10 +5327,13 @@ function buildCharacterPrompt(rock){
     ],
   };
   const POSES=[
-    'dynamic action pose','heroic power stance with clenched fists','crouching ready-to-pounce pose',
-    'mid-air leaping attack pose','arms crossed confident pose','dramatic swirling cape pose',
-    'victorious arms-raised pose','sneaky crouched pose looking over shoulder','charging forward running pose',
-    'relaxed cool leaning pose','spinning attack pose with motion blur','defensive guard pose with arms up',
+    'unleashing a powerful attack with energy bursting out','mid-air leaping attack seen from a dynamic diagonal angle',
+    'roaring fiercely with mouth wide open, intense action shot','charging forward at full speed with motion blur',
+    'crouched low ready to pounce, three-quarter side view','spinning attack with glowing motion trails',
+    'casting its elemental power with glowing effects swirling around it','dodging sideways in a dynamic twisting motion',
+    'slamming the ground with a fist, shockwave and flying debris','triumphant battle cry with arms raised and sparks flying',
+    'dramatic low-angle shot looking up at the heroic creature','glancing back over its shoulder mid-run, dynamic angle',
+    'jumping high delivering a powerful uppercut','bracing in a defensive stance against an incoming blow, dust swirling',
   ];
   const TYPE_BG={
     chaos:['chaotic glitch dimension, swirling pink and black energy, cracked reality, neon sparks','vaporwave void, floating pink geometric shards, warping space'],
@@ -5349,11 +5352,11 @@ function buildCharacterPrompt(rock){
   const VILLAINS=['chaos','ombre','feu','metal'];
   const HEROES=['nature','lumiere','glace'];
   const base=VILLAINS.includes(type)
-    ?`a mischievous evil chibi rock monster named ${name}, its whole body is a single rounded stone pebble with a sinister little grin and glowing menacing eyes carved into the stone, short stubby stone arms and legs`
+    ?`a mischievous evil rock creature monster named ${name}, its whole body is a single rounded stone pebble with a sinister little grin and glowing menacing eyes carved into the stone, short stubby stone arms and legs`
     :HEROES.includes(type)
-    ?`an adorable heroic chibi rock monster named ${name}, its whole body is a single rounded stone pebble with big cute eyes and a happy smile on the stone, short stubby stone arms and legs`
-    :`a brave chibi rock monster named ${name}, its whole body is a single rounded stone pebble with determined eyes on the stone, short stubby stone arms and legs`;
-  return `${base}, ${pose}, ${sizeDesc}, ${rarityDesc}, the stone body is ${typeStyle}, ${atkDesc}, ${defDesc}, ${vitDesc}, ${personality}, it is unmistakably a chunky solid living rock / pebble creature made of stone with rough grainy mineral texture and cracks, like a cute rock-type Pokémon mascot, full body in the foreground, set against a ${bg} background, cinematic dramatic lighting, adorable chibi mascot, highly detailed manga art style, vibrant colors, it is NOT a human, NOT wearing a costume or armor suit, NOT an animal — it is a rock`;
+    ?`an adorable heroic rock creature monster named ${name}, its whole body is a single rounded stone pebble with big cute eyes and a happy smile on the stone, short stubby stone arms and legs`
+    :`a brave rock creature monster named ${name}, its whole body is a single rounded stone pebble with determined eyes on the stone, short stubby stone arms and legs`;
+  return `${base}, ${pose}, ${sizeDesc}, ${rarityDesc}, the stone body is ${typeStyle}, ${atkDesc}, ${defDesc}, ${vitDesc}, ${personality}, it is unmistakably a chunky solid living rock / pebble creature made of stone with rough grainy mineral texture and cracks, an expressive rock-type creature-collector monster in the style of an official Pokemon-style creature, captured mid-action in a dynamic energetic pose (absolutely NOT standing still, NOT facing the camera straight, NOT a stiff symmetrical portrait), dynamic camera angle and dynamic composition, full body in the foreground, set against a ${bg} background, epic cinematic dramatic lighting, glowing energy effects and motion, highly detailed vibrant creature illustration, official monster-taming trading card game artwork style, it is NOT a human, NOT wearing a costume or armor suit, NOT an animal — it is a living rock creature`;
 }
 
 function stopCharGenTimer(){
