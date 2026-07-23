@@ -99,11 +99,11 @@ Deno.serve(async (req) => {
     // ---- 1) fal.ai (FLUX schnell) — fiable, si une clé FAL_KEY est configurée ----
     if (FAL_KEY) {
       try {
-        const falRes = await fetch('https://fal.run/fal-ai/flux/schnell', {
+        const falRes = await fetch('https://fal.run/fal-ai/flux/dev', {
           method: 'POST',
           headers: { 'Authorization': `Key ${FAL_KEY}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ prompt, image_size: 'square', num_inference_steps: 4, num_images: 1, enable_safety_checker: false, sync_mode: true }),
-          signal: AbortSignal.timeout(60000),
+          body: JSON.stringify({ prompt, image_size: 'square_hd', num_inference_steps: 28, guidance_scale: 3.5, num_images: 1, enable_safety_checker: false, sync_mode: true }),
+          signal: AbortSignal.timeout(90000),
         });
         if (falRes.ok) {
           const j = await falRes.json();
