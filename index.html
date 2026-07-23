@@ -1070,6 +1070,55 @@ nav{display:flex;gap:8px;padding:10px 14px max(14px,env(safe-area-inset-bottom))
 .sp-thumb{width:48px;height:48px;flex-shrink:0;border-radius:11px;object-fit:cover;border:2px solid;opacity:.55;cursor:pointer;transition:opacity .15s,transform .15s;}
 .sp-thumb.sel{opacity:1;box-shadow:0 0 0 2px #fff,0 0 12px currentColor;transform:scale(1.06);}
 
+/* ===== ÉCRAN DE CRÉATION : bonhomme qui avance sur un chemin infini (pseudo-3D) ===== */
+.cg-scene{position:relative;width:280px;height:186px;margin:0 auto 22px;border-radius:18px;overflow:hidden;
+  background:linear-gradient(180deg,#12203a 0%,#1c3357 33%,#274d5f 47%,#2f5a40 54%,#245234 100%);
+  box-shadow:0 14px 34px rgba(0,0,0,.55),inset 0 0 0 1px rgba(255,255,255,.06);}
+.cg-scene::before{content:'';position:absolute;left:0;right:0;top:40%;height:24%;pointer-events:none;z-index:1;
+  background:radial-gradient(ellipse 55% 100% at 50% 0,rgba(255,240,200,.4),transparent 72%);}
+.cg-ground{position:absolute;left:50%;bottom:0;width:160%;height:58%;overflow:hidden;z-index:2;
+  transform:translateX(-50%) perspective(190px) rotateX(65deg);transform-origin:bottom center;}
+.cg-ground-tex{position:absolute;left:-12%;right:-12%;top:-80%;bottom:-12%;
+  background:
+    repeating-linear-gradient(0deg,rgba(0,0,0,.17) 0 3px,rgba(255,255,255,.05) 3px 5px,transparent 5px 30px),
+    linear-gradient(90deg,#2f7a35 0 30%,#6e5330 30% 35%,#d7c390 35% 65%,#6e5330 65% 70%,#2f7a35 70% 100%);
+  animation:cgScroll .95s linear infinite;}
+@keyframes cgScroll{from{background-position:0 0,0 0;}to{background-position:0 30px,0 0;}}
+.cg-ground::after{content:'';position:absolute;inset:0;pointer-events:none;background:linear-gradient(0deg,transparent 52%,rgba(19,32,58,.9));}
+.cg-bush{position:absolute;width:26px;height:26px;border-radius:50% 50% 46% 54%/60% 60% 40% 40%;z-index:3;opacity:0;
+  background:radial-gradient(circle at 38% 30%,#63c463,#2f7a35 70%,#1f5525);box-shadow:0 3px 5px rgba(0,0,0,.35);
+  animation:cgApproachSide 2.2s linear infinite;}
+@keyframes cgApproachSide{0%{top:42%;transform:scale(.16);opacity:0;}16%{opacity:1;}88%{opacity:1;}100%{top:84%;transform:scale(1.3);opacity:0;}}
+.cg-rock{position:absolute;left:50%;z-index:4;opacity:0;border-radius:46% 54% 50% 50%/58% 58% 42% 42%;
+  background:radial-gradient(circle at 38% 30%,#eef1f4,#9aa2ac 66%,#6d7681);box-shadow:0 3px 5px rgba(0,0,0,.4);
+  animation:cgApproach 2.4s linear infinite;}
+@keyframes cgApproach{
+  0%{top:40%;transform:translate(calc(-50% + var(--lane,0px)*0.15),0) scale(.16);opacity:0;}
+  14%{opacity:1;}70%{opacity:1;}
+  84%{top:72%;transform:translate(calc(-50% + var(--lane,0px)),6px) scale(1);opacity:1;}
+  100%{top:76%;transform:translate(calc(-50% + var(--lane,0px)*1.05),10px) scale(1.06);opacity:0;}}
+.cg-capture{position:absolute;left:50%;top:69%;width:28px;height:28px;transform:translate(-50%,-50%);z-index:6;border-radius:50%;opacity:0;
+  background:radial-gradient(circle,rgba(196,92,255,.7),transparent 66%);animation:cgCapture 2.4s linear infinite;}
+@keyframes cgCapture{0%,78%{opacity:0;transform:translate(-50%,-50%) scale(.3);}85%{opacity:.95;transform:translate(-50%,-50%) scale(1);}100%{opacity:0;transform:translate(-50%,-50%) scale(1.6);}}
+.cg-hero-shadow{position:absolute;left:50%;bottom:13px;width:40px;height:9px;transform:translateX(-50%);border-radius:50%;z-index:6;
+  background:radial-gradient(ellipse,rgba(0,0,0,.42),transparent 72%);}
+.cg-hero{position:absolute;left:50%;bottom:20px;width:46px;height:54px;z-index:7;transform:translateX(-50%);animation:cgBob .46s ease-in-out infinite alternate;}
+@keyframes cgBob{from{transform:translateX(-50%) translateY(0);}to{transform:translateX(-50%) translateY(-3px);}}
+.cg-hero-body{position:absolute;left:7px;bottom:14px;width:32px;height:30px;border-radius:46% 54% 44% 56%/56% 56% 44% 44%;
+  background:radial-gradient(circle at 36% 28%,#d5dbe2,#9aa2ac 62%,#767f8a);
+  box-shadow:inset -3px -3px 6px rgba(0,0,0,.28),inset 2px 2px 5px rgba(255,255,255,.55),0 4px 7px rgba(0,0,0,.4);}
+.cg-hero-eye{position:absolute;top:9px;width:5px;height:6px;border-radius:50%;background:#22262c;}
+.cg-hero-eye.l{left:10px;}.cg-hero-eye.r{left:21px;}
+.cg-hero-arm{position:absolute;right:1px;top:17px;width:13px;height:5px;border-radius:3px;background:#8a929c;transform:rotate(-26deg);transform-origin:left center;z-index:8;}
+.cg-hero-phone{position:absolute;right:-5px;top:8px;width:9px;height:14px;border-radius:2px;background:#20242c;border:1px solid #3a3f48;box-shadow:0 0 9px rgba(140,200,255,.55);z-index:9;}
+.cg-hero-phone::after{content:'';position:absolute;inset:1.5px;border-radius:1px;background:linear-gradient(180deg,#8fd8ff,#4aa3ff);opacity:.9;animation:cgFlash 1.2s ease-in-out infinite;}
+@keyframes cgFlash{0%,100%{opacity:.75;}50%{opacity:1;box-shadow:0 0 6px #8fd8ff;}}
+.cg-hero-leg{position:absolute;bottom:2px;width:7px;height:13px;border-radius:3px;background:#7a828c;}
+.cg-hero-leg.l{left:12px;animation:cgStepL .46s ease-in-out infinite;}
+.cg-hero-leg.r{left:23px;animation:cgStepR .46s ease-in-out infinite;}
+@keyframes cgStepL{0%,100%{height:13px;transform:translateY(0) rotate(-7deg);}50%{height:10px;transform:translateY(-2px) rotate(11deg);}}
+@keyframes cgStepR{0%,100%{height:10px;transform:translateY(-2px) rotate(11deg);}50%{height:13px;transform:translateY(0) rotate(-7deg);}}
+
 /* ===== CARTE DES TROUVAILLES ===== */
 .map-overlay{position:fixed;inset:0;z-index:80;background:var(--paper);display:flex;flex-direction:column;animation:fadeup .2s ease both;}
 .map-head{display:flex;align-items:center;justify-content:space-between;padding:calc(env(safe-area-inset-top,0px) + 12px) 16px 12px;flex-shrink:0;}
@@ -4977,7 +5026,27 @@ function render(){
     ov.innerHTML=`
       <div style="text-align:center;padding:32px 24px;max-width:320px;width:100%;">
         <div style="font-family:'Playfair Display',Georgia,serif;font-size:13px;letter-spacing:.2em;color:#C45CFF;margin-bottom:24px;">✨ CRÉATION DU PERSONNAGE ✨</div>
-        <div style="font-size:72px;animation:charGenFloat 2s ease-in-out infinite;display:block;margin-bottom:20px;">🪨</div>
+        <div class="cg-scene">
+          <div class="cg-ground"><div class="cg-ground-tex"></div></div>
+          <div class="cg-bush" style="left:13%;animation-delay:0s;"></div>
+          <div class="cg-bush" style="left:81%;animation-delay:.6s;"></div>
+          <div class="cg-bush" style="left:9%;animation-delay:1.3s;"></div>
+          <div class="cg-bush" style="left:85%;animation-delay:1.8s;"></div>
+          <div class="cg-rock" style="--lane:-34px;width:16px;height:13px;animation-delay:0s;"></div>
+          <div class="cg-rock" style="--lane:30px;width:14px;height:12px;animation-delay:.8s;"></div>
+          <div class="cg-rock" style="--lane:-6px;width:18px;height:15px;animation-delay:1.6s;"></div>
+          <div class="cg-capture" style="animation-delay:0s;"></div>
+          <div class="cg-capture" style="animation-delay:.8s;"></div>
+          <div class="cg-capture" style="animation-delay:1.6s;"></div>
+          <div class="cg-hero-shadow"></div>
+          <div class="cg-hero">
+            <div class="cg-hero-body"><span class="cg-hero-eye l"></span><span class="cg-hero-eye r"></span></div>
+            <div class="cg-hero-arm"></div>
+            <div class="cg-hero-phone"></div>
+            <div class="cg-hero-leg l"></div>
+            <div class="cg-hero-leg r"></div>
+          </div>
+        </div>
         <div id="cgMsg" style="font-family:'Nunito',sans-serif;font-size:14px;color:rgba(255,255,255,.85);margin-bottom:20px;min-height:40px;line-height:1.4;">${CHAR_GEN_MSGS[msgIdx]}</div>
         <div style="background:rgba(255,255,255,.1);border-radius:999px;height:10px;width:100%;overflow:hidden;margin-bottom:10px;">
           <div id="cgFill" style="height:100%;width:${pct}%;background:linear-gradient(90deg,#7B2FBE,#C45CFF);border-radius:999px;transition:width .8s ease;box-shadow:0 0 12px #C45CFF80;"></div>
