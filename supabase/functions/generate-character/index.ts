@@ -27,7 +27,7 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ error: 'invalid_session' }), { status: 401, headers: corsHeaders });
     }
 
-    const { rock_name, rock_type, rock_personality, rock_size_cm, rock_rarity, rock_atk, rock_def, rock_vit } = await req.json();
+    const { prompt: clientPrompt, rock_name, rock_type, rock_personality, rock_size_cm, rock_rarity, rock_atk, rock_def, rock_vit } = await req.json();
 
     const name = rock_name || 'a mysterious rock';
     const type = rock_type || 'neutre';
@@ -90,20 +90,24 @@ Deno.serve(async (req) => {
 
     const statDesc = `${atkDesc}, ${defDesc}, ${vitDesc}`;
 
-    const prompt = isVillain
-      ? `villain chibi anime character that is an evil anthropomorphized rock named ${name}, ${sizeDesc}, ${rarityDesc}, ${personality}, ${typeStyle}, ${statDesc}, menacing glowing eyes, sharp angry eyebrows, sinister grin with sharp teeth, dramatic evil pose, comically villainous, unique individual look, full body, white background, manga art style`
+    // Le prompt "riche" (décor thématique + lumière cinématique) est construit côté app
+    // et envoyé ici. On l'utilise en priorité ; sinon on garde un prompt de secours interne.
+    const builtPrompt = isVillain
+      ? `villain chibi anime character that is an evil anthropomorphized rock named ${name}, ${sizeDesc}, ${rarityDesc}, ${personality}, ${typeStyle}, ${statDesc}, menacing glowing eyes, sharp angry eyebrows, sinister grin with sharp teeth, dramatic evil pose, comically villainous, unique individual look, full body, cinematic dramatic lighting, highly detailed manga art style`
       : isHero
-      ? `friendly hero chibi anime character that is a kind anthropomorphized rock named ${name}, ${sizeDesc}, ${rarityDesc}, ${personality}, ${typeStyle}, ${statDesc}, big sparkling cute eyes, warm happy smile, cheerful heroic pose, wholesome and adorable, unique individual look, full body, white background, manga art style`
-      : `fierce chibi anime character that is an intense anthropomorphized rock named ${name}, ${sizeDesc}, ${rarityDesc}, ${personality}, ${typeStyle}, ${statDesc}, determined sharp eyes, serious expression, battle-ready pose, comically serious and powerful, unique individual look, full body, white background, manga art style`;
+      ? `friendly hero chibi anime character that is a kind anthropomorphized rock named ${name}, ${sizeDesc}, ${rarityDesc}, ${personality}, ${typeStyle}, ${statDesc}, big sparkling cute eyes, warm happy smile, cheerful heroic pose, wholesome and adorable, unique individual look, full body, cinematic dramatic lighting, highly detailed manga art style`
+      : `fierce chibi anime character that is an intense anthropomorphized rock named ${name}, ${sizeDesc}, ${rarityDesc}, ${personality}, ${typeStyle}, ${statDesc}, determined sharp eyes, serious expression, battle-ready pose, comically serious and powerful, unique individual look, full body, cinematic dramatic lighting, highly detailed manga art style`;
+
+    const prompt = (typeof clientPrompt === 'string' && clientPrompt.trim().length > 10) ? clientPrompt.trim() : builtPrompt;
 
     // ---- 1) fal.ai (FLUX schnell) — fiable, si une clé FAL_KEY est configurée ----
     if (FAL_KEY) {
       try {
-        const falRes = await fetch('https://fal.run/fal-ai/flux/schnell', {
+        const falRes = await fetch('https://fal.run/fal-ai/flux/dev', {
           method: 'POST',
           headers: { 'Authorization': `Key ${FAL_KEY}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ prompt, image_size: 'square', num_inference_steps: 4, num_images: 1, enable_safety_checker: false, sync_mode: true }),
-          signal: AbortSignal.timeout(60000),
+          body: JSON.stringify({ prompt, image_size: 'square_hd', num_inference_steps: 28, guidance_scale: 3.5, num_images: 1, enable_safety_checker: false, sync_mode: true }),
+          signal: AbortSignal.timeout(90000),
         });
         if (falRes.ok) {
           const j = await falRes.json();

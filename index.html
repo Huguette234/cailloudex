@@ -5400,6 +5400,7 @@ async function generateCharacterForRock(rock){
     // 1) Fonction serveur (fal.ai FLUX si configuré, sinon Pollinations serveur)
     try{
       const { data, error }=await sb.functions.invoke('generate-character', { body:{
+        prompt: buildCharacterPrompt(rock),
         rock_name:rock.name, rock_type:rock.rockType, rock_personality:rock.personality,
         rock_size_cm:rock.sizeCm, rock_rarity:rock.rarity, rock_atk:rock.atk, rock_def:rock.def, rock_vit:rock.vit } });
       if(!error && data && data.image){ rawUrl=`data:${data.mime_type||'image/jpeg'};base64,${data.image}`; }
