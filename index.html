@@ -2820,6 +2820,18 @@ function doSplash(tier){
     d.style.setProperty('--dx',(Math.cos(ang*Math.PI/180)*dist).toFixed(0)+'px'); d.style.setProperty('--dy',(-Math.abs(Math.sin(ang*Math.PI/180))*dist*1.2-18).toFixed(0)+'px'); d.style.animationDelay=(Math.random()*0.1).toFixed(2)+'s'; layer.appendChild(d); }
   setTimeout(()=>{ if(layer) layer.innerHTML=''; },1400);
 }
+// Changement de caillou SANS reconstruire la scène (évite le clignotement / réinit de l'eau WebGL)
+function pickSplashRock(id){
+  const r=dex.find(x=>x.id===id); if(!r) return;
+  splashRock=r; splashPhase='idle';
+  const img=r.characterPhoto||r.animePhoto||r.photo;
+  const rockEl=document.getElementById('spRock');
+  if(rockEl){ rockEl.classList.remove('sp-falling','sp-hidden'); const im=rockEl.querySelector('img'); if(im){ im.src=img; im.alt=r.name||''; } }
+  const layer=document.getElementById('spSplashLayer'); if(layer) layer.innerHTML='';
+  const res=document.getElementById('spResult'); if(res){ res.classList.remove('show'); res.textContent=''; }
+  const btn=document.getElementById('spDropBtn'); if(btn){ btn.disabled=false; btn.style.opacity=''; }
+  document.querySelectorAll('.sp-picker .sp-thumb').forEach(t=>t.classList.toggle('sel', t.dataset.id===id));
+}
 function dropRock(){
   if(splashPhase==='dropping'||!splashRock) return;
   const rock=document.getElementById('spRock'), scene=document.getElementById('splashScene'), res=document.getElementById('spResult'), layer=document.getElementById('spSplashLayer');
@@ -5488,7 +5500,7 @@ document.addEventListener('click',(e)=>{
   else if(action==='cancelSetup'){ screen='home'; render(); }
   else if(action==='openPack'){ openPack(); }
   else if(action==='dropRock'){ dropRock(); }
-  else if(action==='pickSplash'){ splashRock=dex.find(r=>r.id===t.dataset.id)||splashRock; splashPhase='idle'; render(); }
+  else if(action==='pickSplash'){ pickSplashRock(t.dataset.id); }
   else if(action==='openAdmin'){ openAdmin(); }
   else if(action==='adminSubmitPw'){ adminSubmitPw(); }
   else if(action==='adminForgotPw'){ adminForgotPw(); }
