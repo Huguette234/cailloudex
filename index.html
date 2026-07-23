@@ -1046,6 +1046,23 @@ nav{display:flex;gap:8px;padding:10px 14px max(14px,env(safe-area-inset-bottom))
 .sp-picker{display:flex;gap:8px;overflow-x:auto;width:100%;padding:2px 2px 6px;-webkit-overflow-scrolling:touch;}
 .sp-thumb{width:48px;height:48px;flex-shrink:0;border-radius:11px;object-fit:cover;border:2px solid;opacity:.55;cursor:pointer;transition:opacity .15s,transform .15s;}
 .sp-thumb.sel{opacity:1;box-shadow:0 0 0 2px #fff,0 0 12px currentColor;transform:scale(1.06);}
+
+/* ===== CARTE DES TROUVAILLES ===== */
+.map-overlay{position:fixed;inset:0;z-index:80;background:var(--paper);display:flex;flex-direction:column;animation:fadeup .2s ease both;}
+.map-head{display:flex;align-items:center;justify-content:space-between;padding:calc(env(safe-area-inset-top,0px) + 12px) 16px 12px;flex-shrink:0;}
+.map-title{font-family:'Playfair Display',Georgia,serif;font-size:19px;color:var(--txt);}
+.map-close{background:rgba(255,255,255,.75);border:1px solid rgba(150,120,60,.25);color:var(--txt);width:38px;height:38px;border-radius:12px;font-size:16px;cursor:pointer;box-shadow:0 4px 12px rgba(150,120,50,.14);}
+.map-close:active{transform:scale(.94);}
+.map-canvas{flex:1;min-height:0;position:relative;background:#E7DFCF;}
+.map-loading{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;padding:24px;font-family:'Baloo 2',sans-serif;font-weight:700;color:rgba(44,42,46,.6);line-height:1.6;}
+.map-foot{padding:10px 16px calc(env(safe-area-inset-bottom,0px) + 12px);text-align:center;font-family:'Baloo 2',sans-serif;font-weight:700;font-size:12px;color:rgba(44,42,46,.6);flex-shrink:0;}
+.map-pin-wrap{background:none!important;border:none!important;}
+.map-pin{width:44px;height:44px;border-radius:50%;border:3px solid var(--rc,#9E9E9E);background:#fff;overflow:hidden;box-shadow:0 4px 10px rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center;font-size:22px;}
+.map-pin img{width:100%;height:100%;object-fit:cover;display:block;}
+.map-pin-rar{display:block;margin:3px auto 0;width:max-content;max-width:88px;font-family:'Baloo 2',sans-serif;font-weight:800;font-size:8px;letter-spacing:.02em;color:#fff;text-align:center;border-radius:999px;padding:1px 7px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;box-shadow:0 2px 5px rgba(0,0,0,.35);text-shadow:0 1px 1px rgba(0,0,0,.35);}
+.map-pop{display:flex;gap:9px;align-items:center;font-family:'Nunito',sans-serif;font-size:12px;color:#2C2A2E;min-width:150px;}
+.map-pop img{width:48px;height:48px;border-radius:10px;object-fit:cover;flex-shrink:0;}
+.map-pop b{font-family:'Baloo 2',sans-serif;font-size:13px;}
 </style>
 </head>
 <body>
@@ -2196,7 +2213,7 @@ async function renderShareCard(rock){
     ctx.fillStyle='#FFD700'; ctx.font="600 22px 'Baloo 2'";
     wrapText(ctx,'⚡ '+rock.specialMove,W/2,piY+ps+400,pw-80,30);
   }
-  if(rock.location){ ctx.fillStyle='rgba(255,255,255,0.4)'; ctx.font="600 26px 'Baloo 2'"; ctx.fillText('📍 '+rock.location,W/2,py+ph-42); }
+  if(locName(rock.location)){ ctx.fillStyle='rgba(255,255,255,0.4)'; ctx.font="600 26px 'Baloo 2'"; ctx.fillText('📍 '+locName(rock.location),W/2,py+ph-42); }
   ctx.fillStyle='rgba(255,255,255,0.5)'; ctx.font="700 28px 'Baloo 2'";
   ctx.fillText("CaillouDEX — scanne le tien",W/2,H-80);
   return new Promise(r=>canvas.toBlob(r,'image/png'));
@@ -2387,17 +2404,86 @@ function getLocation(){
     if(!navigator.geolocation){ resolve(null); return; }
     navigator.geolocation.getCurrentPosition(
       async(pos)=>{
+        const {latitude,longitude}=pos.coords;
+        const c=`${latitude.toFixed(5)},${longitude.toFixed(5)}`;
         try{
-          const {latitude,longitude}=pos.coords;
           const res=await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=fr`);
           const data=await res.json();
-          resolve(data.city||data.locality||data.principalSubdivision||null);
-        }catch(e){ resolve(null); }
+          const name=data.city||data.locality||data.principalSubdivision||'';
+          resolve(name?`${name}@${c}`:`@${c}`);
+        }catch(e){ resolve(`@${c}`); }
       },
       ()=>resolve(null),{timeout:4000,maximumAge:600000}
     );
   });
 }
+/* --- Emplacement encodé "Ville@lat,lng" (pas de changement de base de données) --- */
+function locName(loc){ if(!loc) return ''; const i=loc.indexOf('@'); return i<0?loc:loc.slice(0,i); }
+function locCoords(loc){ if(!loc) return null; const i=loc.indexOf('@'); if(i<0) return null; const q=loc.slice(i+1).split(','); const la=parseFloat(q[0]),ln=parseFloat(q[1]); return (isFinite(la)&&isFinite(ln))?{lat:la,lng:ln}:null; }
+
+/* ===== CARTE DES TROUVAILLES (Leaflet + OpenStreetMap) ===== */
+let _leafletP=null,_mapInstance=null;
+function loadLeaflet(){
+  if(window.L) return Promise.resolve();
+  if(_leafletP) return _leafletP;
+  _leafletP=new Promise((res,rej)=>{
+    const css=document.createElement('link'); css.rel='stylesheet'; css.href='https://unpkg.com/leaflet@1.9.4/dist/leaflet.css'; document.head.appendChild(css);
+    const js=document.createElement('script'); js.src='https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'; js.onload=()=>res(); js.onerror=()=>rej(new Error('leaflet')); document.head.appendChild(js);
+  });
+  return _leafletP;
+}
+async function geocodeCity(name){
+  if(!name) return null;
+  let cache={}; try{cache=JSON.parse(localStorage.getItem('cdx_geocache')||'{}');}catch(e){}
+  const key=name.toLowerCase().trim();
+  if(cache[key]!==undefined) return cache[key];
+  try{
+    const r=await fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(name)}`,{headers:{'Accept':'application/json'}});
+    const j=await r.json();
+    let c=null; if(j&&j[0]) c={lat:parseFloat(j[0].lat),lng:parseFloat(j[0].lon)};
+    cache[key]=c; try{localStorage.setItem('cdx_geocache',JSON.stringify(cache));}catch(e){}
+    return c;
+  }catch(e){ return null; }
+}
+async function openMap(){
+  if(document.getElementById('mapOverlay')) return;
+  const ov=document.createElement('div'); ov.id='mapOverlay'; ov.className='map-overlay';
+  ov.innerHTML=`<div class="map-head"><span class="map-title">🗺️ Carte des trouvailles</span><button class="map-close" data-action="closeMap">✕</button></div>
+    <div id="mapCanvas" class="map-canvas"><div class="map-loading">Chargement de la carte…</div></div>
+    <div class="map-foot" id="mapFoot"></div>`;
+  document.body.appendChild(ov);
+  const canvas=document.getElementById('mapCanvas'), foot=document.getElementById('mapFoot');
+  try{ await loadLeaflet(); }catch(e){ canvas.innerHTML='<div class="map-loading">Impossible de charger la carte.<br>Vérifie ta connexion internet et réessaie.</div>'; return; }
+  // Rassemble les points : coordonnées exactes, sinon géocodage par ville (anciens cailloux)
+  const withCoords=[], cityRocks=[];
+  (dex||[]).forEach(r=>{ const c=locCoords(r.location); if(c) withCoords.push({r,c}); else if(locName(r.location)) cityRocks.push(r); });
+  const cities=[...new Set(cityRocks.map(r=>locName(r.location)))];
+  const cityCoords={};
+  for(const name of cities){ cityCoords[name.toLowerCase().trim()]=await geocodeCity(name); }
+  const pts=[...withCoords];
+  cityRocks.forEach(r=>{ const c=cityCoords[locName(r.location).toLowerCase().trim()]; if(c) pts.push({r,c,approx:true}); });
+  if(!pts.length){ canvas.innerHTML='<div class="map-loading">Aucun caillou géolocalisé pour l’instant.<br>Capture un caillou en autorisant la position pour le voir apparaître ici !</div>'; return; }
+  canvas.innerHTML='';
+  const map=L.map('mapCanvas',{zoomControl:true,attributionControl:true}); _mapInstance=map;
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(map);
+  const seen={},bounds=[];
+  pts.forEach(({r,c,approx})=>{
+    const k=c.lat.toFixed(3)+','+c.lng.toFixed(3); const n=seen[k]||0; seen[k]=n+1;
+    const ang=n*2.399, rad=n?0.006*Math.ceil(n/6):0;
+    const lat=c.lat+rad*Math.cos(ang), lng=c.lng+rad*Math.sin(ang);
+    const head=r.characterPhoto||r.animePhoto||r.photo||''; const hex=r.hex||'#9E9E9E';
+    const inner=head?`<img src="${head}" alt="">`:`<span>${r.emoji||'🪨'}</span>`;
+    const icon=L.divIcon({className:'map-pin-wrap',html:`<div class="map-pin" style="--rc:${hex}">${inner}</div><b class="map-pin-rar" style="background:${hex}">${r.rarityLabel||''}</b>`,iconSize:[56,66],iconAnchor:[28,60],popupAnchor:[0,-56]});
+    const m=L.marker([lat,lng],{icon}).addTo(map);
+    m.bindPopup(`<div class="map-pop">${head?`<img src="${head}">`:''}<div><b>${r.name||'Caillou'}</b><br><span style="color:${hex};font-weight:800">${r.rarityLabel||''}</span>${r.typeLabel?' · '+r.typeLabel:''}<br><small>📍 ${locName(r.location)}${approx?' (approx.)':''}</small></div></div>`);
+    bounds.push([lat,lng]);
+  });
+  try{ map.fitBounds(bounds,{padding:[44,44],maxZoom:13}); }catch(e){ map.setView(bounds[0],12); }
+  setTimeout(()=>{ try{map.invalidateSize();}catch(e){} },120);
+  const nApprox=pts.filter(x=>x.approx).length;
+  foot.textContent=`${pts.length} caillou${pts.length>1?'x':''} sur la carte`+(nApprox?` · ${nApprox} placé${nApprox>1?'s':''} par ville`:'');
+}
+function closeMap(){ if(_mapInstance){ try{_mapInstance.remove();}catch(e){} _mapInstance=null; } const o=document.getElementById('mapOverlay'); if(o) o.remove(); }
 function resizeImage(file,maxSize=800){
   return new Promise((resolve,reject)=>{
     const reader=new FileReader();
@@ -2604,6 +2690,7 @@ function homeScreen(){
     <div class="home-links">
       <span data-action="goto" data-screen="combat-pick">⚔️ Combat</span>
       <span data-action="goto" data-screen="splash">🌊 Plouf</span>
+      <span data-action="openMap">🗺️ Carte</span>
       <span data-action="goto" data-screen="friends">👥 Amis</span>
       <span data-action="goto" data-screen="shop">🛒 Boutique</span>
       <span data-action="account">⚙️ Compte</span>
@@ -2957,7 +3044,7 @@ function specimenCard(rock,pop){
         <div class="tcard-type-row">
           ${typeInfo?`<span class="tcard-type-badge" style="color:${typeInfo.color};border-color:${typeInfo.color}55;background:${typeInfo.color}18;">${typeInfo.label}</span>`:''}
           ${rock.sizeCm?`<span style="font-size:10px;font-family:'Baloo 2',sans-serif;font-weight:700;color:rgba(255,255,255,.3);">📏 ~${rock.sizeCm}cm</span>`:''}
-          ${rock.location?`<span style="font-size:10px;font-family:'Baloo 2',sans-serif;font-weight:700;color:rgba(255,255,255,.3);">📍 ${rock.location}</span>`:''}
+          ${locName(rock.location)?`<span style="font-size:10px;font-family:'Baloo 2',sans-serif;font-weight:700;color:rgba(255,255,255,.3);">📍 ${locName(rock.location)}</span>`:''}
         </div>
         <div class="tcard-name">${rock.name}</div>
         ${rock.personality?`<div class="tcard-personality">${rock.personality}</div>`:''}
@@ -5349,6 +5436,8 @@ document.addEventListener('click',(e)=>{
     if(screen==='friends'){ Promise.all([loadFriendsList(),checkPendingChallenge()]).then(render); }
     if(screen==='home') checkPendingChallenge().then(render);
   }
+  else if(action==='openMap'){ openMap(); }
+  else if(action==='closeMap'){ closeMap(); }
   else if(action==='dexType'){ dexType=t.dataset.type; render(); }
   else if(action==='dexBack'){ dexType=null; render(); }
   else if(action==='addFriendBtn'){
