@@ -1560,8 +1560,14 @@ async function reportUser(userId,username){
 }
 
 function friendsScreen(){
+  const pushBtn = pushSupported()
+    ? (pushEnabledLocally()
+        ? `<p style="text-align:center;font-family:'Nunito',sans-serif;font-size:12px;color:rgba(44,42,46,.5);margin:0 0 14px;">🔔 Notifications de défi activées</p>`
+        : `<button class="btn btn-gold" style="margin-bottom:16px;" data-action="enablePush">🔔 Activer les notifs de défi</button>`)
+    : `<p style="text-align:center;font-family:'Nunito',sans-serif;font-size:11px;color:rgba(44,42,46,.45);margin:0 0 12px;line-height:1.5;">🔕 Pour recevoir les défis en notif sur iPhone, ajoute l'app à ton écran d'accueil.</p>`;
   return `<div class="combat-pick-wrap">
     <div class="combat-pick-title">👥 MES AMIS</div>
+    ${pushBtn}
     <div class="online-join-col">
       <input class="input-field" id="addFriendInput" type="text" maxlength="20" placeholder="Pseudo de ton ami" autocomplete="off">
       <button class="btn btn-purple" style="margin-top:10px;" data-action="addFriendBtn">➕ Ajouter</button>
@@ -1584,6 +1590,40 @@ function friendsScreen(){
       }).join(''):`<p style="text-align:center;font-family:'Nunito',sans-serif;font-size:13px;color:rgba(44,42,46,.46);margin-top:10px;">Pas encore d'amis ajoutés.</p>`}
     </div>
   </div>`;
+}
+/* ===== NOTIFICATIONS PUSH (défis d'amis) ===== */
+const VAPID_PUBLIC_KEY='BO5S0QINbauqO5tMwaiKfiIQxZe-30d1wpyMDN7Nsn6qpJtqQfVcv3sy6EmAeNNTNj-4yWHmM2Ngf7vrPcsLLlo';
+function pushSupported(){ return ('serviceWorker' in navigator) && ('PushManager' in window) && ('Notification' in window); }
+function pushEnabledLocally(){ try{ return localStorage.getItem('cdx_push')==='1' && typeof Notification!=='undefined' && Notification.permission==='granted'; }catch(e){ return false; } }
+function urlB64ToUint8(b64){
+  const pad='='.repeat((4-(b64.length%4))%4);
+  const s=(b64+pad).replace(/-/g,'+').replace(/_/g,'/');
+  const raw=atob(s); const out=new Uint8Array(raw.length);
+  for(let i=0;i<raw.length;i++) out[i]=raw.charCodeAt(i);
+  return out;
+}
+async function enablePush(){
+  if(!pushSupported()){ showToast('🔕 Ton appareil/navigateur ne gère pas les notifications. (Sur iPhone : ajoute l\'app à l\'écran d\'accueil.)'); return; }
+  if(!session||!sb){ showToast('Connecte-toi d\'abord.'); return; }
+  try{
+    const perm=await Notification.requestPermission();
+    if(perm!=='granted'){ showToast('🔕 Notifications refusées. Réactive-les dans les réglages du téléphone si besoin.'); return; }
+    const reg=await navigator.serviceWorker.ready;
+    let sub=await reg.pushManager.getSubscription();
+    if(!sub){ sub=await reg.pushManager.subscribe({ userVisibleOnly:true, applicationServerKey:urlB64ToUint8(VAPID_PUBLIC_KEY) }); }
+    const j=sub.toJSON();
+    const { error }=await sb.from('push_subscriptions').upsert({
+      user_id:session.user.id, endpoint:j.endpoint, p256dh:j.keys.p256dh, auth:j.keys.auth, ua:(navigator.userAgent||'').slice(0,180)
+    }, { onConflict:'endpoint' });
+    if(error) throw error;
+    try{ localStorage.setItem('cdx_push','1'); }catch(e){}
+    showToast('🔔 Notifications activées ! Tes amis pourront te prévenir de leurs défis.');
+    render();
+  }catch(e){ console.error('enablePush',e); showToast('❌ Activation impossible ('+((e&&e.message)||e)+')'); }
+}
+// Envoi d'une notif push à un ami (silencieux si non configuré)
+function sendPushToFriend(friendId,title,body){
+  try{ if(sb) sb.functions.invoke('send-push',{ body:{ target_id:friendId, title, body, url:'./' } }).then(()=>{}).catch(()=>{}); }catch(e){}
 }
 const GEM_PACKS = [
   { id:'pack50', gems:50, price:'0,99 €' },
@@ -3800,6 +3840,7 @@ async function sendChallenge(friendId,friendUsername){
     if(error) throw error;
   }catch(e){ showToast('❌ Erreur: '+(e?.message||e)); return; }
   showToast(`⚔️ Défi envoyé à ${friendUsername} !`);
+  sendPushToFriend(friendId, '⚔️ Défi CaillouDEX !', `${meta.username||'Un joueur'} te défie en combat ! Ouvre l'app pour accepter.`);
   onlineState={ isHost:true, isChallenge:true, targetUsername:friendUsername, roomCode:code,
     peer:null, conn:null, myRock:null, opponentRock:null, cd:0, botTimer:null, cdTimer:null };
   screen='online-wait'; render();
@@ -5600,6 +5641,7 @@ document.addEventListener('click',(e)=>{
     if(confirm('Retirer cet ami de ta liste ?')) removeFriend(t.dataset.id);
   }
   else if(action==='reportFriendBtn'){ reportUser(t.dataset.id,t.dataset.name); }
+  else if(action==='enablePush'){ enablePush(); }
   else if(action==='challengeFriendBtn'){ sendChallenge(t.dataset.id,t.dataset.name); }
   else if(action==='acceptConsent'){ try{localStorage.setItem('cdx_consent',LEGAL_VERSION);}catch(e){} const g=document.getElementById('consentGate'); if(g) g.remove(); }
   else if(action==='acceptChallengeBtn'){ acceptChallenge(); }
@@ -5748,6 +5790,12 @@ if('serviceWorker' in navigator) window.addEventListener('load',()=>{
   // Si non (toute premiere visite), on ne recharge pas inutilement.
   const hadController = !!navigator.serviceWorker.controller;
   let refreshing = false;
+  // Ouverture depuis une notif push -> aller voir le défi
+  navigator.serviceWorker.addEventListener('message',(e)=>{
+    if(e.data&&e.data.type==='openChallenge'){
+      try{ screen='friends'; render(); if(typeof checkPendingChallenge==='function'){ checkPendingChallenge().then(()=>{ render(); if(pendingChallenge&&typeof showChallengeNotif==='function') showChallengeNotif(pendingChallenge); }); } }catch(_){}
+    }
+  });
   navigator.serviceWorker.addEventListener('controllerchange',()=>{
     if(refreshing || !hadController) return;
     refreshing = true;

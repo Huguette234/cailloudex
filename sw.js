@@ -1,4 +1,4 @@
-const CACHE = 'cailloudex-v107';
+const CACHE = 'cailloudex-v108';
 const ASSETS = ['./', './index.html',
   './secrets/roch.jpg', './secrets/galactor.jpg', './secrets/meme.jpg', './secrets/dore.jpg', './secrets/diamant.jpg'];
 
@@ -12,6 +12,33 @@ self.addEventListener('activate', e => {
     Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))
   ));
   self.clients.claim();
+});
+
+// ===== Notifications push (défis d'amis) =====
+self.addEventListener('push', e => {
+  let d = {};
+  try { d = e.data ? e.data.json() : {}; } catch (_) { d = { body: e.data ? e.data.text() : '' }; }
+  const title = d.title || 'CaillouDEX';
+  const opts = {
+    body: d.body || '',
+    icon: './icon-192.png',
+    badge: './icon-192.png',
+    vibrate: [90, 40, 90],
+    tag: 'cdx-challenge',
+    renotify: true,
+    data: { url: d.url || './' },
+  };
+  e.waitUntil(self.registration.showNotification(title, opts));
+});
+self.addEventListener('notificationclick', e => {
+  e.notification.close();
+  const url = (e.notification.data && e.notification.data.url) || './';
+  e.waitUntil(clients.matchAll({ type: 'window', includeUncontrolled: true }).then(list => {
+    for (const c of list) {
+      if ('focus' in c) { try { c.postMessage({ type: 'openChallenge' }); } catch (_) {} return c.focus(); }
+    }
+    if (clients.openWindow) return clients.openWindow(url);
+  }));
 });
 
 self.addEventListener('fetch', e => {
