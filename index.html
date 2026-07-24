@@ -4280,25 +4280,34 @@ const BOT_POOL = [
   {name:'Gaston le Gneiss', emoji:'🔵', rockType:'glace', specialMove:'Blague Glaciale'},
 ];
 
+const BOT_PORTRAIT_LS='cdx_botimg_';
 async function generateBotCharacter(botRock){
   const key=botRock.name;
-  if(BOT_CHARACTER_CACHE[key]){
-    if(battleState&&battleState.botRock.name===key){
-      battleState.botRock.characterPhoto=BOT_CHARACTER_CACHE[key]; render();
-    }
-    return;
-  }
+  const apply=(url)=>{ BOT_CHARACTER_CACHE[key]=url; if(battleState&&battleState.botRock&&battleState.botRock.name===key){ battleState.botRock.characterPhoto=url; render(); } };
+  // 1) cache mémoire (session)
+  if(BOT_CHARACTER_CACHE[key]){ apply(BOT_CHARACTER_CACHE[key]); return; }
+  // 2) cache local (appareil)
+  try{ const ls=localStorage.getItem(BOT_PORTRAIT_LS+key); if(ls){ apply(ls); return; } }catch(e){}
+  // 3) portrait partagé (Supabase) — silencieux si le tableau n'existe pas encore
   try{
-    const rawUrl=await callPollinations(buildCharacterPrompt({
-      name:botRock.name, rockType:botRock.rockType, personality:botRock.specialMove||'',
-      atk:botRock.atk||10, def:botRock.def||10, vit:botRock.vit||1, rarity:'commun',
-    }));
-    if(!rawUrl) return;
-    const cleanUrl=rawUrl;
-    BOT_CHARACTER_CACHE[key]=cleanUrl;
-    if(battleState&&battleState.botRock.name===key){
-      battleState.botRock.characterPhoto=cleanUrl; render();
+    if(sb){
+      const { data }=await sb.from('bot_portraits').select('image,mime').eq('name',key).maybeSingle();
+      if(data&&data.image){ const url=`data:${data.mime||'image/jpeg'};base64,${data.image}`; apply(url); try{localStorage.setItem(BOT_PORTRAIT_LS+key,url);}catch(e){} return; }
     }
+  }catch(e){}
+  // 4) génération via la fonction serveur (fal.ai), stats canoniques fixes pour un portrait cohérent
+  try{
+    const canon={ name:botRock.name, rockType:botRock.rockType, personality:botRock.specialMove||'', sizeCm:8, rarity:'rare', atk:65, def:55, vit:6 };
+    const { data, error }=await sb.functions.invoke('generate-character', { body:{
+      prompt: buildCharacterPrompt(canon),
+      rock_name:canon.name, rock_type:canon.rockType, rock_personality:canon.personality,
+      rock_size_cm:canon.sizeCm, rock_rarity:canon.rarity, rock_atk:canon.atk, rock_def:canon.def, rock_vit:canon.vit } });
+    if(error||!data||!data.image) return;
+    const mime=data.mime_type||'image/jpeg', url=`data:${mime};base64,${data.image}`;
+    apply(url);
+    try{ localStorage.setItem(BOT_PORTRAIT_LS+key,url); }catch(e){}
+    // partage pour les autres joueurs (silencieux si le tableau n'existe pas encore)
+    try{ if(sb) await sb.from('bot_portraits').upsert({ name:key, image:data.image, mime }); }catch(e){}
   }catch(e){ console.error('generateBotCharacter',e); }
 }
 
