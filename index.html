@@ -296,7 +296,7 @@ nav{display:flex;gap:8px;padding:10px 14px max(14px,env(safe-area-inset-bottom))
 .daily-info{flex:1;text-align:left;}
 .daily-label{font-family:'Baloo 2',sans-serif;font-weight:800;font-size:12px;color:var(--goldd);letter-spacing:.06em;}
 .daily-desc{font-family:'Nunito',sans-serif;font-size:12px;color:rgba(44,42,46,.78);margin-top:1px;}
-.daily-bonus{font-family:'Baloo 2',sans-serif;font-weight:800;font-size:10px;color:#FF6B35;background:rgba(255,107,53,.15);border-radius:999px;padding:2px 7px;white-space:nowrap;}
+.daily-bonus{font-family:'Baloo 2',sans-serif;font-weight:800;font-size:10px;color:#B8430F;background:rgba(255,107,53,.18);border-radius:999px;padding:2px 7px;white-space:nowrap;}
 
 /* --- NOTIFICATION DE DEFI (style push, en haut, au-dessus de tout) --- */
 .challenge-notif{
@@ -381,7 +381,7 @@ nav{display:flex;gap:8px;padding:10px 14px max(14px,env(safe-area-inset-bottom))
 .shop-item-icon{font-size:28px;margin-bottom:4px;}
 .shop-item-name{font-family:'Baloo 2',sans-serif;font-weight:800;font-size:12px;color:var(--txt);}
 .shop-item-desc{font-family:'Nunito',sans-serif;font-size:10px;color:rgba(44,42,46,.5);margin:4px 0;line-height:1.4;min-height:30px;}
-.shop-item-owned{font-family:'Nunito',sans-serif;font-size:10px;color:rgba(120,255,150,.8);margin-bottom:2px;}
+.shop-item-owned{font-family:'Nunito',sans-serif;font-size:10px;color:rgba(30,138,76,.95);margin-bottom:2px;}
 .shop-item-price{font-family:'Baloo 2',sans-serif;font-weight:800;font-size:12px;color:var(--goldd);background:rgba(255,215,0,.14);border:1px solid rgba(255,215,0,.22);border-radius:999px;padding:4px 8px;box-shadow:inset 0 1px 0 rgba(255,255,255,.12);}
 .shop-item-owned-tag{color:#78FF9C;background:rgba(120,255,150,.1);}
 .frame-holo{position:relative;padding:4px;overflow:hidden;}
@@ -908,8 +908,8 @@ nav{display:flex;gap:8px;padding:10px 14px max(14px,env(safe-area-inset-bottom))
 .scan2-shutter-ring{position:absolute;inset:0;border-radius:50%;border:4px solid var(--glow);box-shadow:0 0 18px -2px var(--glow);}
 .scan2-shutter-core{position:absolute;inset:7px;border-radius:50%;background:radial-gradient(circle at 40% 34%,#fff,#ece4c6);display:flex;align-items:center;justify-content:center;font-size:31px;box-shadow:0 4px 12px rgba(0,0,0,.45);transition:transform .09s;}
 .scan2-shutter:active .scan2-shutter-core{transform:scale(.88);}
-.scan2-shutter-label{text-align:center;font-family:'Baloo 2',sans-serif;font-weight:700;font-size:12px;color:rgba(255,255,255,.6);margin-top:9px;}
-.scan2-shutter-label b{color:#F7DC6F;}
+.scan2-shutter-label{text-align:center;font-family:'Baloo 2',sans-serif;font-weight:700;font-size:12px;color:rgba(44,42,46,.62);margin-top:9px;}
+.scan2-shutter-label b{color:var(--goldd);}
 .scan2-odds{margin-top:16px;background:linear-gradient(160deg,rgba(255,255,255,.8),rgba(255,255,255,.5));backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.9);border-radius:18px;padding:13px 13px 11px;box-shadow:0 10px 24px rgba(0,0,0,.26),inset 0 1px 0 rgba(255,255,255,.14);}
 .scan2-odds-title{font-family:'Baloo 2',sans-serif;font-weight:800;font-size:10px;letter-spacing:.1em;color:rgba(44,42,46,.55);text-align:center;margin-bottom:8px;}
 .odds-bar{display:flex;height:12px;border-radius:999px;overflow:hidden;gap:1px;box-shadow:inset 0 1px 3px rgba(0,0,0,.4);}
@@ -1580,8 +1580,8 @@ function friendsScreen(){
             <div class="combat-pick-name">@${f.username} <span style="font-size:10px;color:rgba(44,42,46,.46);">ℹ️ voir profil</span></div>
           </div>
           <button class="btn-feed" style="width:auto;padding:8px 14px;font-size:11px;" data-action="challengeFriendBtn" data-id="${f.user_id}" data-name="${f.username}">⚔️ Défier</button>
-          <span data-action="reportFriendBtn" data-id="${f.user_id}" data-name="${f.username}" title="Signaler" style="font-size:12px;color:rgba(255,180,80,.6);cursor:pointer;margin-left:8px;">⚑</span>
-          <span data-action="removeFriendBtn" data-id="${f.user_id}" style="font-size:11px;color:rgba(255,100,100,.6);cursor:pointer;margin-left:6px;">✕</span>
+          <span data-action="reportFriendBtn" data-id="${f.user_id}" data-name="${f.username}" title="Signaler" style="font-size:12px;color:rgba(190,120,20,.8);cursor:pointer;margin-left:8px;">⚑</span>
+          <span data-action="removeFriendBtn" data-id="${f.user_id}" style="font-size:11px;color:rgba(200,50,50,.75);cursor:pointer;margin-left:6px;">✕</span>
           ${incoming?`<div style="width:100%;margin-top:8px;padding-top:8px;border-top:1px solid rgba(196,92,255,.25);display:flex;align-items:center;justify-content:space-between;">
             <span style="font-family:'Baloo 2',sans-serif;font-weight:800;font-size:12px;color:#C45CFF;">⚔️ ${f.username} te défie !</span>
             <button class="btn-feed" style="width:auto;padding:6px 12px;font-size:11px;background:linear-gradient(135deg,#C45CFF,#8020C0);" data-action="acceptChallengeBtn">Accepter</button>
@@ -2733,11 +2733,11 @@ function homeScreen(){
     ${pendingChallenge?`<div class="daily-widget" style="border-color:rgba(196,92,255,.4);background:linear-gradient(135deg,rgba(196,92,255,.18),rgba(116,185,255,.1));">
       <div class="daily-icon">⚔️</div>
       <div class="daily-info">
-        <div class="daily-label" style="color:#C45CFF;">DÉFI REÇU</div>
+        <div class="daily-label" style="color:#8020C0;">DÉFI REÇU</div>
         <div class="daily-desc">${pendingChallenge.challenger_username} te défie !</div>
       </div>
-      <div class="daily-bonus" style="color:#C45CFF;background:rgba(196,92,255,.15);" data-action="acceptChallengeBtn">Accepter</div>
-      <span data-action="dismissChallengeBtn" style="font-size:14px;color:rgba(255,255,255,.3);cursor:pointer;margin-left:8px;">✕</span>
+      <div class="daily-bonus" style="color:#8020C0;background:rgba(196,92,255,.2);" data-action="acceptChallengeBtn">Accepter</div>
+      <span data-action="dismissChallengeBtn" style="font-size:14px;color:rgba(44,42,46,.42);cursor:pointer;margin-left:8px;">✕</span>
     </div>`:''}
     ${(()=>{
       if(!ch) return '';
@@ -3071,12 +3071,12 @@ function scannerScreen(){
     ?`<div class="hint-soft">🔥 Série de ${meta.streak} jour${meta.streak>1?'s':''} — chances de rareté boostées !</div>`
     :`<div class="hint-soft">Scanne chaque jour pour booster ta chance de rareté.</div>`;
   const aiLine=hasApiKey()
-    ?`<div class="hint-soft" style="color:rgba(196,92,255,.6);">🤖 IA active — noms personnalisés + anti-triche</div>`
-    :`<div class="hint-soft">Active l'IA pour des noms uniques → <span style="color:rgba(255,215,0,.7);cursor:pointer;" data-action="account">⚙️ IA</span></div>`;
+    ?`<div class="hint-soft" style="color:rgba(128,32,192,.8);">🤖 IA active — noms personnalisés + anti-triche</div>`
+    :`<div class="hint-soft">Active l'IA pour des noms uniques → <span style="color:var(--goldd);font-weight:800;cursor:pointer;" data-action="account">⚙️ IA</span></div>`;
   const gKey=guaranteedRarityKey();
   const gTier=gKey?RARITY_TIERS.find(x=>x.key===gKey):null;
   const guaranteedBadge=gTier?`<div class="guaranteed-badge" style="border-color:${gTier.hex};color:${gTier.hex};box-shadow:0 0 16px ${gTier.hex}55;">✨ Prochaine capture : <b>${gTier.label}</b> garantie</div>`:'';
-  const luckyBadge=isLuckyActive()?`<div class="hint-soft" style="color:rgba(90,220,130,.85);">🍀 Porte-Bonheur actif — rareté boostée</div>`:'';
+  const luckyBadge=isLuckyActive()?`<div class="hint-soft" style="color:rgba(30,138,76,.95);font-weight:700;">🍀 Porte-Bonheur actif — rareté boostée</div>`:'';
   const scans=getScansToday(); const left=Math.max(0,DAILY_SCAN_LIMIT-scans);
   const glow=gTier?gTier.hex:'#F7DC6F';
   return `<div class="scan2">
@@ -3248,8 +3248,8 @@ function revealScreen(){
     : genLeft<=0
       ? `<button class="btn btn-ghost" disabled style="opacity:.4;color:#C45CFF;">🔒 Générations épuisées</button>`
       : hasChar
-        ? `<button class="btn btn-ghost" style="color:#C45CFF;border-color:#C45CFF55;" data-action="generateCharacter">🔄 Regénérer (${genLeft} restante${genLeft>1?'s':''})</button>`
-        : `<button class="btn btn-ghost" style="color:#C45CFF;border-color:#C45CFF55;" data-action="generateCharacter">🎨 Personnage IA (${genLeft}/${CHAR_GEN_MAX})</button>`;
+        ? `<button class="btn btn-ghost" style="color:#8020C0;border-color:rgba(128,32,192,.4);" data-action="generateCharacter">🔄 Regénérer (${genLeft} restante${genLeft>1?'s':''})</button>`
+        : `<button class="btn btn-ghost" style="color:#8020C0;border-color:rgba(128,32,192,.4);" data-action="generateCharacter">🎨 Personnage IA (${genLeft}/${CHAR_GEN_MAX})</button>`;
   return `<div class="fadeup">
     ${specimenCard(revealRock,true)}
     <div class="btn-row">
@@ -3356,6 +3356,16 @@ function typeIcon(key){
       <path d="M18 42 Q33 49 49 41" stroke="#4E5760" stroke-width="1.4" fill="none" opacity=".45"/>`);
   }
 }
+// Assombrit une couleur de type/palier pour qu'elle reste lisible en texte sur fond clair,
+// tout en gardant sa teinte (mélange 50% couleur + 50% encre foncée).
+function typeTextCol(hex){
+  const h=String(hex||'').replace('#','');
+  if(h.length<6) return 'var(--txt)';
+  const r=parseInt(h.slice(0,2),16), g=parseInt(h.slice(2,4),16), b=parseInt(h.slice(4,6),16);
+  if([r,g,b].some(isNaN)) return 'var(--txt)';
+  const mix=c=>Math.round(c*0.5+26*0.5);
+  return `rgb(${mix(r)},${mix(g)},${mix(b)})`;
+}
 function dexScreen(){
   if(dex.length===0) return `<div class="empty">${mascotSvg('happy')}<p>Ton Dex est vide.<br>Va scanner ton premier caillou ! 🪨<br><span style="font-size:11px;opacity:.6;">${hasApiKey()?'IA active — chaque capture est unique !':'Active l\'IA pour des noms personnalisés'}</span></p></div>`;
   const byType={};
@@ -3367,7 +3377,7 @@ function dexScreen(){
     const rocks=(byType[dexType]||[]).slice().reverse();
     return `<div>
       <div class="dex-back" data-action="dexBack">← Tous les types</div>
-      <div class="dex-type-head" style="color:${t.color};border-color:${t.color}55;"><span>${t.label}</span><span class="dex-type-count">${rocks.length}</span></div>
+      <div class="dex-type-head" style="color:${typeTextCol(t.color)};border-color:${t.color}55;"><span>${t.label}</span><span class="dex-type-count">${rocks.length}</span></div>
       <div class="dexgrid2">${rocks.map(dexCard).join('')}</div>
     </div>`;
   }
@@ -3378,7 +3388,7 @@ function dexScreen(){
     const nm=t.label.replace(/^\S+\s/,'');
     return `<div class="dextype-tile${n?'':' empty'}" ${n?`style="border-color:${t.color};" data-action="dexType" data-type="${t.key}"`:''}>
       <div class="dextype-icon">${typeIcon(t.key)}</div>
-      <div class="dextype-name" ${n?`style="color:${t.color};"`:''}>${nm}</div>
+      <div class="dextype-name" ${n?`style="color:${typeTextCol(t.color)};"`:''}>${nm}</div>
       <div class="dextype-count">${n} caillou${n>1?'x':''}</div>
     </div>`;
   }).join('');
@@ -3402,12 +3412,12 @@ function badgesScreen(){
       const on=unlocked.has(a.id);
       const html=`<div class="badge-card fadeup" style="animation-delay:${i*45}ms;border-color:${on?tier.color+'55':'rgba(255,255,255,.1)'};">
         <div class="badge-medal ${on?'on':'off'}" style="${on?`background:linear-gradient(135deg,${tier.color},${tier.color}AA);border-color:${tier.color};box-shadow:0 0 12px ${tier.color}66;`:''}">${on?a.icon:'🔒'}</div>
-        <div><div class="badge-title" style="color:${on?'#fff':'rgba(255,255,255,.35)'};">${a.label}</div><div class="badge-desc">${a.desc}</div></div>
+        <div><div class="badge-title" style="color:${on?'var(--txt)':'rgba(44,42,46,.42)'};">${a.label}</div><div class="badge-desc">${a.desc}</div></div>
       </div>`;
       i++;
       return html;
     }).join('');
-    return `<div class="badge-tier-header" style="color:${tier.color};border-color:${tier.color}40;">${tier.label}<span style="opacity:.55;font-weight:700;">${tierDone}/${items.length}</span></div>${cards}`;
+    return `<div class="badge-tier-header" style="color:${typeTextCol(tier.color)};border-color:${tier.color}40;">${tier.label}<span style="opacity:.7;font-weight:700;">${tierDone}/${items.length}</span></div>${cards}`;
   }).join('');
   return `<div>
     <div style="font-family:'Baloo 2',sans-serif;font-weight:700;font-size:11px;color:rgba(44,42,46,.46);text-align:center;margin-bottom:14px;letter-spacing:.06em;">${done}/${total} BADGES DÉBLOQUÉS</div>
@@ -4761,7 +4771,7 @@ function combatPickScreen(){
   return `<div class="combat-pick-wrap">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
       <div class="combat-pick-title" style="margin-bottom:0;">⚔️ CHOISIR UN CAILLOU</div>
-      <span style="font-family:'Baloo 2',sans-serif;font-weight:800;font-size:11px;color:rgba(255,215,0,.6);cursor:pointer;border:1px solid rgba(255,215,0,.25);border-radius:20px;padding:4px 10px;" data-action="goto" data-screen="online-menu">🌐 EN LIGNE</span>
+      <span style="font-family:'Baloo 2',sans-serif;font-weight:800;font-size:11px;color:var(--goldd);cursor:pointer;border:1px solid rgba(154,116,20,.45);border-radius:20px;padding:4px 10px;" data-action="goto" data-screen="online-menu">🌐 EN LIGNE</span>
     </div>
     <div class="combat-pick-sub">Lequel vas-tu envoyer au combat ?</div>
     ${(()=>{ const b=[]; if((meta.inventory?.shield||0)>0)b.push('🛡️ Bouclier'); if((meta.inventory?.crit||0)>0)b.push('💥 Crit ×2'); if((meta.inventory?.mighty||0)>0)b.push('💪 Costaud'); return b.length?`<div class="buff-row">${b.map(x=>`<span class="buff-pill">${x} <span style="opacity:.6;">prêt</span></span>`).join('')}</div>`:''; })()}
@@ -4971,7 +4981,7 @@ function render(){
   let showNav=false;
 
   if(screen==='loading'){
-    app.innerHTML=`<main style="flex:1;display:flex;align-items:center;justify-content:center;min-height:100vh;"><div style="font-family:'Baloo 2',sans-serif;font-weight:700;color:rgba(255,255,255,.4);">Chargement...</div></main>`;
+    app.innerHTML=`<main style="flex:1;display:flex;align-items:center;justify-content:center;min-height:100vh;"><div style="font-family:'Baloo 2',sans-serif;font-weight:700;color:rgba(44,42,46,.45);">Chargement...</div></main>`;
     return;
   }
   if(screen==='login'){
@@ -5101,14 +5111,14 @@ function render(){
       </div>
       <div class="btn-row" style="margin-top:8px;">
         ${hasReroll?`<button class="btn btn-purple" data-action="rerollRock" data-id="${detailRock.id}">🔄 RE-ROLL IA (${meta.inventory.reroll})</button>`:''}
-        <button class="btn btn-ghost" style="font-size:11px;color:rgba(255,200,100,.7);border-color:rgba(255,200,100,.25);" data-action="recycleRock" data-id="${detailRock.id}">💰 Recycler (+${RECYCLE_VALUE[detailRock.rarity]||3})</button>
+        <button class="btn btn-ghost" style="font-size:11px;color:#B26B00;border-color:rgba(178,107,0,.4);" data-action="recycleRock" data-id="${detailRock.id}">💰 Recycler (+${RECYCLE_VALUE[detailRock.rarity]||3})</button>
       </div>
       <div class="btn-row" style="margin-top:4px;">
         ${(()=>{
           const gl=CHAR_GEN_MAX-(detailRock.charGenCount||0);
           if(generatingCharacter) return `<button class="btn btn-ghost" disabled style="opacity:.5;color:#C45CFF;">🎨 Génération en cours...</button>`;
           if(gl<=0) return `<button class="btn btn-ghost" disabled style="opacity:.4;color:#C45CFF;">🔒 Générations épuisées</button>`;
-          return `<button class="btn btn-ghost" style="color:#C45CFF;border-color:#C45CFF55;" data-action="generateCharacter" data-id="${detailRock.id}">${detailRock.characterPhoto?`🔄 Regénérer (${gl} restante${gl>1?'s':''})`:`🎨 Personnage IA (${gl}/${CHAR_GEN_MAX})`}</button>`;
+          return `<button class="btn btn-ghost" style="color:#8020C0;border-color:rgba(128,32,192,.4);" data-action="generateCharacter" data-id="${detailRock.id}">${detailRock.characterPhoto?`🔄 Regénérer (${gl} restante${gl>1?'s':''})`:`🎨 Personnage IA (${gl}/${CHAR_GEN_MAX})`}</button>`;
         })()}
       </div>
       ${(()=>{
