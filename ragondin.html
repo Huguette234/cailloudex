@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Ragondin Run</title>
+<style>
+  html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    overflow: hidden;
+    background: #ffffff;
+  }
+  /* Le canvas remplit tout l'écran ; le ragondin est centré via le rendu. */
+  #game {
+    display: block;
+    width: 100vw;
+    height: 100vh;
+    background: #ffffff;
+    touch-action: none;
+  }
+</style>
+</head>
+<body>
+<canvas id="game"></canvas>
+
+<script>
+"use strict";
+
+/* =========================================================================
+   Ragondin Run — V1
+   -------------------------------------------------------------------------
+   Scène vivante : un ragondin statique, assis face caméra, qui fait coucou
+   de la patte en boucle. Aucun gameplay pour l'instant.
+
+   Le code est volontairement découpé en modules simples pour pouvoir, plus
+   tard, sans tout casser :
+     - remplacer le design du personnage      -> objet Ragondin
+     - ajouter des éléments de décor           -> objet Decor
+     - ajouter des interactions (clic/clavier) -> section INTERACTIONS
+   ========================================================================= */
+
+/* ------------------------------------------------------------------ CONFIG */
+const CONFIG = {
+  // Couleurs du personnage
+  colors: {
+    bg:        "#ffffff",
+    ground:    "#4a4a4a",
+    body:      "#8a5a34", // marron corps
+    bodyDark:  "#6f4526", // ombres / contours doux
+    belly:     "#c99a6a", // ventre plus clair
+    ear:       "#7a4d2c",
+    earInner:  "#a06a3e",
+    teeth:     "#e8863a", // dents oranges
+    nose:      "#3a2418",
+    eye:       "#2a1a10",
+    eyeShine:  "#ffffff",
+    outline:   "#4a2f1a",
+  },
+
+  // Taille de référence du ragondin (hauteur en px du monde logique).
+  // Le personnage est mis à l'échelle pour tenir joliment quel que soit
+  // l'écran (voir layout()).
+  charLogicalHeight: 300,
+
+  // Animation du coucou (patte qui salue)
+  wave: {
+    speed: 3.2,        // vitesse de va-et-vient (radians/s de base)
+    amplitude: 0.55,   // amplitude du balancement (radians)
+    baseAngle: -0.35,  // angle de repos de la patte levée
+  },
+
+  // Léger "breathing" pour rendre la scène vivante
+  breath: {
+    speed: 1.6,
+    amount: 0.02, // variation d'échelle verticale
+  },
+};
+
+/* ----------------------------------------------------------------- CANVAS */
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+
+// État de mise en page recalculé à chaque resize.
+const layout = {
+  dpr: 1,
+  width: 0,      // largeur CSS (px logiques)
+  height: 0,     // hauteur CSS (px logiques)
+  centerX: 0,    // position horizontale du ragondin (toujours centré)
+  groundY: 0,    // ligne de sol
+  scale: 1,      // échelle appliquée au dessin du personnage
+};
+
+function resize() {
+  const dpr = Math.max(1, Math.min(window.devicePixelRatio || 1, 3));
+  const w = window.innerWidth;
+  const h = window.innerHeight;
+
+  // Canvas en pixels réels pour un rendu net (retina), style en px CSS.
+  canvas.width  = Math.round(w * dpr);
+  canvas.height = Math.round(h * dpr);
+  canvas.style.width  = w + "px";
+  canvas.style.height = h + "px";
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+  layout.dpr = dpr;
+  layout.width = w;
+  layout.height = h;
+
+  // Le ragondin reste centré horizontalement, quelle que soit la taille.
+  layout.centerX = w / 2;
+
+  // Le sol est placé un peu en dessous du centre vertical.
+  layout.groundY = Math.round(h * 0.82);
+
+  // Échelle : on veut que le ragondin occupe une part raisonnable de la
+  // hauteur, sans dépasser sur les petits écrans en largeur.
+  const targetH = Math.min(h * 0.55, CONFIG.charLogicalHeight * 1.4);
+  const scaleByHeight = targetH / CONFIG.charLogicalHeight;
+  const maxWidth = Math.min(w * 0.7, 520);
+  const scaleByWidth = maxWidth / (CONFIG.charLogicalHeight * 0.85);
+  layout.scale = Math.min(scaleByHeight, scaleByWidth);
+}
+
+window.addEventListener("resize", resize, { passive: true });
+window.addEventListener("orientationchange", resize, { passive: true });
+
+/* ------------------------------------------------------------------ DECOR */
+const Decor = {
+  draw(ctx) {
+    // Fond blanc uni
+    ctx.fillStyle = CONFIG.colors.bg;
+    ctx.fillRect(0, 0, layout.width, layout.height);
+
+    // Sol : simple ligne horizontale
+    ctx.strokeStyle = CONFIG.colors.ground;
+    ctx.lineWidth = Math.max(2, 3 * layout.scale);
+    ctx.beginPath();
+    ctx.moveTo(0, layout.groundY);
+    ctx.lineTo(layout.width, layout.groundY);
+    ctx.stroke();
+  },
+};
+
+/* --------------------------------------------------------------- RAGONDIN */
+/*
+   Le personnage est dessiné dans un repère local centré sur ses "pieds"
+   (le point posé au sol). Toutes les coordonnées sont exprimées en unités
+   logiques ; la mise à l'échelle est gérée par le caller via ctx.scale().
+   Cela rend le design facile à retoucher indépendamment de l'écran.
+*/
+const Ragondin = {
+  // Dessine le ragondin. `wavePhase` en radians, `breath` facteur d'échelle Y.
+  draw(ctx, wavePhase, breath) {
+    const C = CONFIG.colors;
+
+    ctx.save();
+    ctx.lineJoin = "round";
+    ctx.lineCap = "round";
+
+    // Ombre au sol (ellipse douce sous le personnage)
+    ctx.save();
+    ctx.fillStyle = "rgba(0,0,0,0.08)";
+    ctx.beginPath();
+    ctx.ellipse(0, 4, 120, 16, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+
+    // "Respiration" : on étire très légèrement le corps en vertical.
+    ctx.scale(1, breath);
+
+    // ---- CORPS (assis, forme de poire, vu de face) ----
+    ctx.fillStyle = C.body;
+    ctx.strokeStyle = C.outline;
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    // corps large en bas, épaules plus étroites en haut
+    ctx.moveTo(-95, -30);
+    ctx.bezierCurveTo(-135, -30, -125, -190, -70, -215); // flanc gauche
+    ctx.bezierCurveTo(-30, -235, 30, -235, 70, -215);    // épaules / haut
+    ctx.bezierCurveTo(125, -190, 135, -30, 95, -30);      // flanc droit
+    ctx.bezierCurveTo(70, -6, -70, -6, -95, -30);         // bas / assise
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // ---- VENTRE (plus clair) ----
+    ctx.fillStyle = C.belly;
+    ctx.beginPath();
+    ctx.moveTo(-58, -40);
+    ctx.bezierCurveTo(-80, -60, -70, -150, -30, -165);
+    ctx.bezierCurveTo(0, -172, 30, -165, 58, -140);
+    ctx.bezierCurveTo(70, -80, 55, -40, 45, -30);
+    ctx.bezierCurveTo(0, -14, -35, -20, -58, -40);
+    ctx.closePath();
+    ctx.fill();
+
+    // ---- PIED / PATTE POSÉE (côté droit à l'écran) ----
+    ctx.fillStyle = C.bodyDark;
+    ctx.strokeStyle = C.outline;
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.ellipse(55, -18, 34, 16, -0.15, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    // ---- TÊTE ----
+    // (dessinée après le corps ; la patte qui salue passera par-dessus)
+    const headY = -210;
+
+    // Oreille unique (spec : "une oreille") — côté gauche à l'écran,
+    // posée sur le haut du crâne pour qu'elle dépasse bien de la tête.
+    ctx.fillStyle = C.ear;
+    ctx.strokeStyle = C.outline;
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.ellipse(-56, headY - 58, 22, 24, -0.35, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = C.earInner;
+    ctx.beginPath();
+    ctx.ellipse(-54, headY - 55, 11, 13, -0.35, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Crâne / joues (rond)
+    ctx.fillStyle = C.body;
+    ctx.strokeStyle = C.outline;
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.ellipse(0, headY, 78, 70, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    // Museau clair
+    ctx.fillStyle = C.belly;
+    ctx.beginPath();
+    ctx.ellipse(0, headY + 26, 40, 32, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Yeux
+    for (const ex of [-30, 30]) {
+      ctx.fillStyle = C.eye;
+      ctx.beginPath();
+      ctx.ellipse(ex, headY - 8, 9, 11, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = C.eyeShine;
+      ctx.beginPath();
+      ctx.arc(ex + 3, headY - 12, 3, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // Nez
+    ctx.fillStyle = C.nose;
+    ctx.beginPath();
+    ctx.ellipse(0, headY + 14, 12, 8, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Dents oranges (deux incisives visibles sous le nez)
+    ctx.fillStyle = C.teeth;
+    ctx.strokeStyle = "rgba(0,0,0,0.15)";
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.rect(-11, headY + 22, 10, 20);
+    ctx.rect(1, headY + 22, 10, 20);
+    ctx.fill();
+    ctx.stroke();
+
+    // ---- PATTE QUI FAIT COUCOU (côté gauche à l'écran) ----
+    // Bras articulé à l'épaule, qui se balance en va-et-vient.
+    ctx.save();
+    ctx.translate(-78, -150);           // épaule gauche
+    ctx.rotate(CONFIG.wave.baseAngle + wavePhase);
+
+    // avant-bras
+    ctx.fillStyle = C.body;
+    ctx.strokeStyle = C.outline;
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.moveTo(-14, 0);
+    ctx.bezierCurveTo(-22, -55, -16, -95, 0, -110);
+    ctx.bezierCurveTo(16, -95, 20, -55, 14, 0);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // main / patte (avec petits doigts)
+    ctx.fillStyle = C.bodyDark;
+    ctx.beginPath();
+    ctx.ellipse(0, -118, 20, 24, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = C.bodyDark;
+    for (const fx of [-12, -4, 4, 12]) {
+      ctx.beginPath();
+      ctx.ellipse(fx, -138, 5, 10, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+    }
+    ctx.restore();
+
+    ctx.restore();
+  },
+};
+
+/* ----------------------------------------------------------- INTERACTIONS */
+/*
+   V1 : aucune interaction. On garde ces points d'entrée prêts à l'emploi
+   pour brancher plus tard clic/clavier selon les commentaires TikTok.
+*/
+// canvas.addEventListener("pointerdown", (e) => { /* réaction au clic */ });
+// window.addEventListener("keydown", (e) => { /* réaction clavier */ });
+
+/* ------------------------------------------------------- BOUCLE PRINCIPALE */
+let lastTime = 0;
+let waveClock = 0;
+let breathClock = 0;
+
+function frame(now) {
+  if (!lastTime) lastTime = now;
+  const dt = Math.min((now - lastTime) / 1000, 0.05); // clamp anti-saut
+  lastTime = now;
+
+  // Avancement des horloges d'animation
+  waveClock += dt * CONFIG.wave.speed;
+  breathClock += dt * CONFIG.breath.speed;
+
+  const wavePhase = Math.sin(waveClock) * CONFIG.wave.amplitude;
+  const breath = 1 + Math.sin(breathClock) * CONFIG.breath.amount;
+
+  // Rendu
+  Decor.draw(ctx);
+
+  ctx.save();
+  ctx.translate(layout.centerX, layout.groundY);
+  ctx.scale(layout.scale, layout.scale);
+  Ragondin.draw(ctx, wavePhase, breath);
+  ctx.restore();
+
+  requestAnimationFrame(frame);
+}
+
+/* -------------------------------------------------------------- DÉMARRAGE */
+resize();
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
