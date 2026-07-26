@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Ragondin Run</title>
+<style>
+  html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    overflow: hidden;
+    background: #ffffff;
+  }
+  /* Le canvas remplit tout l'écran ; le ragondin est centré via le rendu. */
+  #game {
+    display: block;
+    width: 100vw;
+    height: 100vh;
+    background: #ffffff;
+    touch-action: none;
+  }
+</style>
+</head>
+<body>
+<canvas id="game"></canvas>
+
+<script>
+"use strict";
+
+/* =========================================================================
+   Ragondin Run — V1
+   -------------------------------------------------------------------------
+   Scène vivante : un ragondin statique, assis face caméra, qui fait coucou
+   de la patte en boucle. Aucun gameplay pour l'instant.
+
+   Le code est volontairement découpé en modules simples pour pouvoir, plus
+   tard, sans tout casser :
+     - remplacer le design du personnage      -> objet Ragondin
+     - ajouter des éléments de décor           -> objet Decor
+     - ajouter des interactions (clic/clavier) -> section INTERACTIONS
+   ========================================================================= */
+
+/* ------------------------------------------------------------------ CONFIG */
+const CONFIG = {
+  colors: {
+    bg:         "#ffffff",
+    ground:     "#3f3f3f",
+
+    // Corps (dégradés construits à partir de ces teintes)
+    furLight:   "#a9764a",
+    furMid:     "#8a5a34",
+    furDark:    "#5e3c22",
+    outline:    "#402a18",
+
+    // Ventre / museau clairs
+    bellyLight: "#e6c79c",
+    bellyMid:   "#d0a875",
+
+    // Oreille
+    earInner:   "#b07048",
+
+    // Visage
+    nose:       "#2c1a10",
+    noseShine:  "rgba(255,255,255,0.55)",
+    eye:        "#241610",
+    eyeShine:   "#ffffff",
+    blush:      "rgba(206,120,92,0.28)",
+    whisker:    "rgba(74,42,24,0.45)",
+
+    // Dents oranges (typiques du ragondin)
+    teethLight: "#ffb056",
+    teethDark:  "#e8863a",
+  },
+
+  charLogicalHeight: 300,
+
+  wave: {
+    speed: 3.0,        // vitesse de va-et-vient
+    amplitude: 0.55,   // amplitude du balancement (radians)
+    baseAngle: -0.28,  // angle de repos de la patte levée
+  },
+
+  breath: {
+    speed: 1.6,
+    amount: 0.018,     // variation d'échelle verticale
+  },
+};
+
+/* ----------------------------------------------------------------- CANVAS */
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+
+const layout = {
+  dpr: 1, width: 0, height: 0,
+  centerX: 0, groundY: 0, scale: 1,
+};
+
+function resize() {
+  const dpr = Math.max(1, Math.min(window.devicePixelRatio || 1, 3));
+  const w = window.innerWidth;
+  const h = window.innerHeight;
+
+  canvas.width  = Math.round(w * dpr);
+  canvas.height = Math.round(h * dpr);
+  canvas.style.width  = w + "px";
+  canvas.style.height = h + "px";
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+  layout.dpr = dpr;
+  layout.width = w;
+  layout.height = h;
+  layout.centerX = w / 2;                 // toujours centré
+  layout.groundY = Math.round(h * 0.82);
+
+  const targetH = Math.min(h * 0.58, CONFIG.charLogicalHeight * 1.45);
+  const scaleByHeight = targetH / CONFIG.charLogicalHeight;
+  const maxWidth = Math.min(w * 0.72, 540);
+  const scaleByWidth = maxWidth / (CONFIG.charLogicalHeight * 0.9);
+  layout.scale = Math.min(scaleByHeight, scaleByWidth);
+}
+
+window.addEventListener("resize", resize, { passive: true });
+window.addEventListener("orientationchange", resize, { passive: true });
+
+/* -------------------------------------------------------------- HELPERS UI */
+// Petit utilitaire : chemin en forme de "poire" (corps) réutilisable.
+function bodyPath(ctx) {
+  ctx.beginPath();
+  ctx.moveTo(-96, -28);
+  ctx.bezierCurveTo(-142, -34, -128, -196, -66, -220);
+  ctx.bezierCurveTo(-26, -238, 26, -238, 66, -220);
+  ctx.bezierCurveTo(128, -196, 142, -34, 96, -28);
+  ctx.bezierCurveTo(70, -4, -70, -4, -96, -28);
+  ctx.closePath();
+}
+
+// Touffes de fourrure le long d'un contour (petits pics) pour la texture.
+function furTufts(ctx, cx, cy, rx, ry, count, len, color, from, to) {
+  ctx.fillStyle = color;
+  for (let i = 0; i < count; i++) {
+    const t = from + (to - from) * (i / (count - 1));
+    const nx = Math.cos(t), ny = Math.sin(t);
+    const bx = cx + nx * rx, by = cy + ny * ry;
+    const tipx = cx + nx * (rx + len), tipy = cy + ny * (ry + len);
+    const sx = -ny, sy = nx; // tangente
+    ctx.beginPath();
+    ctx.moveTo(bx + sx * 6, by + sy * 6);
+    ctx.lineTo(tipx, tipy);
+    ctx.lineTo(bx - sx * 6, by - sy * 6);
+    ctx.closePath();
+    ctx.fill();
+  }
+}
+
+/* ------------------------------------------------------------------ DECOR */
+const Decor = {
+  draw(ctx) {
+    ctx.fillStyle = CONFIG.colors.bg;
+    ctx.fillRect(0, 0, layout.width, layout.height);
+
+    ctx.strokeStyle = CONFIG.colors.ground;
+    ctx.lineWidth = Math.max(2, 3 * layout.scale);
+    ctx.beginPath();
+    ctx.moveTo(0, layout.groundY);
+    ctx.lineTo(layout.width, layout.groundY);
+    ctx.stroke();
+  },
+};
+
+/* --------------------------------------------------------------- RAGONDIN */
+/*
+   Dessiné dans un repère local centré sur ses pieds (posés au sol).
+   Coordonnées en unités logiques ; la mise à l'échelle écran est gérée par
+   le caller. Design isolé ici pour être retouché facilement.
+*/
+const Ragondin = {
+  draw(ctx, wavePhase, breath) {
+    const C = CONFIG.colors;
+    const headY = -206;
+
+    ctx.save();
+    ctx.lineJoin = "round";
+    ctx.lineCap = "round";
+
+    /* -- Ombre portée au sol -- */
+    ctx.save();
+    ctx.fillStyle = "rgba(0,0,0,0.10)";
+    ctx.beginPath();
+    ctx.ellipse(0, 6, 128, 18, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+
+    // Respiration : léger étirement vertical.
+    ctx.scale(1, breath);
+
+    /* ================= PIEDS (avant, sous le corps) ================= */
+    for (const side of [-1, 1]) {
+      ctx.save();
+      ctx.translate(46 * side, -14);
+      ctx.fillStyle = C.furDark;
+      ctx.strokeStyle = C.outline;
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.ellipse(0, 0, 30, 15, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      // orteils
+      ctx.strokeStyle = "rgba(0,0,0,0.25)";
+      ctx.lineWidth = 2;
+      for (const tx of [-12, 0, 12]) {
+        ctx.beginPath();
+        ctx.moveTo(tx, -4);
+        ctx.lineTo(tx, 8);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    /* ===================== CORPS ===================== */
+    // Touffes de fourrure sur le pourtour bas/flancs (sous le corps).
+    furTufts(ctx, 0, -120, 120, 100, 22, 10, C.furDark, Math.PI * 0.15, Math.PI * 0.85);
+
+    // Dégradé de volume sur le corps.
+    let g = ctx.createRadialGradient(-24, -150, 30, 0, -110, 190);
+    g.addColorStop(0, C.furLight);
+    g.addColorStop(0.55, C.furMid);
+    g.addColorStop(1, C.furDark);
+    ctx.fillStyle = g;
+    ctx.strokeStyle = C.outline;
+    ctx.lineWidth = 4;
+    bodyPath(ctx);
+    ctx.fill();
+    ctx.stroke();
+
+    // Ventre clair (dégradé doux).
+    let bg = ctx.createRadialGradient(-10, -110, 20, 0, -95, 130);
+    bg.addColorStop(0, C.bellyLight);
+    bg.addColorStop(1, C.bellyMid);
+    ctx.fillStyle = bg;
+    ctx.beginPath();
+    ctx.moveTo(-60, -36);
+    ctx.bezierCurveTo(-84, -66, -74, -156, -30, -172);
+    ctx.bezierCurveTo(0, -180, 30, -172, 60, -150);
+    ctx.bezierCurveTo(74, -86, 58, -44, 46, -30);
+    ctx.bezierCurveTo(0, -12, -36, -18, -60, -36);
+    ctx.closePath();
+    ctx.fill();
+
+    /* ===================== TÊTE ===================== */
+    // Oreille unique (spec : "une oreille"), côté droit à l'écran pour rester
+    // bien visible (la patte qui salue occupe le côté gauche).
+    ctx.save();
+    ctx.translate(58, headY - 50);
+    ctx.rotate(0.3);
+    let eg = ctx.createRadialGradient(4, -6, 4, 0, 0, 26);
+    eg.addColorStop(0, C.furLight);
+    eg.addColorStop(1, C.furMid);
+    ctx.fillStyle = eg;
+    ctx.strokeStyle = C.outline;
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 22, 25, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = C.earInner;
+    ctx.beginPath();
+    ctx.ellipse(-2, 2, 11, 13, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+
+    // Crâne (dégradé sphérique).
+    let hg = ctx.createRadialGradient(-22, headY - 26, 18, 0, headY, 110);
+    hg.addColorStop(0, C.furLight);
+    hg.addColorStop(0.6, C.furMid);
+    hg.addColorStop(1, C.furDark);
+    ctx.fillStyle = hg;
+    ctx.strokeStyle = C.outline;
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.ellipse(0, headY, 80, 72, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    // Museau clair.
+    let mg = ctx.createRadialGradient(0, headY + 18, 8, 0, headY + 28, 46);
+    mg.addColorStop(0, C.bellyLight);
+    mg.addColorStop(1, C.bellyMid);
+    ctx.fillStyle = mg;
+    ctx.beginPath();
+    ctx.ellipse(0, headY + 28, 44, 34, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Joues rosées.
+    ctx.fillStyle = C.blush;
+    for (const bx of [-46, 46]) {
+      ctx.beginPath();
+      ctx.ellipse(bx, headY + 20, 16, 11, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // Sourcils / arcades (petits arcs qui donnent de l'expression).
+    ctx.strokeStyle = C.furDark;
+    ctx.lineWidth = 4;
+    for (const s of [-1, 1]) {
+      ctx.beginPath();
+      ctx.arc(34 * s, headY - 18, 16, Math.PI * (s < 0 ? 1.15 : 1.55),
+                                        Math.PI * (s < 0 ? 1.45 : 1.85));
+      ctx.stroke();
+    }
+
+    // Yeux (grands, brillants).
+    for (const ex of [-32, 32]) {
+      // blanc de l'œil
+      ctx.fillStyle = "#fff";
+      ctx.beginPath();
+      ctx.ellipse(ex, headY - 4, 13, 15, 0, 0, Math.PI * 2);
+      ctx.fill();
+      // iris
+      ctx.fillStyle = C.eye;
+      ctx.beginPath();
+      ctx.ellipse(ex + 1, headY - 2, 9.5, 11, 0, 0, Math.PI * 2);
+      ctx.fill();
+      // reflets
+      ctx.fillStyle = C.eyeShine;
+      ctx.beginPath();
+      ctx.arc(ex + 4, headY - 6, 3.6, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = 0.7;
+      ctx.beginPath();
+      ctx.arc(ex - 3, headY + 2, 2, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+    }
+
+    // Moustaches.
+    ctx.strokeStyle = C.whisker;
+    ctx.lineWidth = 2;
+    for (const s of [-1, 1]) {
+      for (let k = 0; k < 3; k++) {
+        const yy = headY + 22 + k * 7;
+        ctx.beginPath();
+        ctx.moveTo(18 * s, yy);
+        ctx.quadraticCurveTo(52 * s, yy - 4 + k * 3, 84 * s, yy - 6 + k * 6);
+        ctx.stroke();
+      }
+    }
+
+    // Nez (arrondi, avec reflet).
+    let ng = ctx.createRadialGradient(-3, headY + 12, 2, 0, headY + 16, 14);
+    ng.addColorStop(0, "#5a3a28");
+    ng.addColorStop(1, C.nose);
+    ctx.fillStyle = ng;
+    ctx.beginPath();
+    ctx.moveTo(0, headY + 24);
+    ctx.bezierCurveTo(-15, headY + 22, -14, headY + 8, 0, headY + 8);
+    ctx.bezierCurveTo(14, headY + 8, 15, headY + 22, 0, headY + 24);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = C.noseShine;
+    ctx.beginPath();
+    ctx.ellipse(-4, headY + 12, 3.5, 2.4, -0.4, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Dents oranges (deux incisives proéminentes).
+    ctx.save();
+    let tg = ctx.createLinearGradient(0, headY + 24, 0, headY + 48);
+    tg.addColorStop(0, C.teethLight);
+    tg.addColorStop(1, C.teethDark);
+    ctx.fillStyle = tg;
+    ctx.strokeStyle = "rgba(120,60,20,0.35)";
+    ctx.lineWidth = 1.5;
+    // gencive / bouche sombre
+    ctx.fillStyle = "rgba(60,30,18,0.35)";
+    ctx.beginPath();
+    ctx.ellipse(0, headY + 26, 13, 6, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = tg;
+    roundRect(ctx, -11, headY + 26, 10, 20, 3); ctx.fill(); ctx.stroke();
+    roundRect(ctx,   1, headY + 26, 10, 20, 3); ctx.fill(); ctx.stroke();
+    // reflet vertical sur les dents
+    ctx.fillStyle = "rgba(255,255,255,0.35)";
+    ctx.fillRect(-8, headY + 29, 2.5, 12);
+    ctx.fillRect(4, headY + 29, 2.5, 12);
+    ctx.restore();
+
+    /* ============ PATTE QUI FAIT COUCOU (gauche à l'écran) ============ */
+    ctx.save();
+    ctx.translate(-80, -148);                 // épaule gauche
+    ctx.rotate(CONFIG.wave.baseAngle + wavePhase);
+
+    // avant-bras (dégradé)
+    let ag = ctx.createLinearGradient(-16, 0, 16, -110);
+    ag.addColorStop(0, C.furMid);
+    ag.addColorStop(1, C.furLight);
+    ctx.fillStyle = ag;
+    ctx.strokeStyle = C.outline;
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.moveTo(-15, 4);
+    ctx.bezierCurveTo(-24, -55, -17, -96, 0, -112);
+    ctx.bezierCurveTo(17, -96, 22, -55, 15, 4);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // main / patte
+    ctx.fillStyle = C.furMid;
+    ctx.beginPath();
+    ctx.ellipse(0, -120, 21, 25, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    // doigts
+    ctx.fillStyle = C.furLight;
+    for (const fx of [-13, -4.5, 4.5, 13]) {
+      ctx.beginPath();
+      ctx.ellipse(fx, -140, 5.5, 11, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+    }
+    // paume claire
+    ctx.fillStyle = C.bellyMid;
+    ctx.beginPath();
+    ctx.ellipse(0, -117, 11, 13, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+
+    ctx.restore();
+  },
+};
+
+// Rectangle arrondi (helper, tous navigateurs).
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
+
+/* ----------------------------------------------------------- INTERACTIONS */
+/* V1 : aucune interaction. Points d'entrée prêts pour plus tard. */
+// canvas.addEventListener("pointerdown", (e) => { /* réaction au clic */ });
+// window.addEventListener("keydown", (e) => { /* réaction clavier */ });
+
+/* ------------------------------------------------------- BOUCLE PRINCIPALE */
+let lastTime = 0;
+let waveClock = 0;
+let breathClock = 0;
+
+function frame(now) {
+  if (!lastTime) lastTime = now;
+  const dt = Math.min((now - lastTime) / 1000, 0.05);
+  lastTime = now;
+
+  waveClock += dt * CONFIG.wave.speed;
+  breathClock += dt * CONFIG.breath.speed;
+
+  const wavePhase = Math.sin(waveClock) * CONFIG.wave.amplitude;
+  const breath = 1 + Math.sin(breathClock) * CONFIG.breath.amount;
+
+  Decor.draw(ctx);
+
+  ctx.save();
+  ctx.translate(layout.centerX, layout.groundY);
+  ctx.scale(layout.scale, layout.scale);
+  Ragondin.draw(ctx, wavePhase, breath);
+  ctx.restore();
+
+  requestAnimationFrame(frame);
+}
+
+/* -------------------------------------------------------------- DÉMARRAGE */
+resize();
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
