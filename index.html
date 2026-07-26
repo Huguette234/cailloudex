@@ -5809,6 +5809,52 @@ if('serviceWorker' in navigator) window.addEventListener('load',()=>{
   }).catch(()=>{});
 });
 
+// ===== Bouton "retour" du téléphone (Android) =====
+// Sans ça, un appui sur le bouton retour ferme l'appli. On piège l'historique
+// pour que "retour" ferme d'abord un panneau ouvert, puis revienne à l'accueil,
+// et ne quitte l'appli que depuis l'accueil (avec double appui de confirmation).
+let _lastHomeBack=0;
+function goBackInApp(){
+  // 1) Panneaux superposés (DOM) : carte, notif de défi
+  const mapO=document.getElementById('mapOverlay');
+  if(mapO){ try{ closeMap(); }catch(_){ mapO.remove(); } return true; }
+  const notif=document.getElementById('challengeNotif');
+  if(notif){ try{ hideChallengeNotif(); }catch(_){ notif.remove(); } return true; }
+  // 2) Mode répartition des points d'amélioration -> annuler, on garde la fiche
+  if(typeof upgradeAlloc!=='undefined' && upgradeAlloc){
+    try{ cancelUpgrade(); }catch(_){ upgradeAlloc=null; render(); }
+    return true;
+  }
+  // 3) Fiches / panneaux rendus (fiche caillou, perso IA, stats ami)
+  if(detailRock||characterResult||friendStats){
+    detailRock=null; characterResult=null; friendStats=null;
+    render();
+    return true;
+  }
+  // 4) Un sous-écran -> retour à l'accueil
+  if(screen!=='home' && screen!=='login' && screen!=='loading'){
+    screen='home'; detailRock=null; render();
+    if(typeof checkPendingChallenge==='function') checkPendingChallenge().then(render);
+    return true;
+  }
+  return false; // à l'accueil : rien à fermer
+}
+window.addEventListener('popstate',function(){
+  if(goBackInApp()){
+    // Ré-arme le piège pour continuer à capter les prochains appuis "retour"
+    try{ history.pushState({cdx:'trap'},''); }catch(_){}
+  } else {
+    // À l'accueil : deux appuis rapprochés pour quitter réellement
+    const now=Date.now();
+    if(now-_lastHomeBack<2000){ try{ history.back(); }catch(_){}; return; }
+    _lastHomeBack=now;
+    if(typeof showToast==='function') showToast('Appuie encore sur retour pour quitter');
+    try{ history.pushState({cdx:'trap'},''); }catch(_){}
+  }
+});
+// Amorce le piège d'historique dès le chargement
+try{ history.replaceState({cdx:'root'},''); history.pushState({cdx:'trap'},''); }catch(_){}
+
 (async function init(){
   applyTimeTheme();
   screen='loading'; render();
