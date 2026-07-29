@@ -650,7 +650,12 @@ nav{display:flex;gap:8px;padding:10px 14px max(14px,env(safe-area-inset-bottom))
 /* ===== COMBAT ===== */
 .combat-pick-wrap{padding:16px 12px;}
 .combat-pick-title{font-family:'Playfair Display',Georgia,serif;font-size:22px;color:var(--goldd);text-align:center;margin-bottom:4px;}
-.combat-pick-sub{font-family:'Nunito',sans-serif;font-size:12px;color:rgba(44,42,46,.55);text-align:center;margin-bottom:16px;}
+.combat-pick-sub{font-family:'Nunito',sans-serif;font-size:12px;color:rgba(44,42,46,.55);text-align:center;margin-bottom:12px;}
+.diff-row{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-bottom:6px;}
+.diff-pill{font-family:'Baloo 2',sans-serif;font-weight:800;font-size:12px;color:rgba(44,42,46,.7);background:rgba(255,255,255,.7);border:1.5px solid rgba(44,42,46,.14);border-radius:999px;padding:6px 12px;cursor:pointer;transition:transform .1s,box-shadow .15s;}
+.diff-pill.sel{color:var(--txt);background:linear-gradient(135deg,#FFE79A,var(--legendaire) 60%,#EBBE2E);border-color:rgba(255,240,190,.6);box-shadow:0 3px 10px rgba(184,142,20,.4);transform:translateY(-1px);}
+.diff-desc{font-family:'Nunito',sans-serif;font-size:11.5px;color:rgba(44,42,46,.6);text-align:center;margin-bottom:14px;}
+.diff-desc b{color:var(--goldd);}
 .combat-pick-grid{display:flex;flex-direction:column;gap:10px;}
 .combat-pick-card{display:flex;align-items:center;gap:12px;background:linear-gradient(160deg,rgba(255,255,255,.8),rgba(255,255,255,.62));border-radius:18px;padding:11px 14px;border:1px solid rgba(255,255,255,.9);cursor:pointer;box-shadow:0 8px 20px rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.14);transition:transform .14s cubic-bezier(.2,.8,.3,1),box-shadow .18s;}
 .combat-pick-card:active{transform:scale(.985);box-shadow:0 4px 12px rgba(0,0,0,.26),inset 0 1px 0 rgba(255,255,255,.14);}
@@ -1403,6 +1408,19 @@ const GRAVILLON_BY_RARITY = { commun:5, rare:12, epique:25, legendaire:50, mythi
 const GEM_BY_RARITY = { commun:0, rare:1, epique:2, legendaire:4, mythique:7, cosmique:12, galaxie:25, secret:60 };
 const WIN_GEMS = 3;        // par combat gagné
 const CHALLENGE_GEMS = 5;  // défi du jour
+
+/* ===== NIVEAUX DE DIFFICULTÉ (combat solo vs bot) =====
+   statMult : puissance du bot · iq : proba qu'il joue le coup optimal (sinon au hasard)
+   reward   : multiplicateur sur les gains de victoire */
+const COMBAT_DIFFICULTIES = [
+  { key:'facile',    label:'😌 Facile',    statMult:0.80, iq:0.10, reward:0.7, desc:'Bot affaibli, joue au hasard' },
+  { key:'normal',    label:'⚔️ Normal',    statMult:1.00, iq:0.45, reward:1.0, desc:'Combat équilibré' },
+  { key:'difficile', label:'🔥 Difficile', statMult:1.18, iq:0.80, reward:1.6, desc:'Bot renforcé et malin' },
+  { key:'boss',      label:'💀 Boss',      statMult:1.45, iq:1.00, reward:2.5, desc:'Bot surpuissant, IA parfaite' },
+];
+let combatDifficulty = (()=>{ try{ return localStorage.getItem('cdx_difficulty')||'normal'; }catch(e){ return 'normal'; } })();
+function getDifficulty(){ return COMBAT_DIFFICULTIES.find(d=>d.key===combatDifficulty)||COMBAT_DIFFICULTIES[1]; }
+function setDifficulty(k){ if(!COMBAT_DIFFICULTIES.some(d=>d.key===k)) return; combatDifficulty=k; try{ localStorage.setItem('cdx_difficulty',k); }catch(e){} }
 const RECYCLE_VALUE = { commun:3, rare:8, epique:18, legendaire:40, mythique:80, cosmique:150, galaxie:280, secret:600 };
 
 /* ===== CAILLOUX SECRETS (très rares, mêmes pour tout le monde) =====
@@ -4389,7 +4407,12 @@ function makeBotRock(playerRock){
     const tier=rollRarity(0); rk=tier.key; lbl=tier.label; hx=tier.hex;
     atk=rollStat(tier.range); def=rollStat(tier.range); vit=rollStat([1,8]);
   }
-  return Object.assign({},base,{ rarity:rk, rarityLabel:lbl, hex:hx, atk, def, vit });
+  // Calibrage selon la difficulté choisie (vitesse boostée plus doucement)
+  const diff=getDifficulty(); const sm=diff.statMult; const vm=1+(sm-1)*0.5;
+  atk=Math.max(1,Math.round(atk*sm));
+  def=Math.max(1,Math.round(def*sm));
+  vit=Math.max(1,Math.round(vit*vm));
+  return Object.assign({},base,{ rarity:rk, rarityLabel:lbl, hex:hx, atk, def, vit, _difficulty:diff.key });
 }
 
 function combatMaxHP(def){ return 70+def*6; }
@@ -4593,7 +4616,12 @@ function announceTurn(kind){
 }
 function endBattle(winner){
   battleState.winner=winner; battleState.turn='end';
-  if(winner==='player'){ incrementStat('wins',1); addXp(15); addGravillons(10); addGems(WIN_GEMS); grantFoodLoot(); }
+  if(winner==='player'){
+    const rw=getDifficulty().reward;
+    incrementStat('wins',1);
+    addXp(Math.round(15*rw)); addGravillons(Math.round(10*rw)); addGems(Math.max(1,Math.round(WIN_GEMS*rw)));
+    grantFoodLoot();
+  }
   else { incrementStat('losses',1); }
   screen='combat-result'; render();
 }
@@ -4692,11 +4720,38 @@ function pickBotMoveSolo(){
   const bot=battleState.botRock;
   const e=battleState.botEnergy||0;
   const moves=soloMoves(bot).filter(m=>e>=m.cost);
-  const weights={attack:28,type:34,special:26,ultimate:26};
-  const total=moves.reduce((s,m)=>s+(weights[m.id]||10),0);
-  let r=Math.random()*total;
-  for(const m of moves){ const w=weights[m.id]||10; if(r<w) return m; r-=w; }
-  return moves[0]||soloMoves(bot)[0];
+  const diff=getDifficulty();
+  // Bot "bête" : choix pondéré au hasard (proba 1 - iq)
+  if(Math.random()>=diff.iq){
+    const weights={attack:28,type:34,special:26,ultimate:26};
+    const total=moves.reduce((s,m)=>s+(weights[m.id]||10),0);
+    let r=Math.random()*total;
+    for(const m of moves){ const w=weights[m.id]||10; if(r<w) return m; r-=w; }
+    return moves[0]||soloMoves(bot)[0];
+  }
+  // ---- Bot INTELLIGENT ----
+  const player=battleState.playerRock;
+  const bHP=battleState.botHP, bMax=battleState.botMaxHP;
+  const tMult=typeMultiplier(bot.rockType,player.rockType); // avantage de type du bot
+  const has=id=>moves.some(m=>m.id===id);
+  const get=id=>moves.find(m=>m.id===id);
+  const est=m=>calcDmg(bot.atk,player.def,m.mult*(m.kind!=='basic'?tMult:1)); // dégâts estimés
+  // 1) Achever : le coup le moins cher qui peut tuer le joueur
+  const killers=moves.filter(m=>est(m)>=battleState.playerHP).sort((a,b)=>a.cost-b.cost);
+  if(killers.length) return killers[0];
+  // 2) En danger (<30% PV) : se défendre si le type le permet (métal=blindage, nature=régén)
+  if(bHP/bMax<0.30 && (bot.rockType==='metal'||bot.rockType==='nature') && has('type')
+     && !hasStatus('bot', bot.rockType==='metal'?'blindage':'regen')){
+    return get('type');
+  }
+  // 3) Ultime prêt → frapper un grand coup
+  if(has('ultimate')) return get('ultimate');
+  // 4) Spéciale si avantage de type ou grosse réserve d'énergie
+  if(has('special') && (tMult>=1 || e>=80)) return get('special');
+  // 5) Exploiter l'avantage de type
+  if(tMult>1 && has('type')) return get('type');
+  // 6) Sinon frapper pour recharger l'énergie
+  return get('attack')||moves[0]||soloMoves(bot)[0];
 }
 async function botAct(){
   if(!battleState) return;
@@ -4785,6 +4840,10 @@ function combatPickScreen(){
       <span style="font-family:'Baloo 2',sans-serif;font-weight:800;font-size:11px;color:var(--goldd);cursor:pointer;border:1px solid rgba(154,116,20,.45);border-radius:20px;padding:4px 10px;" data-action="goto" data-screen="online-menu">🌐 EN LIGNE</span>
     </div>
     <div class="combat-pick-sub">Lequel vas-tu envoyer au combat ?</div>
+    <div class="diff-row">
+      ${COMBAT_DIFFICULTIES.map(d=>`<button class="diff-pill${d.key===combatDifficulty?' sel':''}" data-action="setDifficulty" data-key="${d.key}">${d.label}</button>`).join('')}
+    </div>
+    <div class="diff-desc">${getDifficulty().desc} · récompenses <b>×${getDifficulty().reward}</b></div>
     ${(()=>{ const b=[]; if((meta.inventory?.shield||0)>0)b.push('🛡️ Bouclier'); if((meta.inventory?.crit||0)>0)b.push('💥 Crit ×2'); if((meta.inventory?.mighty||0)>0)b.push('💪 Costaud'); return b.length?`<div class="buff-row">${b.map(x=>`<span class="buff-pill">${x} <span style="opacity:.6;">prêt</span></span>`).join('')}</div>`:''; })()}
     <div class="combat-pick-grid">
       ${dex.map(r=>`<div class="combat-pick-card" data-action="startBattle" data-id="${r.id}">
@@ -4936,7 +4995,7 @@ function combatResultScreen(){
     <div style="font-size:64px;animation:resultBounce .5s cubic-bezier(.34,1.56,.64,1);">${emoji}</div>
     <div class="result-banner ${won?'result-win':draw?'result-draw':'result-lose'}">${banner}</div>
     <p class="result-sub">${sub}</p>
-    ${won?`<div style="font-family:'Baloo 2',sans-serif;font-weight:800;font-size:14px;color:#9A7414;margin:-2px 0 6px;">🏆 Récompense : +${WIN_GEMS} 💎 &nbsp;+${s.online?20:10} 🪙</div>`:''}
+    ${won?(()=>{ const rw=s.online?1:getDifficulty().reward; const gems=s.online?WIN_GEMS:Math.max(1,Math.round(WIN_GEMS*rw)); const grav=s.online?20:Math.round(10*rw); const badge=s.online?'':` <span style="color:rgba(44,42,46,.55);">(${getDifficulty().label} ×${rw})</span>`; return `<div style="font-family:'Baloo 2',sans-serif;font-weight:800;font-size:14px;color:#9A7414;margin:-2px 0 6px;">🏆 Récompense : +${gems} 💎 &nbsp;+${grav} 🪙${badge}</div>`; })():''}
     <div class="result-stats">
       <div class="result-stat-item"><div class="result-stat-val">${meta.wins||0}</div><div class="result-stat-lbl">VICTOIRES</div></div>
       <div class="result-stat-item"><div class="result-stat-val">${meta.losses||0}</div><div class="result-stat-lbl">DÉFAITES</div></div>
@@ -5729,6 +5788,7 @@ document.addEventListener('click',(e)=>{
     const v=(document.getElementById('usernameInput')||{}).value||'';
     setUsername(v);
   }
+  else if(action==='setDifficulty'){ setDifficulty(t.dataset.key); render(); }
   else if(action==='startBattle'){
     const rock=dex.find(r=>r.id===t.dataset.id);
     if(rock) initBattle(rock);
