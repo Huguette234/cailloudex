@@ -657,6 +657,27 @@ nav{display:flex;gap:8px;padding:10px 14px max(14px,env(safe-area-inset-bottom))
 .diff-desc{font-family:'Nunito',sans-serif;font-size:11.5px;color:rgba(44,42,46,.6);text-align:center;margin-bottom:14px;}
 .diff-desc b{color:var(--goldd);}
 .cp-pill{font-family:'Baloo 2',sans-serif;font-weight:800;font-size:11px;color:var(--goldd);cursor:pointer;border:1px solid rgba(154,116,20,.45);border-radius:20px;padding:4px 10px;white-space:nowrap;background:rgba(255,255,255,.5);}
+/* ---- Coffre de récompense de fin de combat ---- */
+.chest-wrap{display:flex;flex-direction:column;align-items:center;margin:4px 0 8px;}
+.chest{width:120px;height:96px;position:relative;cursor:pointer;perspective:420px;}
+.chest.idle{animation:chestShake 1.7s ease-in-out infinite;}
+@keyframes chestShake{0%,86%,100%{transform:rotate(0)}89%{transform:rotate(-4deg)}93%{transform:rotate(4deg)}97%{transform:rotate(-2deg)}}
+.chest-glow{position:absolute;left:-12%;right:-12%;top:-28%;bottom:-6%;border-radius:50%;opacity:0;filter:blur(8px);transition:opacity .4s;}
+.chest.open .chest-glow{opacity:.85;animation:chestGlow 1.1s ease-out;}
+@keyframes chestGlow{0%{transform:scale(.4);opacity:0}45%{opacity:.9}100%{transform:scale(1.15);opacity:.7}}
+.chest-base{position:absolute;bottom:0;left:4px;right:4px;height:58px;border-radius:8px 8px 12px 12px;box-shadow:inset 0 -7px 12px rgba(0,0,0,.28),inset 0 3px 6px rgba(255,255,255,.25),0 6px 14px rgba(0,0,0,.3);}
+.chest-lid{position:absolute;top:0;left:2px;right:2px;height:46px;border-radius:14px 14px 4px 4px;transform-origin:50% 2px;transition:transform .55s cubic-bezier(.34,1.5,.5,1);box-shadow:inset 0 5px 9px rgba(255,255,255,.35),inset 0 -3px 6px rgba(0,0,0,.25);z-index:2;}
+.chest.open .chest-lid{transform:rotateX(-122deg);}
+.chest-lock{position:absolute;left:50%;top:32px;transform:translateX(-50%);width:20px;height:24px;border-radius:5px;background:linear-gradient(180deg,#FFE79A,#C9931A);box-shadow:0 1px 3px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.6);z-index:4;transition:opacity .2s;}
+.chest-lock::after{content:'';position:absolute;left:50%;top:9px;transform:translateX(-50%);width:5px;height:8px;border-radius:2px;background:rgba(90,60,10,.7);}
+.chest.open .chest-lock{opacity:0;}
+.chest-spark{position:absolute;width:7px;height:7px;border-radius:50%;top:38%;left:50%;margin:-3px 0 0 -3px;opacity:0;z-index:5;}
+.chest.open .chest-spark{animation:chestSpark .85s ease-out forwards;}
+@keyframes chestSpark{0%{opacity:1;transform:translate(0,0) scale(1)}100%{opacity:0;transform:translate(var(--dx),var(--dy)) scale(.3)}}
+.chest-hint{font-family:'Baloo 2',sans-serif;font-weight:800;font-size:12px;color:var(--goldd);margin-top:8px;animation:hintPulse 1.2s ease-in-out infinite;}
+@keyframes hintPulse{0%,100%{opacity:.5}50%{opacity:1}}
+.chest-loot{opacity:0;transform:translateY(8px);transition:opacity .45s,transform .45s;}
+.chest-loot.show{opacity:1;transform:translateY(0);}
 .combat-pick-grid{display:flex;flex-direction:column;gap:10px;}
 .combat-pick-card{display:flex;align-items:center;gap:12px;background:linear-gradient(160deg,rgba(255,255,255,.8),rgba(255,255,255,.62));border-radius:18px;padding:11px 14px;border:1px solid rgba(255,255,255,.9);cursor:pointer;box-shadow:0 8px 20px rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.14);transition:transform .14s cubic-bezier(.2,.8,.3,1),box-shadow .18s;}
 .combat-pick-card:active{transform:scale(.985);box-shadow:0 4px 12px rgba(0,0,0,.26),inset 0 1px 0 rgba(255,255,255,.14);}
@@ -1158,14 +1179,15 @@ function bestAvailableFood(){
   for(const f of FOOD_ITEMS){ if((meta.food?.[f.id]||0)>0) return f; }
   return null;
 }
-function grantFoodLoot(){
+function grantFoodLoot(silent){
   let food=null;
   for(const f of FOOD_ITEMS){ if(Math.random()<f.lootChance){ food=f; break; } }
-  if(!food) return;
+  if(!food) return null;
   meta.food=meta.food||{};
   meta.food[food.id]=(meta.food[food.id]||0)+1;
   saveMeta();
-  setTimeout(()=>showToast(`${food.emoji} Butin de combat : ${food.name} obtenu !`),700);
+  if(!silent) setTimeout(()=>showToast(`${food.emoji} Butin de combat : ${food.name} obtenu !`),700);
+  return food;
 }
 function consumeFoodHeal(isPlayerSide){
   const food=bestAvailableFood();
@@ -4647,9 +4669,13 @@ function endBattle(winner){
   if(battleState.arena) return endArenaWave(winner);
   if(winner==='player'){
     const rw=getDifficulty().reward;
+    const gems=Math.max(1,Math.round(WIN_GEMS*rw)), grav=Math.round(10*rw), xp=Math.round(15*rw);
     incrementStat('wins',1);
-    addXp(Math.round(15*rw)); addGravillons(Math.round(10*rw)); addGems(Math.max(1,Math.round(WIN_GEMS*rw)));
-    grantFoodLoot();
+    addXp(xp); addGravillons(grav); addGems(gems);
+    const food=grantFoodLoot(true); // butin affiché dans le coffre, pas de toast
+    battleState.chestTier=combatDifficulty;
+    battleState.lootSummary={gems,grav,xp,food};
+    battleState.chestOpen=false;
   }
   else { incrementStat('losses',1); }
   screen='combat-result'; render();
@@ -4686,6 +4712,22 @@ function startArena(rock){
   initBattle(rock);
 }
 function arenaRetry(){ arenaRun=null; battleState=null; arenaPicking=true; screen='combat-pick'; render(); }
+
+/* ===== COFFRE DE RÉCOMPENSE (fin de combat) ===== */
+const CHEST_TIERS = {
+  facile:    { name:'bois',        c1:'#C08A4E', c2:'#8A5A28', glow:'#E0A860' },
+  normal:    { name:'bronze',      c1:'#D08840', c2:'#9A5B22', glow:'#FFB870' },
+  difficile: { name:'argent',      c1:'#D2D6DC', c2:'#9AA0A8', glow:'#EAF0FF' },
+  boss:      { name:'légendaire',  c1:'#FFE79A', c2:'#D9A016', glow:'#FFF0B0' },
+};
+function openChest(){
+  const c=document.querySelector('.chest'); if(!c||c.classList.contains('open')) return;
+  if(battleState) battleState.chestOpen=true;
+  c.classList.remove('idle'); c.classList.add('open');
+  if(navigator.vibrate) navigator.vibrate([15,30,60]);
+  const hint=document.querySelector('.chest-hint'); if(hint) hint.style.display='none';
+  const loot=document.querySelector('.chest-loot'); if(loot) setTimeout(()=>loot.classList.add('show'),360);
+}
 async function playerAction(moveId){
   if(!battleState||battleState.turn!=='player') return;
   if(moveId==='flee'){
@@ -5063,7 +5105,27 @@ function combatResultScreen(){
     <div style="font-size:64px;animation:resultBounce .5s cubic-bezier(.34,1.56,.64,1);">${emoji}</div>
     <div class="result-banner ${won?'result-win':draw?'result-draw':'result-lose'}">${banner}</div>
     <p class="result-sub">${sub}</p>
-    ${won?(()=>{ const rw=s.online?1:getDifficulty().reward; const gems=s.online?WIN_GEMS:Math.max(1,Math.round(WIN_GEMS*rw)); const grav=s.online?20:Math.round(10*rw); const badge=s.online?'':` <span style="color:rgba(44,42,46,.55);">(${getDifficulty().label} ×${rw})</span>`; return `<div style="font-family:'Baloo 2',sans-serif;font-weight:800;font-size:14px;color:#9A7414;margin:-2px 0 6px;">🏆 Récompense : +${gems} 💎 &nbsp;+${grav} 🪙${badge}</div>`; })():''}
+    ${won&&s.online?`<div style="font-family:'Baloo 2',sans-serif;font-weight:800;font-size:14px;color:#9A7414;margin:-2px 0 6px;">🏆 Récompense : +${WIN_GEMS} 💎 &nbsp;+20 🪙</div>`:''}
+    ${won&&!s.online?(()=>{
+      const t=CHEST_TIERS[s.chestTier]||CHEST_TIERS.normal;
+      const l=s.lootSummary||{gems:0,grav:0,xp:0,food:null};
+      const opened=!!s.chestOpen;
+      const sparks=Array.from({length:12},(_,i)=>{const a=(i/12)*Math.PI*2;const d=42+Math.random()*28;const c=['#FFE79A','#ffffff','#FFB870',t.glow][i%4];return `<span class="chest-spark" style="--dx:${Math.round(Math.cos(a)*d)}px;--dy:${Math.round(Math.sin(a)*d-18)}px;background:${c};box-shadow:0 0 6px ${c};"></span>`;}).join('');
+      return `<div class="chest-wrap">
+        <div class="chest ${opened?'open':'idle'}" data-action="openChest">
+          <div class="chest-glow" style="background:radial-gradient(circle,${t.glow},transparent 70%);"></div>
+          <div class="chest-base" style="background:linear-gradient(180deg,${t.c1},${t.c2});"></div>
+          <div class="chest-lock"></div>
+          <div class="chest-lid" style="background:linear-gradient(180deg,${t.c1},${t.c2});"></div>
+          ${sparks}
+        </div>
+        <div class="chest-hint" ${opened?'style="display:none;"':''}>👆 Touche pour ouvrir le coffre ${t.name}</div>
+        <div class="chest-loot${opened?' show':''}">
+          <div style="font-family:'Baloo 2',sans-serif;font-weight:800;font-size:15px;color:#9A7414;margin:4px 0 2px;">+${l.gems} 💎 &nbsp;+${l.grav} 🪙 &nbsp;+${l.xp} XP</div>
+          ${l.food?`<div style="font-family:'Nunito',sans-serif;font-size:12.5px;color:rgba(44,42,46,.7);">Bonus : ${l.food.emoji} ${l.food.name} !</div>`:''}
+        </div>
+      </div>`;
+    })():''}
     <div class="result-stats">
       <div class="result-stat-item"><div class="result-stat-val">${meta.wins||0}</div><div class="result-stat-lbl">VICTOIRES</div></div>
       <div class="result-stat-item"><div class="result-stat-val">${meta.losses||0}</div><div class="result-stat-lbl">DÉFAITES</div></div>
@@ -5922,6 +5984,7 @@ document.addEventListener('click',(e)=>{
     const rock=dex.find(r=>r.id===t.dataset.id);
     if(rock) startArena(rock);
   }
+  else if(action==='openChest'){ openChest(); }
   else if(action==='arenaContinue'){ arenaContinue(); }
   else if(action==='arenaCashout'){ arenaCashout(); }
   else if(action==='arenaRetry'){ arenaRetry(); }
