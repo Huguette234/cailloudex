@@ -118,6 +118,11 @@ header p{margin:0;color:var(--muted);font-size:14px;font-weight:600;}
 .msg.warn{background:rgba(154,116,20,.12);color:var(--goldd);}
 .msg.ok{background:rgba(58,140,32,.12);color:var(--ok);}
 .recipe{font-size:12px;color:var(--muted);line-height:1.6;margin:8px 0 0;}
+#diagOut{
+  background:rgba(44,42,46,.06);border-radius:12px;padding:12px;margin:10px 0 0;
+  font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11.5px;line-height:1.7;
+  color:var(--txt);white-space:pre-wrap;word-break:break-word;
+}
 .recipe b{color:var(--txt);}
 input[type=file]{display:none;}
 </style>
@@ -182,6 +187,8 @@ input[type=file]{display:none;}
     <button class="btn primary wide" id="go">✨ Générer le visuel</button>
     <div id="status"></div>
     <div id="result"></div>
+    <button class="btn ghost" id="diag">🩺 Diagnostic de connexion</button>
+    <pre id="diagOut" hidden></pre>
     <p class="recipe">
       Réglages verrouillés — graine <b>424242</b>, cadrage <b>3:4</b>, décor et consignes <b>constants côté serveur</b>.
       Une même paire (scène + vêtement) redonne l'image déjà générée, sans repasser par l'IA.
@@ -622,6 +629,76 @@ async function generate(force){
   }
 }
 
+/* ------------------------------------------------------------- Diagnostic */
+/**
+ * Interroge directement les fonctions serveur, sans passer par supabase-js,
+ * pour distinguer trois pannes que le message d'erreur confond :
+ * fonction absente, session refusée, ou requête trop lourde.
+ * Aucun appel ne déclenche de génération : les corps envoyés sont conçus
+ * pour être rejetés immédiatement par le serveur.
+ */
+async function probe(fnName, body, withAuth){
+  const headers={ 'Content-Type':'application/json', 'apikey':SUPABASE_ANON_KEY };
+  if(withAuth&&session&&session.access_token) headers['Authorization']='Bearer '+session.access_token;
+  const t0=Date.now();
+  try{
+    const r=await fetch(`${SUPABASE_URL}/functions/v1/${fnName}`,{
+      method:'POST', headers, body:JSON.stringify(body), signal:AbortSignal.timeout(90000),
+    });
+    let txt=''; try{ txt=(await r.text()).slice(0,90).replace(/\s+/g,' '); }catch(_){}
+    return { ok:true, status:r.status, ms:Date.now()-t0, txt };
+  }catch(e){
+    return { ok:false, status:0, ms:Date.now()-t0, txt:String(e&&e.message||e).slice(0,90) };
+  }
+}
+
+async function diagnose(){
+  const out=document.getElementById('diagOut');
+  const btn=document.getElementById('diag');
+  out.hidden=false; out.textContent='Diagnostic en cours…'; btn.disabled=true;
+  const L=[];
+
+  L.push(session?`1. Session : active (${(session.user&&session.user.email)||'compte inconnu'})`
+                :'1. Session : AUCUNE — connecte-toi dans l\'app');
+  if(session&&session.expires_at){
+    const min=Math.round((session.expires_at*1000-Date.now())/60000);
+    L.push(`   jeton valable encore ${min} min`);
+  }
+
+  const full={ mode:'tryon', category:state.category,
+               garment_image:state.garment||'', scene_image:state.scene||'' };
+  const poids=JSON.stringify(full).length;
+  L.push(`2. Poids de la requête réelle : ${(poids/1048576).toFixed(2)} Mo`);
+
+  const fmt=(r)=>r.ok?`HTTP ${r.status} en ${r.ms} ms — ${r.txt}`:`ÉCHEC RÉSEAU en ${r.ms} ms — ${r.txt}`;
+
+  const a=await probe('generate-outfit',{ mode:'tryon' },false);
+  L.push('3. generate-outfit, requête vide sans jeton :'); L.push('   '+fmt(a));
+
+  const b=await probe('generate-character',{},false);
+  L.push('4. generate-character (fonction témoin) :'); L.push('   '+fmt(b));
+
+  const c=await probe('generate-outfit',{ mode:'tryon' },true);
+  L.push('5. generate-outfit, requête vide avec jeton :'); L.push('   '+fmt(c));
+
+  // Même poids que la vraie requête, mais champs volontairement mal nommés
+  // pour que le serveur refuse tout de suite sans rien générer.
+  const d=await probe('generate-outfit',{ mode:'tryon',
+    garment_probe:state.garment||'', scene_probe:state.scene||'' },true);
+  L.push('6. generate-outfit, requête lourde :'); L.push('   '+fmt(d));
+
+  L.push('');
+  if(!a.ok&&!b.ok) L.push('➜ Aucune fonction n\'est joignable : c\'est le réseau du téléphone ou le projet Supabase, pas cette fonction-ci.');
+  else if(!a.ok&&b.ok) L.push('➜ La fonction témoin répond mais pas generate-outfit : soit elle n\'est pas déployée sous ce nom exact, soit son réglage "Verify JWT" diffère de celui de generate-character.');
+  else if(a.ok&&!c.ok) L.push('➜ La fonction répond sans jeton mais échoue avec : problème de session ou d\'en-tête d\'autorisation.');
+  else if(c.ok&&!d.ok) L.push('➜ La requête vide passe, la lourde non : ce sont les photos qui sont trop volumineuses.');
+  else if(d.ok&&d.status>=500) L.push('➜ La fonction est joignable mais plante côté serveur : regarde ses logs Supabase.');
+  else L.push('➜ La liaison est bonne. Si la génération échoue encore, l\'erreur vient de fal.ai — regarde les logs de la fonction.');
+
+  out.textContent=L.join('\n');
+  btn.disabled=false;
+}
+
 /* ------------------------------------------------------------- Démarrage */
 async function boot(){
   renderMode(); renderChips(); renderScene(); renderGarment(); refreshGo();
@@ -671,6 +748,7 @@ document.getElementById('sceneClear').onclick=async ()=>{
 document.getElementById('garmentPick').onclick=async ()=>{ const f=await pickFile(false); if(f) setGarment(f); };
 document.getElementById('garmentShoot').onclick=async ()=>{ const f=await pickFile(true); if(f) setGarment(f); };
 document.getElementById('go').onclick=()=>generate(false);
+document.getElementById('diag').onclick=()=>diagnose();
 
 boot();
 </script>
