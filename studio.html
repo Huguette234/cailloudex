@@ -155,6 +155,7 @@ input[type=file]{display:none;}
         <button class="btn ghost" id="sceneClear">Effacer</button>
       </div>
       <p class="hint" style="margin:14px 0 6px">Pas de photo sous la main ? Fabrique une personne avec l'IA : même graine, même consigne, donc toujours <b>exactement la même personne</b> et le même mur.</p>
+      <div class="chips" id="genderChips"></div>
       <div class="chips" id="modelChips"></div>
       <button class="btn" id="makeModel">🤖 Fabriquer la personne</button>
       <div id="sceneStatus"></div>
@@ -169,7 +170,8 @@ input[type=file]{display:none;}
   <!-- ÉTAPE 2 : le vêtement -->
   <section class="card">
     <h2><span class="step">2</span> La pièce à photographier</h2>
-    <p class="hint">La photo du vêtement, posée bien à plat et entière. C'est la seule chose qui change d'un visuel à l'autre.</p>
+    <p class="hint">La photo du vêtement, à plat et entière. C'est la seule chose qui change d'un visuel à l'autre.<br>
+    <b>Déplie complètement la pièce</b> avant de la photographier : si un short est plié en deux, l'IA le reproduit court et mal coupé, parce qu'elle ne voit pas sa vraie longueur.</p>
     <div id="garmentPreview" class="thumb">Aucune photo de vêtement</div>
     <div class="row" style="margin-top:10px">
       <button class="btn" id="garmentPick">📁 Choisir la photo</button>
@@ -239,6 +241,10 @@ const PRESETS = [
   { key:'studio',   label:'⚪ Studio blanc' },
   { key:'parquet',  label:'🪵 Parquet clair' },
 ];
+const GENDERS = [
+  { key:'homme', label:'👨 Homme' },
+  { key:'femme', label:'👩 Femme' },
+];
 const MODEL_PRESETS = [
   { key:'neutre', label:'🧱 Mur béton' },
   { key:'studio', label:'⚪ Studio blanc' },
@@ -254,6 +260,7 @@ const state = {
   mode:'tryon',
   preset:'beton',
   modelPreset:'neutre',
+  gender:'homme',
   category:'auto',
   scene:null,        // data URL normalisée
   sceneHash:'',
@@ -454,6 +461,8 @@ function renderChips(){
   c.innerHTML=CATEGORIES.map(x=>`<button class="chip${x.key===state.category?' on':''}" data-cat="${x.key}">${x.label}</button>`).join('');
   const m=document.getElementById('modelChips');
   m.innerHTML=MODEL_PRESETS.map(x=>`<button class="chip${x.key===state.modelPreset?' on':''}" data-model="${x.key}">${x.label}</button>`).join('');
+  const g=document.getElementById('genderChips');
+  g.innerHTML=GENDERS.map(x=>`<button class="chip${x.key===state.gender?' on':''}" data-gender="${x.key}">${x.label}</button>`).join('');
 }
 
 function refreshGo(){
@@ -543,7 +552,7 @@ async function makeModel(){
   const status=document.getElementById('sceneStatus');
   if(!session){ setMsg(status,'warn','Connecte-toi dans l\'app avant de fabriquer la personne.'); return; }
 
-  const key='model:'+RECIPE_VERSION+':'+state.modelPreset;
+  const key='model:'+RECIPE_VERSION+':'+state.gender+':'+state.modelPreset;
   const hit=await dbGet(key);
   if(hit&&hit.image){ await applyModelImage(hit.image,true); return; }
 
@@ -554,7 +563,7 @@ async function makeModel(){
     setMsg(status,'warn',`<div class="center"><div class="spinner"></div>Fabrication de la personne… ${s}s</div>`);
   },250);
   try{
-    const { data, error }=await invokeStudio({ mode:'model', preset:state.modelPreset });
+    const { data, error }=await invokeStudio({ mode:'model', preset:state.modelPreset, gender:state.gender });
     clearInterval(tick);
     if(error||!data||!data.image){
       let detail = error ? error.message : ((data&&(data.details||data.error))||'raison inconnue');
@@ -752,6 +761,7 @@ async function boot(){
     if(prefs.mode==='scene'||prefs.mode==='tryon') state.mode=prefs.mode;
     if(prefs.preset) state.preset=prefs.preset;
     if(prefs.modelPreset) state.modelPreset=prefs.modelPreset;
+    if(prefs.gender) state.gender=prefs.gender;
     if(prefs.category) state.category=prefs.category;
   }
   const hist=await dbGet('history');
@@ -761,7 +771,7 @@ async function boot(){
   await initSupabase();
 }
 
-function savePrefs(){ dbSet('prefs',{ mode:state.mode, preset:state.preset, modelPreset:state.modelPreset, category:state.category }); }
+function savePrefs(){ dbSet('prefs',{ mode:state.mode, preset:state.preset, modelPreset:state.modelPreset, gender:state.gender, category:state.category }); }
 
 document.getElementById('modeSeg').addEventListener('click',(e)=>{
   const b=e.target.closest('button[data-mode]'); if(!b) return;
@@ -778,6 +788,10 @@ document.getElementById('catChips').addEventListener('click',(e)=>{
 document.getElementById('modelChips').addEventListener('click',(e)=>{
   const b=e.target.closest('button[data-model]'); if(!b) return;
   state.modelPreset=b.dataset.model; renderChips(); savePrefs();
+});
+document.getElementById('genderChips').addEventListener('click',(e)=>{
+  const b=e.target.closest('button[data-gender]'); if(!b) return;
+  state.gender=b.dataset.gender; renderChips(); savePrefs();
 });
 document.getElementById('makeModel').onclick=()=>makeModel();
 document.getElementById('scenePick').onclick=async ()=>{ const f=await pickFile(false); if(f) setScene(f); };
