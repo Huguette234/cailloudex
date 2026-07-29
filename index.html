@@ -828,6 +828,14 @@ nav{display:flex;gap:8px;padding:10px 14px max(14px,env(safe-area-inset-bottom))
 .fu-foe .fureur-txt{text-shadow:0 0 18px #B24BE0,0 0 40px #8020C0,0 3px 6px rgba(0,0,0,.6);}
 .fureur-txt span{display:block;font-family:'Baloo 2',sans-serif;font-weight:800;font-size:16px;margin-top:6px;color:rgba(255,255,255,.9);text-shadow:0 2px 5px rgba(0,0,0,.7);}
 @keyframes furTxt{0%{transform:scale(.4);opacity:0;}55%{transform:scale(1.12);opacity:1;}100%{transform:scale(1);opacity:1;}}
+/* Emotes (combat entre amis) */
+.emote-bar{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-top:10px;}
+.emote-btn{font-size:20px;line-height:1;width:40px;height:40px;border-radius:12px;cursor:pointer;
+  background:rgba(255,255,255,.72);border:1.5px solid rgba(44,42,46,.14);box-shadow:0 3px 8px rgba(0,0,0,.14);transition:transform .1s;}
+.emote-btn:active{transform:scale(.86);}
+.emote-bubble{position:fixed;z-index:72;transform:translateX(-50%);font-size:44px;pointer-events:none;
+  filter:drop-shadow(0 3px 6px rgba(0,0,0,.4));animation:emotePop 1.6s ease-out forwards;}
+@keyframes emotePop{0%{opacity:0;transform:translate(-50%,6px) scale(.3);}15%{opacity:1;transform:translate(-50%,0) scale(1.15);}30%{transform:translate(-50%,0) scale(1);}80%{opacity:1;transform:translate(-50%,-30px) scale(1);}100%{opacity:0;transform:translate(-50%,-52px) scale(.9);}}
 /* Badges de statut */
 .stbadges{display:flex;gap:4px;justify-content:center;flex-wrap:wrap;margin-top:6px;min-height:16px;}
 .stbadge{font-size:10px;font-weight:800;font-family:'Baloo 2',sans-serif;border:1.5px solid;border-radius:999px;padding:0 6px;line-height:15px;background:rgba(255,255,255,.72);}
@@ -3915,6 +3923,22 @@ function handleOnlineMsg(msg){
     if(screen==='combat-result') render();
   }
   if(msg.type==='action') applyOnlineOpponentAction(msg);
+  if(msg.type==='emote') showEmoteBubble('foe',msg.emoji);
+}
+const COMBAT_EMOTES=['😎','🔥','😭','😂','😤','👑','🫡','😱'];
+function sendEmote(emoji){
+  if(!emoji||!battleState||!battleState.online) return;
+  showEmoteBubble('mine',emoji);
+  try{ if(onlineState&&onlineState.conn&&onlineState.conn.open) onlineState.conn.send({type:'emote',emoji}); }catch(e){}
+}
+function showEmoteBubble(side,emoji){
+  const card=document.querySelector(side==='mine'?'.bcard-mine':'.bcard-foe'); if(!card||!emoji) return;
+  const r=card.getBoundingClientRect();
+  const b=document.createElement('div'); b.className='emote-bubble'; b.textContent=emoji;
+  b.style.left=(r.left+r.width/2)+'px'; b.style.top=(r.top+16)+'px';
+  document.body.appendChild(b);
+  if(navigator.vibrate) navigator.vibrate(12);
+  setTimeout(()=>b.remove(),1600);
 }
 
 async function createOnlineSalle(){
@@ -5239,6 +5263,7 @@ function combatFightScreen(){
     </div>
     <div class="arena-actions" id="cbMoves">${combatMovesHtml()}</div>
     <div class="arena-actions" id="cbSecondary" style="margin-top:8px;">${combatSecondaryHtml()}</div>
+    ${s.online?`<div class="emote-bar">${COMBAT_EMOTES.map(e=>`<button class="emote-btn" data-action="emote" data-emoji="${e}">${e}</button>`).join('')}</div>`:''}
     ${(waitMsg&&s.online)?`<div style="text-align:center;font-family:'Nunito',sans-serif;font-size:12px;color:rgba(44,42,46,.5);margin-top:6px;">${waitMsg}</div>`:''}
     </div>
   </div>`;
@@ -6137,6 +6162,7 @@ document.addEventListener('click',(e)=>{
     const rock=dex.find(r=>r.id===t.dataset.id);
     if(rock) startArena(rock);
   }
+  else if(action==='emote'){ sendEmote(t.dataset.emoji); }
   else if(action==='openChest'){ openChest(); }
   else if(action==='arenaContinue'){ arenaContinue(); }
   else if(action==='arenaCashout'){ arenaCashout(); }
