@@ -5788,7 +5788,13 @@ document.addEventListener('click',(e)=>{
     const v=(document.getElementById('usernameInput')||{}).value||'';
     setUsername(v);
   }
-  else if(action==='setDifficulty'){ setDifficulty(t.dataset.key); render(); }
+  else if(action==='setDifficulty'){
+    setDifficulty(t.dataset.key);
+    // Mise à jour en place (pas de render() -> plus de saccade / rechargement des images)
+    document.querySelectorAll('.diff-pill').forEach(p=>p.classList.toggle('sel', p.dataset.key===combatDifficulty));
+    const d=getDifficulty(); const dd=document.querySelector('.diff-desc');
+    if(dd) dd.innerHTML=`${d.desc} · récompenses <b>×${d.reward}</b>`;
+  }
   else if(action==='startBattle'){
     const rock=dex.find(r=>r.id===t.dataset.id);
     if(rock) initBattle(rock);
