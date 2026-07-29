@@ -219,6 +219,16 @@ input[type=file]{display:none;}
 const SUPABASE_URL = 'https://bfhqkueyildphglgnxup.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJmaHFrdWV5aWxkcGhnbGdueHVwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE4MzcyNTIsImV4cCI6MjA5NzQxMzI1Mn0.T9Rreg3YVYDXPKSyicXzAgYAHSF9rFZgGv3i8qgglEE';
 
+/**
+ * Identifiants d'URL possibles de la fonction serveur.
+ * Le tableau de bord Supabase attribue parfois à une fonction un identifiant
+ * d'URL tiré au hasard, différent du nom affiché dans la liste : ici la
+ * fonction nommée "generate-outfit" répond en réalité sur "smooth-task".
+ * On essaie donc les identifiants connus jusqu'à ce que l'un réponde, et on
+ * mémorise celui qui a marché pour ne pas refaire le tour ensuite.
+ */
+const FUNCTION_SLUGS = ['generate-outfit','smooth-task'];
+
 /* Version de la "recette" : la changer invalide les images en cache. */
 const RECIPE_VERSION = 'v1';
 const MAX_HISTORY = 9;
@@ -378,6 +388,30 @@ async function initSupabase(){
   refreshGo();
 }
 
+/**
+ * Appelle la fonction serveur en essayant les identifiants d'URL connus.
+ * On ne passe au suivant que si la requête n'a reçu aucune réponse
+ * (FunctionsFetchError) : dès que le serveur répond, même par une erreur,
+ * c'est qu'on tient la bonne adresse et on s'arrête là.
+ */
+async function invokeStudio(payload){
+  const known=await dbGet('fnSlug');
+  const order=known?[known].concat(FUNCTION_SLUGS.filter(s=>s!==known)):FUNCTION_SLUGS.slice();
+  let last={ data:null, error:new Error('aucune fonction joignable'), slug:order[0] };
+  for(const slug of order){
+    let res=null;
+    try{ res=await sb.functions.invoke(slug,{ body:payload }); }
+    catch(e){ last={ data:null, error:e, slug }; continue; }
+    if(!res.error){
+      if(slug!==known) await dbSet('fnSlug',slug);
+      return { data:res.data, error:null, slug };
+    }
+    last={ data:res.data, error:res.error, slug };
+    if(res.error.name!=='FunctionsFetchError') break;
+  }
+  return last;
+}
+
 /* ------------------------------------------------------------- Rendu UI */
 function renderMode(){
   document.querySelectorAll('#modeSeg button').forEach(b=>{
@@ -520,7 +554,7 @@ async function makeModel(){
     setMsg(status,'warn',`<div class="center"><div class="spinner"></div>Fabrication de la personne… ${s}s</div>`);
   },250);
   try{
-    const { data, error }=await sb.functions.invoke('generate-outfit',{ body:{ mode:'model', preset:state.modelPreset } });
+    const { data, error }=await invokeStudio({ mode:'model', preset:state.modelPreset });
     clearInterval(tick);
     if(error||!data||!data.image){
       let detail = error ? error.message : ((data&&(data.details||data.error))||'raison inconnue');
@@ -597,7 +631,7 @@ async function generate(force){
     const payload = state.mode==='tryon'
       ? { mode:'tryon', scene_image:state.scene, garment_image:state.garment, category:state.category }
       : { mode:'scene', preset:state.preset, garment_image:state.garment };
-    const { data, error } = await sb.functions.invoke('generate-outfit',{ body:payload });
+    const { data, error } = await invokeStudio(payload);
 
     clearInterval(tick);
 
@@ -672,24 +706,32 @@ async function diagnose(){
 
   const fmt=(r)=>r.ok?`HTTP ${r.status} en ${r.ms} ms — ${r.txt}`:`ÉCHEC RÉSEAU en ${r.ms} ms — ${r.txt}`;
 
-  const a=await probe('generate-outfit',{ mode:'tryon' },false);
-  L.push('3. generate-outfit, requête vide sans jeton :'); L.push('   '+fmt(a));
+  // Chaque identifiant d'URL possible est testé : celui qui répond est le bon.
+  let a=null, slugVivant='';
+  let n=3;
+  for(const slug of FUNCTION_SLUGS){
+    const r=await probe(slug,{ mode:'tryon' },false);
+    L.push(`${n++}. ${slug}, requête vide sans jeton :`); L.push('   '+fmt(r));
+    if(r.ok&&!slugVivant){ slugVivant=slug; a=r; }
+  }
+  if(!a) a={ ok:false, status:0, ms:0, txt:'aucun identifiant ne répond' };
 
   const b=await probe('generate-character',{},false);
-  L.push('4. generate-character (fonction témoin) :'); L.push('   '+fmt(b));
+  L.push(`${n++}. generate-character (fonction témoin) :`); L.push('   '+fmt(b));
 
-  const c=await probe('generate-outfit',{ mode:'tryon' },true);
-  L.push('5. generate-outfit, requête vide avec jeton :'); L.push('   '+fmt(c));
+  const c=await probe(slugVivant||FUNCTION_SLUGS[0],{ mode:'tryon' },true);
+  L.push(`${n++}. requête vide avec jeton :`); L.push('   '+fmt(c));
 
   // Même poids que la vraie requête, mais champs volontairement mal nommés
   // pour que le serveur refuse tout de suite sans rien générer.
-  const d=await probe('generate-outfit',{ mode:'tryon',
+  const d=await probe(slugVivant||FUNCTION_SLUGS[0],{ mode:'tryon',
     garment_probe:state.garment||'', scene_probe:state.scene||'' },true);
-  L.push('6. generate-outfit, requête lourde :'); L.push('   '+fmt(d));
+  L.push(`${n++}. requête lourde :`); L.push('   '+fmt(d));
 
   L.push('');
+  if(slugVivant) L.push(`Adresse qui répond : ${slugVivant}`);
   if(!a.ok&&!b.ok) L.push('➜ Aucune fonction n\'est joignable : c\'est le réseau du téléphone ou le projet Supabase, pas cette fonction-ci.');
-  else if(!a.ok&&b.ok) L.push('➜ La fonction témoin répond mais pas generate-outfit : soit elle n\'est pas déployée sous ce nom exact, soit son réglage "Verify JWT" diffère de celui de generate-character.');
+  else if(!a.ok&&b.ok) L.push('➜ La fonction témoin répond mais aucune adresse du Studio : la fonction n\'est déployée sous aucun des identifiants connus.');
   else if(a.ok&&!c.ok) L.push('➜ La fonction répond sans jeton mais échoue avec : problème de session ou d\'en-tête d\'autorisation.');
   else if(c.ok&&!d.ok) L.push('➜ La requête vide passe, la lourde non : ce sont les photos qui sont trop volumineuses.');
   else if(d.ok&&d.status>=500) L.push('➜ La fonction est joignable mais plante côté serveur : regarde ses logs Supabase.');
