@@ -2756,7 +2756,6 @@ function homeScreen(){
       <span data-action="goto" data-screen="combat-pick">⚔️ Combat</span>
       <span data-action="goto" data-screen="splash">🌊 Plouf</span>
       <span data-action="openMap">🗺️ Carte</span>
-      <span data-action="openStudio">🧵 Studio</span>
       <span data-action="goto" data-screen="friends">👥 Amis</span>
       <span data-action="goto" data-screen="shop">🛒 Boutique</span>
       <span data-action="account">⚙️ Compte</span>
@@ -3620,6 +3619,7 @@ function adminScreen(){
   return `<div class="admin-wrap">
     <div class="admin-head"><span>🛠️ ADMIN</span><button class="admin-close" data-action="goto" data-screen="account">✕</button></div>
     <div class="admin-tabs">${tb('stats','📊')}${tb('mod','🚩')}${tb('players','🎁')}${tb('logs','🐞')}</div>
+    <button class="admin-btn" style="width:100%;margin-bottom:12px;color:#F7DC6F;border-color:rgba(247,220,111,.35);" data-action="openStudio">🧵 Studio IA — visuels à fond constant</button>
     <div class="admin-body">${adminTabContent()}</div>
   </div>`;
 }
