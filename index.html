@@ -5706,8 +5706,13 @@ document.addEventListener('click',(e)=>{
     screen=t.dataset.screen; detailRock=null;
     if(screen==='dex') dexType=null; // on entre par le menu des types
     render();
-    if(screen==='friends'){ Promise.all([loadFriendsList(),checkPendingChallenge()]).then(render); }
-    if(screen==='home') checkPendingChallenge().then(render);
+    if(screen==='friends'){ Promise.all([loadFriendsList(),checkPendingChallenge()]).then(()=>{ if(screen==='friends') render(); }); }
+    // Accueil : on ne reconstruit la page QUE si un défi est réellement arrivé/parti
+    // (évite un 2ᵉ rendu complet qui rechargeait l'avatar -> effet saccadé).
+    if(screen==='home'){
+      const prev=pendingChallenge?pendingChallenge.id:null;
+      checkPendingChallenge().then(()=>{ const now=pendingChallenge?pendingChallenge.id:null; if(screen==='home'&&now!==prev) render(); });
+    }
   }
   else if(action==='openMap'){ openMap(); }
   // Studio IA : page autonome, même origine (la session Supabase y est déjà valide)
@@ -5923,7 +5928,10 @@ function goBackInApp(){
   // 4) Un sous-écran -> retour à l'accueil
   if(screen!=='home' && screen!=='login' && screen!=='loading'){
     screen='home'; detailRock=null; render();
-    if(typeof checkPendingChallenge==='function') checkPendingChallenge().then(render);
+    if(typeof checkPendingChallenge==='function'){
+      const prev=pendingChallenge?pendingChallenge.id:null;
+      checkPendingChallenge().then(()=>{ const now=pendingChallenge?pendingChallenge.id:null; if(screen==='home'&&now!==prev) render(); });
+    }
     return true;
   }
   return false; // à l'accueil : rien à fermer
