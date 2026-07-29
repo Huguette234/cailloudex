@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Studio IA — même fond à chaque fois</title>
+<meta name="theme-color" content="#F3ECDD">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800;900&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --txt:#2C2A2E;
+  --muted:#6B6560;
+  --goldd:#9A7414;
+  --gold:#F7DC6F;
+  --paper:#F7F0E2;
+  --glass1:rgba(255,255,255,.82);
+  --glass2:rgba(255,255,255,.55);
+  --glass-brd:rgba(255,255,255,.9);
+  --glass-sh:0 16px 34px rgba(150,120,50,.16),inset 0 1px 0 rgba(255,255,255,.9);
+  --ok:#3A8C20;
+  --err:#C0392B;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html{background:#EFE6D5;}
+body{
+  margin:0;padding:0 0 40px;font-family:'Nunito',sans-serif;color:var(--txt);
+  background:
+    radial-gradient(ellipse 72% 46% at 82% 8%,rgba(255,214,140,.26),transparent 62%),
+    radial-gradient(ellipse 56% 32% at 10% 92%,rgba(255,190,120,.14),transparent 66%),
+    linear-gradient(180deg,#FCF7EC 0%,#FBF1DC 42%,#F6E7CC 100%);
+  background-attachment:fixed;min-height:100vh;
+}
+.wrap{max-width:620px;margin:0 auto;padding:18px 16px calc(24px + env(safe-area-inset-bottom));}
+
+header{text-align:center;padding:14px 0 6px;}
+header h1{
+  font-family:'Playfair Display',serif;font-weight:900;font-size:30px;line-height:1.1;
+  margin:0 0 6px;color:var(--txt);letter-spacing:-.5px;
+}
+header p{margin:0;color:var(--muted);font-size:14px;font-weight:600;}
+.back{display:inline-block;margin-bottom:4px;color:var(--goldd);text-decoration:none;font-weight:800;font-size:13px;}
+
+.card{
+  background:linear-gradient(180deg,var(--glass1),var(--glass2));
+  border:1px solid var(--glass-brd);border-radius:20px;box-shadow:var(--glass-sh);
+  padding:16px;margin:14px 0;backdrop-filter:blur(8px);
+}
+.card h2{
+  font-family:'Playfair Display',serif;font-size:18px;margin:0 0 4px;display:flex;align-items:center;gap:8px;
+}
+.step{
+  display:inline-flex;align-items:center;justify-content:center;min-width:24px;height:24px;border-radius:50%;
+  background:var(--gold);color:#6B4E00;font-size:13px;font-weight:800;font-family:'Nunito',sans-serif;
+}
+.hint{color:var(--muted);font-size:13px;margin:0 0 12px;line-height:1.45;}
+
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  border:none;border-radius:14px;padding:12px 16px;font-family:'Nunito',sans-serif;
+  font-weight:800;font-size:15px;cursor:pointer;background:#EDE2CB;color:var(--txt);
+  box-shadow:0 4px 0 rgba(150,120,50,.18);transition:transform .08s ease;
+}
+.btn:active{transform:translateY(2px);box-shadow:0 2px 0 rgba(150,120,50,.18);}
+.btn.primary{background:linear-gradient(180deg,#FFE68A,#F0C93F);color:#5B4300;}
+.btn.ghost{background:transparent;box-shadow:none;color:var(--goldd);text-decoration:underline;padding:6px 4px;font-size:13px;}
+.btn[disabled]{opacity:.45;cursor:not-allowed;box-shadow:none;}
+.btn.wide{width:100%;padding:15px;font-size:17px;}
+.row{display:flex;gap:8px;flex-wrap:wrap;}
+
+.seg{display:flex;gap:6px;background:rgba(255,255,255,.5);padding:5px;border-radius:14px;margin-bottom:12px;}
+.seg button{
+  flex:1;border:none;background:transparent;padding:9px 6px;border-radius:10px;
+  font-family:'Nunito',sans-serif;font-weight:800;font-size:13px;color:var(--muted);cursor:pointer;
+}
+.seg button.on{background:#fff;color:var(--txt);box-shadow:0 2px 8px rgba(150,120,50,.14);}
+
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;}
+.chip{
+  border:1px solid rgba(154,116,20,.3);background:rgba(255,255,255,.6);border-radius:999px;
+  padding:7px 12px;font-family:'Nunito',sans-serif;font-weight:700;font-size:12.5px;color:var(--muted);cursor:pointer;
+}
+.chip.on{background:var(--gold);border-color:var(--gold);color:#6B4E00;}
+
+.thumb{
+  width:100%;border-radius:14px;background:rgba(255,255,255,.55);
+  border:1px dashed rgba(154,116,20,.35);overflow:hidden;
+  display:flex;align-items:center;justify-content:center;text-align:center;
+  color:var(--muted);font-size:13px;font-weight:700;padding:20px;min-height:120px;
+}
+.thumb.filled{padding:0;border-style:solid;border-color:rgba(154,116,20,.2);}
+.thumb img{width:100%;max-height:340px;object-fit:contain;display:block;}
+.locked{
+  display:inline-flex;align-items:center;gap:6px;background:rgba(58,140,32,.12);color:var(--ok);
+  border-radius:999px;padding:4px 10px;font-size:12px;font-weight:800;margin-bottom:10px;
+}
+
+.result-wrap{position:relative;}
+.result img{width:100%;border-radius:16px;display:block;box-shadow:0 10px 30px rgba(120,95,40,.22);}
+.badge{
+  display:inline-block;background:rgba(154,116,20,.12);color:var(--goldd);border-radius:999px;
+  padding:4px 10px;font-size:11.5px;font-weight:800;margin-top:8px;
+}
+.spinner{
+  width:38px;height:38px;border-radius:50%;border:4px solid rgba(154,116,20,.2);
+  border-top-color:var(--goldd);animation:spin .9s linear infinite;margin:0 auto 10px;
+}
+@keyframes spin{to{transform:rotate(360deg);}}
+.center{text-align:center;}
+
+.hist{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+.hist img{width:100%;aspect-ratio:3/4;object-fit:cover;border-radius:10px;cursor:pointer;display:block;}
+
+.msg{border-radius:12px;padding:11px 13px;font-size:13.5px;font-weight:700;margin:10px 0;line-height:1.4;}
+.msg.err{background:rgba(192,57,43,.1);color:var(--err);}
+.msg.warn{background:rgba(154,116,20,.12);color:var(--goldd);}
+.msg.ok{background:rgba(58,140,32,.12);color:var(--ok);}
+.recipe{font-size:12px;color:var(--muted);line-height:1.6;margin:8px 0 0;}
+.recipe b{color:var(--txt);}
+input[type=file]{display:none;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <a class="back" href="./index.html">‹ Retour à CaillouDEX</a>
+    <h1>Studio IA</h1>
+    <p>Une seule chose change : le vêtement. Le reste ne bouge jamais.</p>
+  </header>
+
+  <div id="authMsg"></div>
+
+  <!-- ÉTAPE 1 : la scène, verrouillée une bonne fois pour toutes -->
+  <section class="card">
+    <h2><span class="step">1</span> La scène de référence</h2>
+    <div class="seg" id="modeSeg">
+      <button data-mode="tryon">👕 Sur quelqu'un</button>
+      <button data-mode="scene">🧺 À plat sur un fond</button>
+    </div>
+
+    <div id="tryonPane">
+      <p class="hint">Choisis <b>une seule fois</b> la photo de la personne (même pose, même mur, même lumière). Elle est enregistrée et réutilisée pour tous tes visuels : c'est ce qui rend le fond identique à chaque fois.</p>
+      <div id="sceneLock"></div>
+      <div id="scenePreview" class="thumb">Aucune scène choisie pour l'instant</div>
+      <div class="row" style="margin-top:10px">
+        <button class="btn" id="scenePick">📁 Choisir la photo</button>
+        <button class="btn" id="sceneShoot">📷 Photographier</button>
+        <button class="btn ghost" id="sceneClear">Effacer</button>
+      </div>
+      <p class="hint" style="margin:14px 0 6px">Pas de photo sous la main ? Fabrique une personne avec l'IA : même graine, même consigne, donc toujours <b>exactement la même personne</b> et le même mur.</p>
+      <div class="chips" id="modelChips"></div>
+      <button class="btn" id="makeModel">🤖 Fabriquer la personne</button>
+      <div id="sceneStatus"></div>
+    </div>
+
+    <div id="scenePane" hidden>
+      <p class="hint">Le vêtement est reposé sur un décor figé. Le décor choisi est enregistré : tant que tu ne le changes pas, tous tes visuels auront exactement le même fond.</p>
+      <div class="chips" id="presetChips"></div>
+    </div>
+  </section>
+
+  <!-- ÉTAPE 2 : le vêtement -->
+  <section class="card">
+    <h2><span class="step">2</span> La pièce à photographier</h2>
+    <p class="hint">La photo du vêtement, posée bien à plat et entière. C'est la seule chose qui change d'un visuel à l'autre.</p>
+    <div id="garmentPreview" class="thumb">Aucune photo de vêtement</div>
+    <div class="row" style="margin-top:10px">
+      <button class="btn" id="garmentPick">📁 Choisir la photo</button>
+      <button class="btn" id="garmentShoot">📷 Photographier</button>
+    </div>
+    <div id="catRow" style="margin-top:12px">
+      <p class="hint" style="margin-bottom:6px">Type de pièce :</p>
+      <div class="chips" id="catChips"></div>
+    </div>
+  </section>
+
+  <!-- ÉTAPE 3 : génération -->
+  <section class="card">
+    <h2><span class="step">3</span> Générer</h2>
+    <button class="btn primary wide" id="go">✨ Générer le visuel</button>
+    <div id="status"></div>
+    <div id="result"></div>
+    <p class="recipe">
+      Réglages verrouillés — graine <b>424242</b>, cadrage <b>3:4</b>, décor et consignes <b>constants côté serveur</b>.
+      Une même paire (scène + vêtement) redonne l'image déjà générée, sans repasser par l'IA.
+    </p>
+  </section>
+
+  <section class="card" id="histCard" hidden>
+    <h2>🗂️ Derniers visuels</h2>
+    <p class="hint">Touche une vignette pour la ré-afficher et la télécharger.</p>
+    <div class="hist" id="hist"></div>
+  </section>
+</div>
+
+<script>
+"use strict";
+
+/* =========================================================================
+   Studio IA — page autonome
+   -------------------------------------------------------------------------
+   Elle réutilise la session Supabase déjà ouverte dans l'app (même origine,
+   même stockage) et appelle la fonction serveur `generate-outfit`, qui garde
+   tous les réglages "aléatoires" figés.
+
+   Tout ce qui est enregistré ici (scène, cache, historique) vit dans
+   IndexedDB : les images sont trop lourdes pour localStorage.
+   ========================================================================= */
+
+const SUPABASE_URL = 'https://bfhqkueyildphglgnxup.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJmaHFrdWV5aWxkcGhnbGdueHVwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE4MzcyNTIsImV4cCI6MjA5NzQxMzI1Mn0.T9Rreg3YVYDXPKSyicXzAgYAHSF9rFZgGv3i8qgglEE';
+
+/* Version de la "recette" : la changer invalide les images en cache. */
+const RECIPE_VERSION = 'v1';
+const MAX_HISTORY = 9;
+
+const PRESETS = [
+  { key:'beton',    label:'🧱 Béton gris' },
+  { key:'lin',      label:'🌾 Lin beige' },
+  { key:'studio',   label:'⚪ Studio blanc' },
+  { key:'parquet',  label:'🪵 Parquet clair' },
+];
+const MODEL_PRESETS = [
+  { key:'neutre', label:'🧱 Mur béton' },
+  { key:'studio', label:'⚪ Studio blanc' },
+];
+const CATEGORIES = [
+  { key:'auto',        label:'Automatique' },
+  { key:'tops',        label:'Haut' },
+  { key:'bottoms',     label:'Bas / short' },
+  { key:'one-pieces',  label:'Ensemble / robe' },
+];
+
+const state = {
+  mode:'tryon',
+  preset:'beton',
+  modelPreset:'neutre',
+  category:'auto',
+  scene:null,        // data URL normalisée
+  sceneHash:'',
+  garment:null,
+  garmentHash:'',
+  busy:false,
+  history:[],
+};
+
+let sb=null, session=null;
+
+/* ----------------------------------------------------------- IndexedDB */
+function openDb(){
+  return new Promise((ok,ko)=>{
+    const r=indexedDB.open('studio-ia',1);
+    r.onupgradeneeded=()=>{ if(!r.result.objectStoreNames.contains('kv')) r.result.createObjectStore('kv'); };
+    r.onsuccess=()=>ok(r.result);
+    r.onerror=()=>ko(r.error);
+  });
+}
+async function dbGet(key){
+  try{
+    const db=await openDb();
+    return await new Promise((ok,ko)=>{
+      const q=db.transaction('kv','readonly').objectStore('kv').get(key);
+      q.onsuccess=()=>ok(q.result); q.onerror=()=>ko(q.error);
+    });
+  }catch(e){ console.warn('dbGet',e); return undefined; }
+}
+async function dbSet(key,val){
+  try{
+    const db=await openDb();
+    return await new Promise((ok,ko)=>{
+      const t=db.transaction('kv','readwrite');
+      t.objectStore('kv').put(val,key);
+      t.oncomplete=()=>ok(true); t.onerror=()=>ko(t.error);
+    });
+  }catch(e){ console.warn('dbSet',e); return false; }
+}
+async function dbDel(key){
+  try{
+    const db=await openDb();
+    return await new Promise((ok)=>{
+      const t=db.transaction('kv','readwrite');
+      t.objectStore('kv').delete(key);
+      t.oncomplete=()=>ok(true); t.onerror=()=>ok(false);
+    });
+  }catch(e){ return false; }
+}
+
+/* ------------------------------------------------------------- Utilitaires */
+/** Empreinte FNV-1a : sert de clé de cache, pas de sécurité. */
+function hashString(str){
+  let h=0x811c9dc5;
+  for(let i=0;i<str.length;i++){
+    h^=str.charCodeAt(i);
+    h=(h+((h<<1)+(h<<4)+(h<<7)+(h<<8)+(h<<24)))>>>0;
+  }
+  return ('0000000'+h.toString(16)).slice(-8)+'-'+str.length.toString(36);
+}
+
+/**
+ * Ramène une photo à une taille et une qualité fixes. Deux imports du même
+ * fichier redonnent exactement les mêmes octets : c'est ce qui permet au
+ * cache de reconnaître une pièce déjà générée.
+ */
+async function normalizePhoto(file, maxSide=1024, quality=0.82){
+  let bmp=null;
+  try{ bmp=await createImageBitmap(file,{imageOrientation:'from-image'}); }
+  catch(_){
+    bmp=await new Promise((ok,ko)=>{
+      const img=new Image(); const url=URL.createObjectURL(file);
+      img.onload=()=>{ URL.revokeObjectURL(url); ok(img); };
+      img.onerror=(e)=>{ URL.revokeObjectURL(url); ko(e); };
+      img.src=url;
+    });
+  }
+  const w0=bmp.width||bmp.naturalWidth, h0=bmp.height||bmp.naturalHeight;
+  const scale=Math.min(1, maxSide/Math.max(w0,h0));
+  const w=Math.max(1,Math.round(w0*scale)), h=Math.max(1,Math.round(h0*scale));
+  const c=document.createElement('canvas'); c.width=w; c.height=h;
+  const ctx=c.getContext('2d');
+  ctx.fillStyle='#ffffff'; ctx.fillRect(0,0,w,h);
+  ctx.drawImage(bmp,0,0,w,h);
+  if(bmp.close) bmp.close();
+  return c.toDataURL('image/jpeg',quality);
+}
+
+function pickFile(capture){
+  return new Promise((resolve)=>{
+    const input=document.createElement('input');
+    input.type='file'; input.accept='image/*';
+    if(capture) input.capture='environment';
+    input.onchange=()=>resolve(input.files&&input.files[0]?input.files[0]:null);
+    input.click();
+  });
+}
+
+function setMsg(el, kind, html){
+  el.innerHTML = html ? `<div class="msg ${kind}">${html}</div>` : '';
+}
+
+/* ------------------------------------------------------------- Supabase */
+function loadScript(src){
+  return new Promise((ok,ko)=>{
+    const s=document.createElement('script');
+    s.src=src; s.onload=ok; s.onerror=ko; document.head.appendChild(s);
+  });
+}
+async function initSupabase(){
+  const authMsg=document.getElementById('authMsg');
+  try{
+    const cdns=[
+      'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2',
+      'https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js',
+    ];
+    for(const url of cdns){
+      try{ await loadScript(url); }catch(_){ continue; }
+      if(window.supabase&&window.supabase.createClient) break;
+    }
+    if(!window.supabase||!window.supabase.createClient) throw new Error('librairie indisponible');
+    sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
+    const { data }=await sb.auth.getSession();
+    session=data&&data.session?data.session:null;
+    if(!session){
+      setMsg(authMsg,'warn','🔑 Connecte-toi d\'abord dans <a href="./index.html">CaillouDEX</a>, puis reviens ici : le Studio utilise le même compte.');
+    }
+    sb.auth.onAuthStateChange((_e,s)=>{ session=s; if(s) setMsg(authMsg,'',''); refreshGo(); });
+  }catch(e){
+    setMsg(authMsg,'err','Impossible de joindre le serveur. Vérifie ta connexion puis recharge la page.');
+  }
+  refreshGo();
+}
+
+/* ------------------------------------------------------------- Rendu UI */
+function renderMode(){
+  document.querySelectorAll('#modeSeg button').forEach(b=>{
+    b.classList.toggle('on', b.dataset.mode===state.mode);
+  });
+  document.getElementById('tryonPane').hidden = state.mode!=='tryon';
+  document.getElementById('scenePane').hidden = state.mode!=='scene';
+  document.getElementById('catRow').hidden = state.mode!=='tryon';
+}
+
+function renderScene(){
+  const box=document.getElementById('scenePreview');
+  const lock=document.getElementById('sceneLock');
+  if(state.scene){
+    box.className='thumb filled';
+    box.innerHTML='<img src="'+state.scene+'" alt="Scène de référence">';
+    lock.innerHTML='<span class="locked">🔒 Scène verrouillée · '+state.sceneHash.slice(0,8)+'</span>';
+  }else{
+    box.className='thumb';
+    box.textContent='Aucune scène choisie pour l\'instant';
+    lock.innerHTML='';
+  }
+}
+
+function renderGarment(){
+  const box=document.getElementById('garmentPreview');
+  if(state.garment){
+    box.className='thumb filled';
+    box.innerHTML='<img src="'+state.garment+'" alt="Vêtement à mettre en scène">';
+  }else{
+    box.className='thumb';
+    box.textContent='Aucune photo de vêtement';
+  }
+}
+
+function renderChips(){
+  const p=document.getElementById('presetChips');
+  p.innerHTML=PRESETS.map(x=>`<button class="chip${x.key===state.preset?' on':''}" data-preset="${x.key}">${x.label}</button>`).join('');
+  const c=document.getElementById('catChips');
+  c.innerHTML=CATEGORIES.map(x=>`<button class="chip${x.key===state.category?' on':''}" data-cat="${x.key}">${x.label}</button>`).join('');
+  const m=document.getElementById('modelChips');
+  m.innerHTML=MODEL_PRESETS.map(x=>`<button class="chip${x.key===state.modelPreset?' on':''}" data-model="${x.key}">${x.label}</button>`).join('');
+}
+
+function refreshGo(){
+  const mk=document.getElementById('makeModel');
+  mk.disabled = state.busy || !session;
+  const go=document.getElementById('go');
+  const needScene = state.mode==='tryon' && !state.scene;
+  go.disabled = state.busy || !session || !state.garment || needScene;
+  go.textContent = state.busy ? '⏳ Génération…'
+    : needScene ? '① Choisis d\'abord la scène'
+    : !state.garment ? '② Ajoute la photo du vêtement'
+    : !session ? '🔑 Connexion requise'
+    : '✨ Générer le visuel';
+}
+
+function showResult(dataUrl, meta){
+  const box=document.getElementById('result');
+  const stamp=new Date().toISOString().slice(0,10);
+  const name=`studio-${stamp}-${(meta.key||'').slice(0,8)}.jpg`;
+  box.innerHTML=`
+    <div class="result" style="margin-top:12px">
+      <img src="${dataUrl}" alt="Visuel généré">
+      <div class="center">
+        <span class="badge">${meta.cached?'♻️ image déjà générée (identique)':'🆕 nouvelle image'} · graine 424242${meta.engine?' · '+meta.engine.split('/').slice(1).join('/'):''}</span>
+      </div>
+      <div class="row" style="margin-top:10px">
+        <a class="btn primary" download="${name}" href="${dataUrl}">⬇️ Télécharger</a>
+        <button class="btn" id="again">🔁 Autre pièce</button>
+        ${meta.cached?'<button class="btn ghost" id="force">Forcer une nouvelle génération</button>':''}
+      </div>
+    </div>`;
+  const again=document.getElementById('again');
+  if(again) again.onclick=async ()=>{
+    state.garment=null; state.garmentHash='';
+    renderGarment(); refreshGo();
+    document.getElementById('result').innerHTML='';
+    const f=await pickFile(false); if(f) await setGarment(f);
+  };
+  const force=document.getElementById('force');
+  if(force) force.onclick=()=>generate(true);
+}
+
+function renderHistory(){
+  const card=document.getElementById('histCard');
+  const box=document.getElementById('hist');
+  if(!state.history.length){ card.hidden=true; return; }
+  card.hidden=false;
+  box.innerHTML=state.history.map((h,i)=>`<img src="${h.image}" data-i="${i}" alt="Visuel ${i+1}">`).join('');
+  box.querySelectorAll('img').forEach(img=>{
+    img.onclick=()=>{
+      const h=state.history[Number(img.dataset.i)];
+      showResult(h.image,{cached:true,engine:h.engine,key:h.key});
+      document.getElementById('result').scrollIntoView({behavior:'smooth',block:'center'});
+    };
+  });
+}
+
+/* ------------------------------------------------------------- Actions */
+async function setScene(file){
+  const status=document.getElementById('status');
+  try{
+    const url=await normalizePhoto(file,1024,0.85);
+    state.scene=url; state.sceneHash=hashString(url);
+    await dbSet('scene',{ image:url, hash:state.sceneHash, at:Date.now() });
+    renderScene(); refreshGo();
+    setMsg(status,'ok','🔒 Scène enregistrée. Tous tes prochains visuels utiliseront cette personne et ce fond.');
+  }catch(e){ setMsg(status,'err','Photo illisible : '+(e&&e.message||e)); }
+}
+
+/** Enregistre l'image reçue comme scène de référence, exactement comme une photo importée. */
+async function applyModelImage(url, cached){
+  state.scene=url; state.sceneHash=hashString(url);
+  await dbSet('scene',{ image:url, hash:state.sceneHash, at:Date.now() });
+  renderScene(); refreshGo();
+  setMsg(document.getElementById('sceneStatus'),'ok',
+    (cached?'♻️ Personne déjà fabriquée : c\'est la même, reprise telle quelle.'
+          :'🔒 Personne fabriquée et verrouillée.')+' Tes essayages utiliseront désormais cette silhouette et ce fond.');
+}
+
+/**
+ * Fabrique la personne de référence. Le serveur utilise une graine et un
+ * prompt constants ; on garde en plus l'image en cache pour ne jamais
+ * dépendre d'une éventuelle évolution du modèle.
+ */
+async function makeModel(){
+  if(state.busy) return;
+  const status=document.getElementById('sceneStatus');
+  if(!session){ setMsg(status,'warn','Connecte-toi dans l\'app avant de fabriquer la personne.'); return; }
+
+  const key='model:'+RECIPE_VERSION+':'+state.modelPreset;
+  const hit=await dbGet(key);
+  if(hit&&hit.image){ await applyModelImage(hit.image,true); return; }
+
+  state.busy=true; refreshGo();
+  const started=Date.now();
+  const tick=setInterval(()=>{
+    const s=Math.round((Date.now()-started)/1000);
+    setMsg(status,'warn',`<div class="center"><div class="spinner"></div>Fabrication de la personne… ${s}s</div>`);
+  },250);
+  try{
+    const { data, error }=await sb.functions.invoke('generate-outfit',{ body:{ mode:'model', preset:state.modelPreset } });
+    clearInterval(tick);
+    if(error||!data||!data.image){
+      let detail = error ? error.message : ((data&&(data.details||data.error))||'raison inconnue');
+      try{
+        if(error&&error.context&&typeof error.context.json==='function'){
+          const b=await error.context.json();
+          if(b) detail=((b.error||'')+' '+(b.details||b.message||'')).trim();
+        }
+      }catch(_){}
+      setMsg(status,'err','❌ Fabrication impossible — '+String(detail).slice(0,240));
+      return;
+    }
+    const url=`data:${data.mime_type||'image/jpeg'};base64,${data.image}`;
+    await dbSet(key,{ image:url, at:Date.now() });
+    await applyModelImage(url,false);
+  }catch(e){
+    clearInterval(tick);
+    setMsg(status,'err','❌ Erreur : '+(e&&e.message||e));
+  }finally{
+    clearInterval(tick);
+    state.busy=false; refreshGo();
+  }
+}
+
+async function setGarment(file){
+  const status=document.getElementById('status');
+  try{
+    const url=await normalizePhoto(file,1024,0.85);
+    state.garment=url; state.garmentHash=hashString(url);
+    document.getElementById('result').innerHTML='';
+    renderGarment(); refreshGo(); setMsg(status,'','');
+  }catch(e){ setMsg(status,'err','Photo illisible : '+(e&&e.message||e)); }
+}
+
+function cacheKey(){
+  const base = state.mode==='tryon'
+    ? `${RECIPE_VERSION}|tryon|${state.sceneHash}|${state.category}|${state.garmentHash}`
+    : `${RECIPE_VERSION}|scene|${state.preset}|${state.garmentHash}`;
+  return 'out:'+hashString(base);
+}
+
+async function pushHistory(entry){
+  state.history=[entry].concat(state.history.filter(h=>h.key!==entry.key)).slice(0,MAX_HISTORY);
+  await dbSet('history',state.history);
+  renderHistory();
+}
+
+async function generate(force){
+  if(state.busy) return;
+  const status=document.getElementById('status');
+  if(!session){ setMsg(status,'warn','Connecte-toi dans l\'app avant de générer.'); return; }
+  if(!state.garment){ setMsg(status,'warn','Ajoute d\'abord la photo du vêtement.'); return; }
+  if(state.mode==='tryon'&&!state.scene){ setMsg(status,'warn','Choisis d\'abord la scène de référence.'); return; }
+
+  const key=cacheKey();
+
+  if(!force){
+    const hit=await dbGet(key);
+    if(hit&&hit.image){
+      showResult(hit.image,{cached:true,engine:hit.engine,key});
+      setMsg(status,'ok','♻️ Cette pièce a déjà été générée : voici exactement la même image, sans nouvel appel à l\'IA.');
+      return;
+    }
+  }
+
+  state.busy=true; refreshGo();
+  const started=Date.now();
+  const tick=setInterval(()=>{
+    const s=Math.round((Date.now()-started)/1000);
+    setMsg(status,'warn',`<div class="center"><div class="spinner"></div>Génération en cours… ${s}s<br><span style="font-weight:600">Compte 20 à 60 secondes. Ne ferme pas la page.</span></div>`);
+  },250);
+
+  try{
+    const payload = state.mode==='tryon'
+      ? { mode:'tryon', scene_image:state.scene, garment_image:state.garment, category:state.category }
+      : { mode:'scene', preset:state.preset, garment_image:state.garment };
+    const { data, error } = await sb.functions.invoke('generate-outfit',{ body:payload });
+
+    clearInterval(tick);
+
+    if(error||!data||!data.image){
+      let detail = error ? error.message : ((data&&(data.details||data.error))||'raison inconnue');
+      try{
+        if(error&&error.context&&typeof error.context.json==='function'){
+          const b=await error.context.json();
+          if(b) detail=((b.error||'')+' '+(b.details||b.message||'')).trim();
+        }
+      }catch(_){}
+      if(/fal_not_configured/.test(detail)) detail='la clé FAL_KEY n\'est pas encore configurée côté Supabase.';
+      setMsg(status,'err','❌ Génération impossible — '+String(detail).slice(0,240));
+      return;
+    }
+
+    const url=`data:${data.mime_type||'image/jpeg'};base64,${data.image}`;
+    const entry={ key, image:url, engine:data.engine||'', mode:data.mode||state.mode, at:Date.now() };
+    await dbSet(key,entry);
+    await pushHistory(entry);
+    showResult(url,{cached:false,engine:entry.engine,key});
+    setMsg(status,'ok','✅ Visuel prêt. Il est mémorisé : redemander cette pièce redonnera exactement cette image.');
+  }catch(e){
+    clearInterval(tick);
+    setMsg(status,'err','❌ Erreur : '+(e&&e.message||e));
+  }finally{
+    clearInterval(tick);
+    state.busy=false; refreshGo();
+  }
+}
+
+/* ------------------------------------------------------------- Démarrage */
+async function boot(){
+  renderMode(); renderChips(); renderScene(); renderGarment(); refreshGo();
+
+  const saved=await dbGet('scene');
+  if(saved&&saved.image){ state.scene=saved.image; state.sceneHash=saved.hash||hashString(saved.image); renderScene(); }
+  const prefs=await dbGet('prefs');
+  if(prefs){
+    if(prefs.mode==='scene'||prefs.mode==='tryon') state.mode=prefs.mode;
+    if(prefs.preset) state.preset=prefs.preset;
+    if(prefs.modelPreset) state.modelPreset=prefs.modelPreset;
+    if(prefs.category) state.category=prefs.category;
+  }
+  const hist=await dbGet('history');
+  if(Array.isArray(hist)) state.history=hist;
+  renderMode(); renderChips(); renderHistory(); refreshGo();
+
+  await initSupabase();
+}
+
+function savePrefs(){ dbSet('prefs',{ mode:state.mode, preset:state.preset, modelPreset:state.modelPreset, category:state.category }); }
+
+document.getElementById('modeSeg').addEventListener('click',(e)=>{
+  const b=e.target.closest('button[data-mode]'); if(!b) return;
+  state.mode=b.dataset.mode; renderMode(); refreshGo(); savePrefs();
+});
+document.getElementById('presetChips').addEventListener('click',(e)=>{
+  const b=e.target.closest('button[data-preset]'); if(!b) return;
+  state.preset=b.dataset.preset; renderChips(); savePrefs();
+});
+document.getElementById('catChips').addEventListener('click',(e)=>{
+  const b=e.target.closest('button[data-cat]'); if(!b) return;
+  state.category=b.dataset.cat; renderChips(); savePrefs();
+});
+document.getElementById('modelChips').addEventListener('click',(e)=>{
+  const b=e.target.closest('button[data-model]'); if(!b) return;
+  state.modelPreset=b.dataset.model; renderChips(); savePrefs();
+});
+document.getElementById('makeModel').onclick=()=>makeModel();
+document.getElementById('scenePick').onclick=async ()=>{ const f=await pickFile(false); if(f) setScene(f); };
+document.getElementById('sceneShoot').onclick=async ()=>{ const f=await pickFile(true); if(f) setScene(f); };
+document.getElementById('sceneClear').onclick=async ()=>{
+  state.scene=null; state.sceneHash=''; await dbDel('scene');
+  setMsg(document.getElementById('sceneStatus'),'','');
+  renderScene(); refreshGo();
+};
+document.getElementById('garmentPick').onclick=async ()=>{ const f=await pickFile(false); if(f) setGarment(f); };
+document.getElementById('garmentShoot').onclick=async ()=>{ const f=await pickFile(true); if(f) setGarment(f); };
+document.getElementById('go').onclick=()=>generate(false);
+
+boot();
+</script>
+</body>
+</html>
