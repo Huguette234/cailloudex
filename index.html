@@ -656,6 +656,7 @@ nav{display:flex;gap:8px;padding:10px 14px max(14px,env(safe-area-inset-bottom))
 .diff-pill.sel{color:var(--txt);background:linear-gradient(135deg,#FFE79A,var(--legendaire) 60%,#EBBE2E);border-color:rgba(255,240,190,.6);box-shadow:0 3px 10px rgba(184,142,20,.4);transform:translateY(-1px);}
 .diff-desc{font-family:'Nunito',sans-serif;font-size:11.5px;color:rgba(44,42,46,.6);text-align:center;margin-bottom:14px;}
 .diff-desc b{color:var(--goldd);}
+.cp-pill{font-family:'Baloo 2',sans-serif;font-weight:800;font-size:11px;color:var(--goldd);cursor:pointer;border:1px solid rgba(154,116,20,.45);border-radius:20px;padding:4px 10px;white-space:nowrap;background:rgba(255,255,255,.5);}
 .combat-pick-grid{display:flex;flex-direction:column;gap:10px;}
 .combat-pick-card{display:flex;align-items:center;gap:12px;background:linear-gradient(160deg,rgba(255,255,255,.8),rgba(255,255,255,.62));border-radius:18px;padding:11px 14px;border:1px solid rgba(255,255,255,.9);cursor:pointer;box-shadow:0 8px 20px rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.14);transition:transform .14s cubic-bezier(.2,.8,.3,1),box-shadow .18s;}
 .combat-pick-card:active{transform:scale(.985);box-shadow:0 4px 12px rgba(0,0,0,.26),inset 0 1px 0 rgba(255,255,255,.14);}
@@ -1322,6 +1323,8 @@ function updateCharGenOverlay(){
 let scanMsgInterval = null;
 let battleState = null;
 let onlineState = null;
+let arenaRun = null;       // partie d'arène en cours { rock, wave, carryHpFrac, pot }
+let arenaPicking = false;  // on choisit son champion pour l'arène
 
 /* ===== SUPABASE (compte + dex partagé + IA commune) ===== */
 const SUPABASE_URL='https://bfhqkueyildphglgnxup.supabase.co';
@@ -1421,6 +1424,19 @@ const COMBAT_DIFFICULTIES = [
 let combatDifficulty = (()=>{ try{ return localStorage.getItem('cdx_difficulty')||'normal'; }catch(e){ return 'normal'; } })();
 function getDifficulty(){ return COMBAT_DIFFICULTIES.find(d=>d.key===combatDifficulty)||COMBAT_DIFFICULTIES[1]; }
 function setDifficulty(k){ if(!COMBAT_DIFFICULTIES.some(d=>d.key===k)) return; combatDifficulty=k; try{ localStorage.setItem('cdx_difficulty',k); }catch(e){} }
+
+/* ===== MODE ARÈNE (vagues de bots de plus en plus forts) ===== */
+const ARENA_HEAL_FRAC = 0.30; // PV régénérés entre chaque vague
+let arenaBest = (()=>{ try{ return parseInt(localStorage.getItem('cdx_arenabest'))||0; }catch(e){ return 0; } })();
+function setArenaBest(w){ if(w>arenaBest){ arenaBest=w; try{ localStorage.setItem('cdx_arenabest',String(w)); }catch(e){} } }
+// Récompenses d'une vague franchie (montent avec la vague, gros bonus tous les 5 paliers)
+function arenaWaveRewards(wave){
+  const milestone=(wave%5===0);
+  return { gems:1+Math.floor(wave/3)+(milestone?5:0), grav:6+wave*2, xp:8+wave*3, milestone };
+}
+// Puissance du bot et intelligence de l'IA selon la vague
+function arenaBotStatMult(wave){ return 0.9 + wave*0.10; }
+function arenaBotIq(wave){ return Math.min(1, 0.3 + wave*0.10); }
 const RECYCLE_VALUE = { commun:3, rare:8, epique:18, legendaire:40, mythique:80, cosmique:150, galaxie:280, secret:600 };
 
 /* ===== CAILLOUX SECRETS (très rares, mêmes pour tout le monde) =====
@@ -4391,7 +4407,7 @@ async function generateBotCharacter(botRock){
   }catch(e){ console.error('generateBotCharacter',e); }
 }
 
-function makeBotRock(playerRock){
+function makeBotRock(playerRock, override){
   const base=BOT_POOL[Math.floor(Math.random()*BOT_POOL.length)];
   let atk,def,vit,rk,lbl,hx;
   if(playerRock){
@@ -4407,12 +4423,13 @@ function makeBotRock(playerRock){
     const tier=rollRarity(0); rk=tier.key; lbl=tier.label; hx=tier.hex;
     atk=rollStat(tier.range); def=rollStat(tier.range); vit=rollStat([1,8]);
   }
-  // Calibrage selon la difficulté choisie (vitesse boostée plus doucement)
-  const diff=getDifficulty(); const sm=diff.statMult; const vm=1+(sm-1)*0.5;
+  // Calibrage : arène (par vague) sinon difficulté choisie. Vitesse boostée plus doucement.
+  const sm=(override&&override.statMult!=null)?override.statMult:getDifficulty().statMult;
+  const vm=1+(sm-1)*0.5;
   atk=Math.max(1,Math.round(atk*sm));
   def=Math.max(1,Math.round(def*sm));
   vit=Math.max(1,Math.round(vit*vm));
-  return Object.assign({},base,{ rarity:rk, rarityLabel:lbl, hex:hx, atk, def, vit, _difficulty:diff.key });
+  return Object.assign({},base,{ rarity:rk, rarityLabel:lbl, hex:hx, atk, def, vit });
 }
 
 function combatMaxHP(def){ return 70+def*6; }
@@ -4558,19 +4575,22 @@ function timingChallenge(kind){
 }
 
 async function initBattle(playerRock){
+  const arena=!!arenaRun;
   const playerSpriteUrl=await makeRockSprite(playerRock.photo,playerRock.id);
   let effRock=playerRock;
   const usedBuffs=[];
-  if((meta.inventory?.mighty||0)>0){
+  // Les objets à usage unique ne sont PAS consommés en arène (sinon on en perdrait un par vague)
+  if(!arena && (meta.inventory?.mighty||0)>0){
     meta.inventory.mighty--;
     effRock={...playerRock, atk:Math.round(playerRock.atk*1.2), def:Math.round(playerRock.def*1.2)};
     usedBuffs.push('💪 Caillou Costaud');
   }
-  const bot=makeBotRock(effRock);
+  const bot=makeBotRock(effRock, arena?{ statMult:arenaBotStatMult(arenaRun.wave) }:null);
+  const maxHp=combatMaxHP(effRock.def);
   battleState={
     playerRock:effRock, botRock:bot,
-    playerHP:combatMaxHP(effRock.def), botHP:combatMaxHP(bot.def),
-    playerMaxHP:combatMaxHP(effRock.def), botMaxHP:combatMaxHP(bot.def),
+    playerHP:maxHp, botHP:combatMaxHP(bot.def),
+    playerMaxHP:maxHp, botMaxHP:combatMaxHP(bot.def),
     playerSpecialUsed:false, botSpecialUsed:false, playerUltimateUsed:false, botUltimateUsed:false,
     log:[{text:`⚔️ ${playerRock.name} affronte ${bot.name} !`, cls:'neutral'}],
     turn:'animating', winner:null, entered:false,
@@ -4578,9 +4598,17 @@ async function initBattle(playerRock){
     shieldActive:false, critPending:false,
     playerEnergy:0, botEnergy:0, playerStatus:[], botStatus:[], turnCount:0,
   };
-  if((meta.inventory?.shield||0)>0){ meta.inventory.shield--; battleState.shieldActive=true; usedBuffs.push('🛡️ Bouclier'); }
-  if((meta.inventory?.crit||0)>0){ meta.inventory.crit--; battleState.critPending=true; usedBuffs.push('💥 Frappe Critique'); }
-  if(usedBuffs.length){ saveMeta(); setTimeout(()=>showToast('✨ Objets activés : '+usedBuffs.join(', ')),250); }
+  if(arena){
+    battleState.arena=true;
+    battleState.wave=arenaRun.wave;
+    battleState.aiIq=arenaBotIq(arenaRun.wave);
+    battleState.playerHP=Math.max(1,Math.round(maxHp*(arenaRun.carryHpFrac||1)));
+    battleState.log=[{text:`🏟️ Vague ${arenaRun.wave} — ${bot.name} entre dans l'arène !`, cls:'neutral'}];
+  } else {
+    if((meta.inventory?.shield||0)>0){ meta.inventory.shield--; battleState.shieldActive=true; usedBuffs.push('🛡️ Bouclier'); }
+    if((meta.inventory?.crit||0)>0){ meta.inventory.crit--; battleState.critPending=true; usedBuffs.push('💥 Frappe Critique'); }
+    if(usedBuffs.length){ saveMeta(); setTimeout(()=>showToast('✨ Objets activés : '+usedBuffs.join(', ')),250); }
+  }
   // Ordre du tour : le plus rapide attaque en premier (égalité → joueur)
   const playerFirst=(effRock.vit||0)>=(bot.vit||0);
   battleState.playerFirst=playerFirst;
@@ -4616,6 +4644,7 @@ function announceTurn(kind){
 }
 function endBattle(winner){
   battleState.winner=winner; battleState.turn='end';
+  if(battleState.arena) return endArenaWave(winner);
   if(winner==='player'){
     const rw=getDifficulty().reward;
     incrementStat('wins',1);
@@ -4625,6 +4654,38 @@ function endBattle(winner){
   else { incrementStat('losses',1); }
   screen='combat-result'; render();
 }
+// Fin d'une vague d'arène : victoire → palier + choix continuer/encaisser ; défaite → bilan
+function endArenaWave(winner){
+  const wave=arenaRun.wave;
+  if(winner==='player'){
+    const rw=arenaWaveRewards(wave);
+    arenaRun.pot.gems+=rw.gems; arenaRun.pot.grav+=rw.grav; arenaRun.pot.xp+=rw.xp;
+    addGems(rw.gems); addGravillons(rw.grav); addXp(rw.xp);
+    if(rw.milestone) grantFoodLoot();
+    incrementStat('wins',1);
+    setArenaBest(wave);
+    const frac=battleState.playerMaxHP?battleState.playerHP/battleState.playerMaxHP:1;
+    arenaRun.carryHpFrac=Math.min(1, frac+ARENA_HEAL_FRAC);
+    arenaRun.lastReward=rw;
+    if(navigator.vibrate) navigator.vibrate([20,40,20]);
+    screen='arena-next'; render();
+  } else {
+    incrementStat('losses',1);
+    arenaRun.defeated=true;
+    screen='arena-result'; render();
+  }
+}
+function arenaContinue(){ if(!arenaRun) return; arenaRun.wave++; initBattle(arenaRun.rock); }
+function arenaCashout(){
+  arenaRun=null; arenaPicking=false; battleState=null;
+  screen='home'; render();
+  showToast('🏟️ Arène quittée — récompenses gardées !');
+}
+function startArena(rock){
+  arenaRun={ rock, wave:1, carryHpFrac:1, pot:{gems:0,grav:0,xp:0} };
+  initBattle(rock);
+}
+function arenaRetry(){ arenaRun=null; battleState=null; arenaPicking=true; screen='combat-pick'; render(); }
 async function playerAction(moveId){
   if(!battleState||battleState.turn!=='player') return;
   if(moveId==='flee'){
@@ -4720,9 +4781,9 @@ function pickBotMoveSolo(){
   const bot=battleState.botRock;
   const e=battleState.botEnergy||0;
   const moves=soloMoves(bot).filter(m=>e>=m.cost);
-  const diff=getDifficulty();
+  const iq=(battleState.aiIq!=null)?battleState.aiIq:getDifficulty().iq;
   // Bot "bête" : choix pondéré au hasard (proba 1 - iq)
-  if(Math.random()>=diff.iq){
+  if(Math.random()>=iq){
     const weights={attack:28,type:34,special:26,ultimate:26};
     const total=moves.reduce((s,m)=>s+(weights[m.id]||10),0);
     let r=Math.random()*total;
@@ -4834,25 +4895,32 @@ function combatPickScreen(){
     <p style="font-family:'Nunito',sans-serif;font-size:13px;color:rgba(44,42,46,.5);margin:8px 0 20px;">Capture d'abord des cailloux<br>avant de les envoyer au combat.</p>
     <button class="btn btn-gold" data-action="goto" data-screen="scanner">📷 CAPTURER</button>
   </div>`;
+  const arena=arenaPicking;
+  const rightBtns=arena
+    ? `<span class="cp-pill" data-action="exitArena">← Combat normal</span>`
+    : `<span class="cp-pill" data-action="enterArena">🏟️ ARÈNE</span><span class="cp-pill" data-action="goto" data-screen="online-menu">🌐 EN LIGNE</span>`;
+  const cardAction=arena?'arenaStart':'startBattle';
   return `<div class="combat-pick-wrap">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
-      <div class="combat-pick-title" style="margin-bottom:0;">⚔️ CHOISIR UN CAILLOU</div>
-      <span style="font-family:'Baloo 2',sans-serif;font-weight:800;font-size:11px;color:var(--goldd);cursor:pointer;border:1px solid rgba(154,116,20,.45);border-radius:20px;padding:4px 10px;" data-action="goto" data-screen="online-menu">🌐 EN LIGNE</span>
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:10px;">
+      <div class="combat-pick-title" style="margin-bottom:0;">${arena?'🏟️ ARÈNE':'⚔️ CHOISIR UN CAILLOU'}</div>
+      <div style="display:flex;gap:6px;flex-shrink:0;">${rightBtns}</div>
     </div>
-    <div class="combat-pick-sub">Lequel vas-tu envoyer au combat ?</div>
+    ${arena
+      ? `<div class="combat-pick-sub">Choisis ton champion — enchaîne les vagues de bots de plus en plus forts ! 🏆 Record : <b>${arenaBest}</b> vague${arenaBest>1?'s':''}</div>`
+      : `<div class="combat-pick-sub">Lequel vas-tu envoyer au combat ?</div>
     <div class="diff-row">
       ${COMBAT_DIFFICULTIES.map(d=>`<button class="diff-pill${d.key===combatDifficulty?' sel':''}" data-action="setDifficulty" data-key="${d.key}">${d.label}</button>`).join('')}
     </div>
     <div class="diff-desc">${getDifficulty().desc} · récompenses <b>×${getDifficulty().reward}</b></div>
-    ${(()=>{ const b=[]; if((meta.inventory?.shield||0)>0)b.push('🛡️ Bouclier'); if((meta.inventory?.crit||0)>0)b.push('💥 Crit ×2'); if((meta.inventory?.mighty||0)>0)b.push('💪 Costaud'); return b.length?`<div class="buff-row">${b.map(x=>`<span class="buff-pill">${x} <span style="opacity:.6;">prêt</span></span>`).join('')}</div>`:''; })()}
+    ${(()=>{ const b=[]; if((meta.inventory?.shield||0)>0)b.push('🛡️ Bouclier'); if((meta.inventory?.crit||0)>0)b.push('💥 Crit ×2'); if((meta.inventory?.mighty||0)>0)b.push('💪 Costaud'); return b.length?`<div class="buff-row">${b.map(x=>`<span class="buff-pill">${x} <span style="opacity:.6;">prêt</span></span>`).join('')}</div>`:''; })()}`}
     <div class="combat-pick-grid">
-      ${dex.map(r=>`<div class="combat-pick-card" data-action="startBattle" data-id="${r.id}">
+      ${dex.map(r=>`<div class="combat-pick-card" data-action="${cardAction}" data-id="${r.id}">
         <img class="combat-pick-img" src="${r.characterPhoto||r.animePhoto||r.photo}" alt="${r.name}">
         <div class="combat-pick-info">
           <div class="combat-pick-name">${r.name}</div>
           <div class="combat-pick-stats">⚔️${r.atk} 🛡️${r.def} 💨${r.vit} · ${r.rarityLabel}</div>
         </div>
-        <div class="combat-pick-btn">CHOISIR</div>
+        <div class="combat-pick-btn">${arena?'ENTRER':'CHOISIR'}</div>
       </div>`).join('')}
     </div>
   </div>`;
@@ -5017,6 +5085,46 @@ function combatResultScreen(){
   </div>`;
 }
 
+// Écran entre deux vagues d'arène (après une victoire)
+function arenaNextScreen(){
+  const r=arenaRun; if(!r) return '';
+  const rw=r.lastReward||{gems:0,grav:0,xp:0,milestone:false};
+  const next=r.wave+1;
+  const hpPct=Math.round((r.carryHpFrac||1)*100);
+  return `<div class="result-wrap">
+    <div style="font-size:60px;animation:resultBounce .5s cubic-bezier(.34,1.56,.64,1);">🏟️</div>
+    <div class="result-banner result-win">VAGUE ${r.wave} VAINCUE !</div>
+    <p class="result-sub">${rw.milestone?'🎁 Palier bonus atteint ! ':''}Ton champion récupère un peu de PV avant la suite.</p>
+    <div style="font-family:'Baloo 2',sans-serif;font-weight:800;font-size:14px;color:#9A7414;margin:2px 0 4px;">+${rw.gems} 💎 &nbsp;+${rw.grav} 🪙 &nbsp;+${rw.xp} XP</div>
+    <div style="font-family:'Nunito',sans-serif;font-size:12px;color:rgba(44,42,46,.6);margin-bottom:8px;">❤️ PV pour la vague ${next} : <b>${hpPct}%</b></div>
+    <div class="result-stats">
+      <div class="result-stat-item"><div class="result-stat-val">${r.wave}</div><div class="result-stat-lbl">VAGUES</div></div>
+      <div class="result-stat-item"><div class="result-stat-val">${r.pot.gems}</div><div class="result-stat-lbl">💎 CUMUL</div></div>
+      <div class="result-stat-item"><div class="result-stat-val">${arenaBest}</div><div class="result-stat-lbl">RECORD</div></div>
+    </div>
+    <button class="btn btn-gold" data-action="arenaContinue">⚔️ VAGUE ${next} — bot plus fort</button>
+    <button class="btn btn-ghost" style="margin-top:8px;" data-action="arenaCashout">💰 Encaisser &amp; rentrer</button>
+  </div>`;
+}
+// Écran de fin d'arène (après une défaite)
+function arenaResultScreen(){
+  const r=arenaRun; if(!r) return '';
+  const cleared=Math.max(0,r.wave-1);
+  const record=(cleared>0 && cleared>=arenaBest);
+  return `<div class="result-wrap">
+    <div style="font-size:64px;animation:resultBounce .5s cubic-bezier(.34,1.56,.64,1);">💀</div>
+    <div class="result-banner result-lose">ARÈNE TERMINÉE</div>
+    <p class="result-sub">${r.rock.name} est tombé à la vague ${r.wave}. Tu as franchi <b>${cleared}</b> vague${cleared>1?'s':''} !${record?' 🏆 Nouveau record !':''}</p>
+    <div style="font-family:'Baloo 2',sans-serif;font-weight:800;font-size:14px;color:#9A7414;margin:2px 0 6px;">Butin total : +${r.pot.gems} 💎 &nbsp;+${r.pot.grav} 🪙 &nbsp;+${r.pot.xp} XP</div>
+    <div class="result-stats">
+      <div class="result-stat-item"><div class="result-stat-val">${cleared}</div><div class="result-stat-lbl">VAGUES</div></div>
+      <div class="result-stat-item"><div class="result-stat-val">${arenaBest}</div><div class="result-stat-lbl">RECORD</div></div>
+    </div>
+    <button class="btn btn-gold" data-action="arenaRetry">🔄 REJOUER L'ARÈNE</button>
+    <button class="btn btn-ghost" style="margin-top:8px;" data-action="goto" data-screen="home">🏠 Accueil</button>
+  </div>`;
+}
+
 /* ===== RENDER ===== */
 const LEGAL_VERSION='2026-07';
 function hasConsent(){ try{ return localStorage.getItem('cdx_consent')===LEGAL_VERSION; }catch(e){ return true; } }
@@ -5086,6 +5194,8 @@ function render(){
     else if(screen==='combat-pick'){ mainHtml=combatPickScreen(); showNav=true; }
     else if(screen==='combat-fight'){ mainHtml=combatFightScreen(); showNav=false; showHeader=false; }
     else if(screen==='combat-result'){ mainHtml=combatResultScreen(); showNav=true; }
+    else if(screen==='arena-next'){ mainHtml=arenaNextScreen(); showNav=true; }
+    else if(screen==='arena-result'){ mainHtml=arenaResultScreen(); showNav=true; }
     else if(screen==='online-menu'){ mainHtml=onlineMenuScreen(); showNav=true; }
     else if(screen==='online-wait'){ mainHtml=onlineWaitScreen(); showNav=false; }
     else if(screen==='online-pick'){ mainHtml=onlinePickScreen(); showNav=true; }
@@ -5703,6 +5813,8 @@ document.addEventListener('click',(e)=>{
   const action=t.dataset.action;
   if(action==='capture'){ document.getElementById('fileInput').click(); }
   else if(action==='goto'){
+    // Quitter la navigation normale annule une éventuelle partie d'arène en cours
+    if(t.dataset.screen!=='combat-pick'){ arenaRun=null; arenaPicking=false; }
     screen=t.dataset.screen; detailRock=null;
     if(screen==='dex') dexType=null; // on entre par le menu des types
     render();
@@ -5804,6 +5916,15 @@ document.addEventListener('click',(e)=>{
     const rock=dex.find(r=>r.id===t.dataset.id);
     if(rock) initBattle(rock);
   }
+  else if(action==='enterArena'){ arenaPicking=true; render(); }
+  else if(action==='exitArena'){ arenaPicking=false; render(); }
+  else if(action==='arenaStart'){
+    const rock=dex.find(r=>r.id===t.dataset.id);
+    if(rock) startArena(rock);
+  }
+  else if(action==='arenaContinue'){ arenaContinue(); }
+  else if(action==='arenaCashout'){ arenaCashout(); }
+  else if(action==='arenaRetry'){ arenaRetry(); }
   else if(action==='combatMove'){
     const moveId=t.dataset.move;
     if(battleState&&battleState.online) playerOnlineAction(moveId);
@@ -5927,6 +6048,7 @@ function goBackInApp(){
   }
   // 4) Un sous-écran -> retour à l'accueil
   if(screen!=='home' && screen!=='login' && screen!=='loading'){
+    arenaRun=null; arenaPicking=false;
     screen='home'; detailRock=null; render();
     if(typeof checkPendingChallenge==='function'){
       const prev=pendingChallenge?pendingChallenge.id:null;
