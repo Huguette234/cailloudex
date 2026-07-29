@@ -802,6 +802,32 @@ nav{display:flex;gap:8px;padding:10px 14px max(14px,env(safe-area-inset-bottom))
 @keyframes nrgPulse{0%,100%{filter:brightness(1);}50%{filter:brightness(1.35);}}
 .nrg-lbl{font-family:'Baloo 2',sans-serif;font-weight:800;font-size:9px;color:#2C7DB0;min-width:26px;text-align:right;}
 .nrg-lbl.full{color:#B8860B;}
+/* Jauge de Fureur (se remplit quand on encaisse) */
+.fur-wrap{display:flex;align-items:center;gap:5px;margin-top:4px;}
+.fur-bg{flex:1;height:7px;background:rgba(150,60,40,.18);border-radius:999px;overflow:hidden;border:1px solid rgba(150,60,40,.24);}
+.fur-fill{height:100%;border-radius:999px;background:linear-gradient(90deg,#FF7A3C,#FF3B2F);transition:width .4s ease;box-shadow:0 0 6px rgba(255,90,50,.5);}
+.fur-fill.full{background:linear-gradient(90deg,#FF3B2F,#FF0055);box-shadow:0 0 12px #FF3B2Fbb;animation:furPulse .75s ease-in-out infinite;}
+@keyframes furPulse{0%,100%{filter:brightness(1);}50%{filter:brightness(1.45);}}
+.fur-lbl{font-family:'Baloo 2',sans-serif;font-weight:800;font-size:9px;color:#C0392B;min-width:26px;text-align:right;}
+.fur-lbl.full{color:#FF2A2A;}
+/* Bouton Fureur */
+.btn-fureur{font-family:'Baloo 2',sans-serif;font-weight:800;font-size:14px;border:3px solid var(--ink);border-radius:16px;width:100%;padding:14px 0;cursor:pointer;text-align:center;color:#fff;background:linear-gradient(135deg,#FF6A00,#FF1E3C 60%,#C4003C);box-shadow:0 6px 0 rgba(120,0,20,.5),0 0 18px rgba(255,60,40,.6);animation:furBtn .8s ease-in-out infinite;}
+@keyframes furBtn{0%,100%{box-shadow:0 6px 0 rgba(120,0,20,.5),0 0 14px rgba(255,60,40,.5);}50%{box-shadow:0 6px 0 rgba(120,0,20,.5),0 0 26px rgba(255,60,40,.95);}}
+/* Cinématique de Fureur */
+.fureur-ov{position:fixed;inset:0;z-index:80;pointer-events:none;display:flex;align-items:center;justify-content:center;overflow:hidden;
+  background:radial-gradient(circle at 50% 45%,rgba(0,0,0,.25),rgba(0,0,0,.72));opacity:1;animation:furOvIn .25s ease-out;}
+.fureur-ov.out{opacity:0;transition:opacity .3s ease-in;}
+@keyframes furOvIn{from{opacity:0;}to{opacity:1;}}
+.fureur-flash{position:absolute;inset:0;background:#fff;opacity:0;animation:furFlash .5s ease-out .05s;}
+@keyframes furFlash{0%{opacity:0;}18%{opacity:.9;}100%{opacity:0;}}
+.fureur-streaks{position:absolute;inset:-20%;background:repeating-linear-gradient(115deg,transparent 0 26px,rgba(255,90,50,.16) 26px 30px);animation:furStreaks .9s linear;}
+@keyframes furStreaks{from{transform:translateX(-40px);}to{transform:translateX(40px);}}
+.fu-foe .fureur-streaks{background:repeating-linear-gradient(115deg,transparent 0 26px,rgba(150,60,220,.18) 26px 30px);}
+.fureur-txt{position:relative;font-family:'Playfair Display',Georgia,serif;font-weight:900;font-size:44px;color:#fff;text-align:center;line-height:1.05;
+  text-shadow:0 0 18px #FF3B2F,0 0 40px #FF1E3C,0 3px 6px rgba(0,0,0,.6);transform:scale(1);opacity:1;animation:furTxt .55s cubic-bezier(.2,1.5,.4,1);}
+.fu-foe .fureur-txt{text-shadow:0 0 18px #B24BE0,0 0 40px #8020C0,0 3px 6px rgba(0,0,0,.6);}
+.fureur-txt span{display:block;font-family:'Baloo 2',sans-serif;font-weight:800;font-size:16px;margin-top:6px;color:rgba(255,255,255,.9);text-shadow:0 2px 5px rgba(0,0,0,.7);}
+@keyframes furTxt{0%{transform:scale(.4);opacity:0;}55%{transform:scale(1.12);opacity:1;}100%{transform:scale(1);opacity:1;}}
 /* Badges de statut */
 .stbadges{display:flex;gap:4px;justify-content:center;flex-wrap:wrap;margin-top:6px;min-height:16px;}
 .stbadge{font-size:10px;font-weight:800;font-family:'Baloo 2',sans-serif;border:1.5px solid;border-radius:999px;padding:0 6px;line-height:15px;background:rgba(255,255,255,.72);}
@@ -4520,6 +4546,15 @@ const TYPE_STATUS={
 };
 const ENERGY_ACT=24;   // énergie gagnée quand on agit
 const ENERGY_HIT=12;   // énergie gagnée quand on encaisse
+const FUREUR_MULT=3.8; // multiplicateur de dégâts de l'attaque de Fureur
+// La Fureur se remplit quand on ENCAISSE des dégâts (mécanique de come-back).
+// Encaisser ~65% de ses PV totaux remplit la jauge.
+function gainFureur(side,dmg){
+  if(!battleState||battleState.online||!dmg) return;
+  const max=battleState[side+'MaxHP']||1;
+  const g=Math.round(dmg/max*100*1.5);
+  battleState[side+'Fureur']=Math.min(100,(battleState[side+'Fureur']||0)+g);
+}
 
 function soloMoves(rock){
   const typeInfo=ROCK_TYPES.find(t=>t.key===rock.rockType);
@@ -4636,6 +4671,7 @@ async function initBattle(playerRock){
     playerSpriteUrl, botSpriteUrl:null,
     shieldActive:false, critPending:false,
     playerEnergy:0, botEnergy:0, playerStatus:[], botStatus:[], turnCount:0,
+    playerFureur:0, botFureur:0,
   };
   if(arena){
     battleState.arena=true;
@@ -4670,6 +4706,18 @@ function addCombatLog(text,cls='neutral'){
   if(battleState.log.length>4) battleState.log.pop();
 }
 
+function fureurCinematic(side){
+  return new Promise(res=>{
+    const isP=side==='player';
+    const rock=isP?battleState.playerRock:battleState.botRock;
+    const ov=document.createElement('div'); ov.className='fureur-ov '+(isP?'fu-mine':'fu-foe');
+    ov.innerHTML=`<div class="fureur-flash"></div><div class="fureur-streaks"></div><div class="fureur-txt">🔥 FUREUR 🔥<span>${rock.name}</span></div>`;
+    document.body.appendChild(ov);
+    if(navigator.vibrate) navigator.vibrate([30,40,80,40,140]);
+    setTimeout(()=>ov.classList.add('out'),840);
+    setTimeout(()=>{ ov.remove(); res(); },1160);
+  });
+}
 function announceTurn(kind){
   return new Promise(res=>{
     const prev=document.querySelector('.turn-banner'); if(prev) prev.remove();
@@ -4806,6 +4854,26 @@ async function playerAction(moveId){
     setTimeout(beginBotTurn,800);
     return;
   }
+  if(moveId==='fureur'){
+    if((battleState.playerFureur||0)<100){ showToast('🔥 Jauge de Fureur pas encore pleine !'); return; }
+    battleState.playerFureur=0;
+    battleState.turn='animating'; render();
+    const pr=battleState.playerRock;
+    await fureurCinematic('player');
+    const tMult=typeMultiplier(pr.rockType,battleState.botRock.rockType);
+    const dmg=Math.max(1,Math.round(calcDmg(pr.atk,battleState.botRock.def,FUREUR_MULT*tMult)));
+    await playAttackAnim('playerSprite','botSprite',{dmg,crit:true,ultimate:true,effective:tMult>1?'super':tMult<1?'weak':null,color:attackColor(pr,'ultimate')});
+    battleState.botHP=Math.max(0,battleState.botHP-dmg);
+    gainFureur('bot',dmg);
+    applyMoveStatus('player','bot',pr,((TYPE_STATUS[pr.rockType]||{}).turns||2)+1);
+    battleState.botEnergy=Math.min(100,(battleState.botEnergy||0)+ENERGY_HIT);
+    const eff=tMult>1?' (super efficace !)':tMult<1?' (peu efficace...)':'';
+    addCombatLog(`🔥 FUREUR ! ${pr.name} déchaîne sa rage : -${dmg} PV${eff}`,'dmg-bot');
+    if(battleState.botHP<=0) return endBattle('player');
+    render();
+    setTimeout(beginBotTurn,850);
+    return;
+  }
   const move=soloMoves(battleState.playerRock).find(m=>m.id===moveId);
   if(!move) return;
   if((battleState.playerEnergy||0)<move.cost){ showToast(`⚡ Il faut ${move.cost} d'énergie pour ça !`); return; }
@@ -4843,6 +4911,7 @@ async function playerAction(moveId){
     addCombatLog(dodged?`💨 ${battleState.botRock.name} esquive l'attaque !`:`✨ ${pr.name} est aveuglé et rate son attaque !`,'neutral');
   } else {
     battleState.botHP=Math.max(0,battleState.botHP-dmg);
+    gainFureur('bot',dmg);
     if(elemental) applyMoveStatus('player','bot',pr, move.kind==='ultimate'?((TYPE_STATUS[pr.rockType]||{}).turns||2)+1:null);
     let msg;
     if(move.kind==='ultimate') msg=`🌟 ULTIME ! ${pr.name} déchaîne sa puissance`;
@@ -4926,6 +4995,23 @@ async function botAct(){
     if(battleState.botHP<=0) return endBattle('player');
     return setTimeout(beginPlayerTurn,850);
   }
+  // Fureur du bot : déchaînée dès que la jauge est pleine
+  if((battleState.botFureur||0)>=100){
+    battleState.botFureur=0;
+    await fureurCinematic('bot');
+    const tMult=typeMultiplier(bot.rockType,battleState.playerRock.rockType);
+    const dmg=Math.max(1,Math.round(calcDmg(bot.atk,battleState.playerRock.def,FUREUR_MULT*tMult)));
+    await playAttackAnim('botSprite','playerSprite',{dmg,ultimate:true,effective:tMult>1?'super':tMult<1?'weak':null,color:attackColor(bot,'ultimate')});
+    battleState.playerHP=Math.max(0,battleState.playerHP-dmg);
+    gainFureur('player',dmg);
+    applyMoveStatus('bot','player',bot,((TYPE_STATUS[bot.rockType]||{}).turns||2)+1);
+    battleState.playerEnergy=Math.min(100,(battleState.playerEnergy||0)+ENERGY_HIT);
+    const eff=tMult>1?' (super efficace !)':tMult<1?' (peu efficace...)':'';
+    addCombatLog(`🔥 FUREUR ! ${bot.name} déchaîne sa rage : -${dmg} PV${eff}`,'dmg-player');
+    if(battleState.playerHP<=0) return endBattle('bot');
+    render();
+    return setTimeout(beginPlayerTurn,850);
+  }
   const elemental=move.kind!=='basic';
   const tMult=elemental?typeMultiplier(bot.rockType,battleState.playerRock.rockType):1;
   const miss=hasStatus('bot','aveugle')&&Math.random()<0.35;
@@ -4952,6 +5038,7 @@ async function botAct(){
     addCombatLog(dodged?`💨 ${battleState.playerRock.name} esquive l'attaque !`:`✨ ${bot.name} est aveuglé et rate son attaque !`,'neutral');
   } else {
     battleState.playerHP=Math.max(0,battleState.playerHP-dmg);
+    gainFureur('player',dmg);
     if(elemental) applyMoveStatus('bot','player',bot, move.kind==='ultimate'?((TYPE_STATUS[bot.rockType]||{}).turns||2)+1:null);
     let msg;
     if(move.kind==='ultimate') msg=`🌟 ULTIME ! ${bot.name} déchaîne sa puissance`;
@@ -5026,11 +5113,15 @@ function combatPickScreen(){
 // Boutons d'action (rebâtis sans images -> pas de scintillement)
 function combatMovesHtml(){
   const s=battleState; const busy=s.turn!=='player'; const isSolo=!s.online;
-  if(isSolo) return soloMoves(s.playerRock).map(m=>{
-    const e=s.playerEnergy||0; const locked=e<m.cost; const dis=busy||locked;
-    const cls=m.kind==='ultimate'?'btn-ultimate':m.kind==='special'?'btn-purple':'btn-gold';
-    return `<button class="btn ${cls} mv-btn" ${dis?'disabled':''} style="${dis?'opacity:.42;':''}" data-action="combatMove" data-move="${m.id}">${m.label}${m.cost?`<span class="mv-cost${locked?'':' ready'}">${m.cost}⚡</span>`:''}</button>`;
-  }).join('');
+  if(isSolo){
+    const moves=soloMoves(s.playerRock).map(m=>{
+      const e=s.playerEnergy||0; const locked=e<m.cost; const dis=busy||locked;
+      const cls=m.kind==='ultimate'?'btn-ultimate':m.kind==='special'?'btn-purple':'btn-gold';
+      return `<button class="btn ${cls} mv-btn" ${dis?'disabled':''} style="${dis?'opacity:.42;':''}" data-action="combatMove" data-move="${m.id}">${m.label}${m.cost?`<span class="mv-cost${locked?'':' ready'}">${m.cost}⚡</span>`:''}</button>`;
+    }).join('');
+    const fu=(s.playerFureur||0)>=100 ? `<button class="btn btn-fureur mv-btn" ${busy?'disabled style="opacity:.5;"':''} data-action="combatMove" data-move="fureur">🔥 FUREUR</button>` : '';
+    return fu+moves;
+  }
   return getAvailableMoves(s.playerRock).map(m=>{
     const used=(m.id==='special'&&s.playerSpecialUsed)||(m.id==='ultimate'&&s.playerUltimateUsed);
     const cls=m.id==='ultimate'?'btn-ultimate':m.id==='special'?'btn-purple':'btn-gold';
@@ -5057,6 +5148,9 @@ function patchCombat(){
       const e=Math.max(0,Math.min(100,s[side+'Energy']||0)), full=e>=100;
       const nf=card.querySelector('.nrg-fill'); if(nf){ nf.style.width=e+'%'; nf.classList.toggle('full',full); }
       const nl=card.querySelector('.nrg-lbl'); if(nl){ nl.textContent='⚡'+e; nl.classList.toggle('full',full); }
+      const f=Math.max(0,Math.min(100,s[side+'Fureur']||0)), ffull=f>=100;
+      const ff=card.querySelector('.fur-fill'); if(ff){ ff.style.width=f+'%'; ff.classList.toggle('full',ffull); }
+      const fl=card.querySelector('.fur-lbl'); if(fl){ fl.textContent='🔥'+f; fl.classList.toggle('full',ffull); }
       const sb=card.querySelector('.stbadges'); if(sb){ const arr=s[side+'Status']||[]; sb.innerHTML=arr.map(st=>{const d=STATUS_DEFS[st.kind]||{icon:'?',color:'#fff'};return `<span class="stbadge" style="border-color:${d.color};color:${d.color};">${d.icon}<i>${st.turns}</i></span>`;}).join(''); }
     }
   });
@@ -5102,6 +5196,7 @@ function combatFightScreen(){
   const isSolo=!s.online;
   const statBadges=(side)=>{ if(!isSolo) return ''; const arr=s[side+'Status']||[]; if(!arr.length) return '<div class="stbadges"></div>'; return `<div class="stbadges">`+arr.map(st=>{const d=STATUS_DEFS[st.kind]||{icon:'?',name:'',color:'#fff'};return `<span class="stbadge" style="border-color:${d.color};color:${d.color};">${d.icon}<i>${st.turns}</i></span>`;}).join('')+`</div>`; };
   const nrgBar=(side)=>{ if(!isSolo) return ''; const e=Math.max(0,Math.min(100,s[side+'Energy']||0)); const full=e>=100; return `<div class="nrg-wrap"><div class="nrg-bg"><div class="nrg-fill${full?' full':''}" style="width:${e}%;"></div></div><span class="nrg-lbl${full?' full':''}">⚡${e}</span></div>`; };
+  const furBar=(side)=>{ if(!isSolo) return ''; const f=Math.max(0,Math.min(100,s[side+'Fureur']||0)); const full=f>=100; return `<div class="fur-wrap"><div class="fur-bg"><div class="fur-fill${full?' full':''}" style="width:${f}%;"></div></div><span class="fur-lbl${full?' full':''}">🔥${f}</span></div>`; };
 
   return `<div class="cfx">
     <div class="cfx-bg"></div>
@@ -5121,6 +5216,7 @@ function combatFightScreen(){
         <div class="bcard-hprow"><b>${s.botHP}</b>/<span>${s.botMaxHP} PV</span></div>
         <div class="arena-bar-bg"><div class="arena-bar-fill hp-shine" style="width:${bPct*100}%;background:${hpBarColor(bPct)};"></div></div>
         ${nrgBar('bot')}
+        ${furBar('bot')}
         ${statBadges('bot')}
       </div>
       <div class="cfx-vs"><span class="cfx-vs-ring"></span><span class="cfx-vs-pulse"></span><b>VS</b></div>
@@ -5134,6 +5230,7 @@ function combatFightScreen(){
         <div class="bcard-hprow"><b>${s.playerHP}</b>/<span>${s.playerMaxHP} PV</span></div>
         <div class="arena-bar-bg"><div class="arena-bar-fill hp-shine" style="width:${pPct*100}%;background:${hpBarColor(pPct)};"></div></div>
         ${nrgBar('player')}
+        ${furBar('player')}
         ${statBadges('player')}
       </div>
     </div>
