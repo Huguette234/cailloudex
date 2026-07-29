@@ -676,32 +676,28 @@ nav{display:flex;gap:8px;padding:10px 14px max(14px,env(safe-area-inset-bottom))
 .chest-body{position:absolute;bottom:0;left:6px;right:6px;height:70px;border-radius:7px 7px 13px 13px;z-index:2;
   background:linear-gradient(180deg,var(--c1),var(--c2) 78%);
   box-shadow:inset 0 -8px 14px rgba(0,0,0,.32),inset 0 4px 7px rgba(255,255,255,.28),0 8px 18px rgba(0,0,0,.34);}
-.chest-body::before{content:'';position:absolute;left:0;right:0;top:20px;height:2px;background:rgba(0,0,0,.16);box-shadow:0 12px 0 rgba(0,0,0,.12);}
-.chest-inside{position:absolute;left:8px;right:8px;top:2px;height:16px;border-radius:6px 6px 2px 2px;z-index:1;opacity:0;
-  background:linear-gradient(180deg,rgba(20,10,0,.6),rgba(60,40,10,.3));box-shadow:inset 0 3px 6px rgba(0,0,0,.6);}
-.chest.open .chest-inside{opacity:1;transition:opacity .25s .18s;}
-/* Sangles verticales métalliques */
-.chest-strap{position:absolute;top:2px;bottom:6px;width:15px;border-radius:3px;z-index:3;
+/* Intérieur sombre révélé quand le couvercle se soulève */
+.chest-inside{position:absolute;left:7px;right:7px;top:0;height:22px;border-radius:8px 8px 2px 2px;z-index:1;opacity:0;
+  background:linear-gradient(180deg,rgba(25,14,2,.75),rgba(70,46,12,.4));box-shadow:inset 0 4px 8px rgba(0,0,0,.7);}
+.chest.open .chest-inside{opacity:1;transition:opacity .2s .12s;}
+/* Sangles verticales métalliques (corps) */
+.chest-strap{position:absolute;top:3px;bottom:7px;width:15px;border-radius:3px;z-index:3;
   background:linear-gradient(90deg,rgba(0,0,0,.35),var(--strap) 30%,var(--metal) 50%,var(--strap) 70%,rgba(0,0,0,.35));
   box-shadow:0 0 3px rgba(0,0,0,.4);}
-/* Ferrures d'angle */
-.chest-corner{position:absolute;width:15px;height:15px;z-index:4;background:var(--metal);box-shadow:inset 0 0 3px rgba(0,0,0,.5);}
-.chest-corner::after{content:'';position:absolute;left:4px;top:4px;width:5px;height:5px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#fff,rgba(0,0,0,.4));}
-.chest-corner.bl{left:6px;bottom:0;border-radius:0 8px 0 13px;}
-.chest-corner.br{right:6px;bottom:0;border-radius:8px 0 13px 0;}
 /* Couvercle bombé */
-.chest-lid{position:absolute;top:0;left:2px;right:2px;height:56px;border-radius:26px 26px 4px 4px;transform-origin:50% 92%;
-  transition:transform .6s cubic-bezier(.34,1.45,.5,1);z-index:6;
+.chest-lid{position:absolute;top:0;left:2px;right:2px;height:52px;border-radius:26px 26px 4px 4px;transform-origin:50% 100%;
+  transition:transform .55s cubic-bezier(.34,1.4,.5,1);z-index:6;
   background:linear-gradient(180deg,var(--c1) 5%,var(--c2) 95%);
   box-shadow:inset 0 6px 11px rgba(255,255,255,.4),inset 0 -4px 8px rgba(0,0,0,.3),0 -2px 6px rgba(0,0,0,.18);}
-.chest-lid::before{content:'';position:absolute;left:14%;right:14%;top:6px;height:10px;border-radius:50%;background:rgba(255,255,255,.35);filter:blur(2px);}
+.chest-lid::before{content:'';position:absolute;left:14%;right:14%;top:7px;height:9px;border-radius:50%;background:rgba(255,255,255,.35);filter:blur(2px);}
 .chest-rim{position:absolute;left:0;right:0;bottom:0;height:9px;border-radius:0 0 4px 4px;z-index:1;
   background:linear-gradient(180deg,var(--metal),var(--strap));box-shadow:inset 0 1px 0 rgba(255,255,255,.4),0 1px 2px rgba(0,0,0,.35);}
-.chest.open .chest-lid{transform:rotateX(-125deg);}
+/* Ouverture : le couvercle se soulève et bascule légèrement en arrière (reste attaché) */
+.chest.open .chest-lid{transform:translateY(-16px) rotateX(-52deg);}
 /* Serrure */
-.chest-lock{position:absolute;left:50%;top:44px;transform:translateX(-50%);width:24px;height:28px;border-radius:5px;z-index:7;
-  background:linear-gradient(180deg,#FFE79A,#C9931A);box-shadow:0 2px 4px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.7);transition:opacity .2s;}
-.chest-lock::after{content:'';position:absolute;left:50%;top:10px;transform:translateX(-50%);width:6px;height:10px;border-radius:2px;background:rgba(80,52,8,.8);box-shadow:0 -3px 0 -1px rgba(80,52,8,.8);}
+.chest-lock{position:absolute;left:50%;top:40px;transform:translateX(-50%);width:24px;height:28px;border-radius:5px;z-index:7;
+  background:linear-gradient(180deg,#FFE79A,#C9931A);box-shadow:0 2px 4px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.7);transition:opacity .25s;}
+.chest-lock::after{content:'';position:absolute;left:50%;top:9px;transform:translateX(-50%);width:6px;height:11px;border-radius:2px;background:rgba(80,52,8,.85);}
 .chest.open .chest-lock{opacity:0;}
 /* Étincelles + pièces qui jaillissent */
 .chest-spark{position:absolute;width:8px;height:8px;border-radius:50%;top:40%;left:50%;margin:-4px 0 0 -4px;opacity:0;z-index:8;}
@@ -5157,8 +5153,6 @@ function combatResultScreen(){
           <div class="chest-body">
             <span class="chest-strap" style="left:24px;"></span>
             <span class="chest-strap" style="right:24px;"></span>
-            <span class="chest-corner bl"></span>
-            <span class="chest-corner br"></span>
           </div>
           <div class="chest-lid">
             <span class="chest-strap" style="left:24px;top:6px;bottom:2px;"></span>
