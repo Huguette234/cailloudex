@@ -2756,6 +2756,7 @@ function homeScreen(){
       <span data-action="goto" data-screen="combat-pick">⚔️ Combat</span>
       <span data-action="goto" data-screen="splash">🌊 Plouf</span>
       <span data-action="openMap">🗺️ Carte</span>
+      <span data-action="openStudio">🧵 Studio</span>
       <span data-action="goto" data-screen="friends">👥 Amis</span>
       <span data-action="goto" data-screen="shop">🛒 Boutique</span>
       <span data-action="account">⚙️ Compte</span>
@@ -5640,6 +5641,8 @@ document.addEventListener('click',(e)=>{
     if(screen==='home') checkPendingChallenge().then(render);
   }
   else if(action==='openMap'){ openMap(); }
+  // Studio IA : page autonome, même origine (la session Supabase y est déjà valide)
+  else if(action==='openStudio'){ location.href='./studio.html'; }
   else if(action==='closeMap'){ closeMap(); }
   else if(action==='dexType'){ dexType=t.dataset.type; render(); }
   else if(action==='dexBack'){ dexType=null; render(); }
