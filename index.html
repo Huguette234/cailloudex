@@ -657,6 +657,15 @@ nav{display:flex;gap:8px;padding:10px 14px max(14px,env(safe-area-inset-bottom))
 .diff-desc{font-family:'Nunito',sans-serif;font-size:11.5px;color:rgba(44,42,46,.6);text-align:center;margin-bottom:14px;}
 .diff-desc b{color:var(--goldd);}
 .cp-pill{font-family:'Baloo 2',sans-serif;font-weight:800;font-size:11px;color:var(--goldd);cursor:pointer;border:1px solid rgba(154,116,20,.45);border-radius:20px;padding:4px 10px;white-space:nowrap;background:rgba(255,255,255,.5);}
+/* Classement des dresseurs */
+.lb-list{display:flex;flex-direction:column;gap:7px;max-height:56vh;overflow-y:auto;}
+.lb-row{display:flex;align-items:center;gap:10px;background:linear-gradient(160deg,rgba(255,255,255,.82),rgba(255,255,255,.64));border:1px solid rgba(255,255,255,.9);border-radius:14px;padding:8px 12px;box-shadow:0 4px 12px rgba(0,0,0,.14);}
+.lb-row.me{border-color:var(--goldd);background:linear-gradient(160deg,rgba(255,231,154,.6),rgba(255,244,214,.5));box-shadow:0 4px 14px rgba(184,142,20,.3);}
+.lb-rank{font-family:'Playfair Display',Georgia,serif;font-weight:900;font-size:18px;color:var(--txt);min-width:30px;text-align:center;}
+.lb-name{flex:1;font-family:'Baloo 2',sans-serif;font-weight:800;font-size:14px;color:var(--txt);line-height:1.15;overflow:hidden;text-overflow:ellipsis;}
+.lb-sub{font-family:'Nunito',sans-serif;font-weight:700;font-size:10.5px;color:rgba(44,42,46,.55);margin-top:1px;}
+.lb-score{font-family:'Nunito',sans-serif;font-size:11px;color:rgba(44,42,46,.55);white-space:nowrap;text-align:right;}
+.lb-score b{font-family:'Playfair Display',Georgia,serif;font-size:15px;color:var(--txt);}
 /* ---- Coffre de récompense de fin de combat ---- */
 .chest-wrap{display:flex;flex-direction:column;align-items:center;margin:4px 0 8px;}
 .chest{width:150px;height:124px;position:relative;cursor:pointer;}
@@ -1607,6 +1616,19 @@ async function setUsername(name){
 let friendsList=[];
 let pendingChallenge=null;
 let friendStats=null;
+let leaderboard=null; // 'loading' | tableau classé | null
+async function openLeaderboard(){
+  if(!session||!sb) return;
+  leaderboard='loading'; render();
+  const rows=[{ username:meta.username||'Toi', level:getLevelInfo(meta.xp||0).level, wins:meta.wins||0, losses:meta.losses||0, rockCount:dex.length, isMe:true }];
+  await Promise.all((friendsList||[]).map(async f=>{
+    let r=null;
+    try{ const { data }=await sb.rpc('get_friend_stats',{ friend_user_id:f.user_id }); r=Array.isArray(data)?data[0]:data; }catch(e){}
+    rows.push({ username:f.username, level:getLevelInfo(r?(r.xp||0):0).level, wins:r?(r.wins||0):0, losses:r?(r.losses||0):0, rockCount:r?(r.rock_count||0):0, isMe:false });
+  }));
+  rows.sort((a,b)=>(b.wins-a.wins)||(b.level-a.level)||(b.rockCount-a.rockCount));
+  leaderboard=rows; render();
+}
 async function viewFriendStats(friendId,friendUsername){
   if(!session||!sb) return;
   try{
@@ -1673,7 +1695,10 @@ function friendsScreen(){
         : `<button class="btn btn-gold" style="margin-bottom:16px;" data-action="enablePush">🔔 Activer les notifs de défi</button>`)
     : `<p style="text-align:center;font-family:'Nunito',sans-serif;font-size:11px;color:rgba(44,42,46,.45);margin:0 0 12px;line-height:1.5;">🔕 Pour recevoir les défis en notif sur iPhone, ajoute l'app à ton écran d'accueil.</p>`;
   return `<div class="combat-pick-wrap">
-    <div class="combat-pick-title">👥 MES AMIS</div>
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:10px;">
+      <div class="combat-pick-title" style="margin-bottom:0;">👥 MES AMIS</div>
+      <span class="cp-pill" data-action="openLeaderboard">🏆 Classement</span>
+    </div>
     ${pushBtn}
     <div class="online-join-col">
       <input class="input-field" id="addFriendInput" type="text" maxlength="20" placeholder="Pseudo de ton ami" autocomplete="off">
@@ -5615,6 +5640,28 @@ function render(){
     </div>`;
     document.body.appendChild(ov2);
   }
+  if(leaderboard){
+    const ovL=document.createElement('div'); ovL.className='overlay'; ovL.dataset.action='closeLeaderboard';
+    let inner;
+    if(leaderboard==='loading'){
+      inner=`<div class="overlay-inner"><div class="combat-pick-title">🏆 CLASSEMENT</div><p style="text-align:center;font-family:'Nunito',sans-serif;font-size:13px;color:rgba(44,42,46,.6);margin-top:18px;">Chargement du classement...</p></div>`;
+    } else {
+      const medals=['🥇','🥈','🥉'];
+      const rowsHtml=leaderboard.map((r,i)=>`<div class="lb-row${r.isMe?' me':''}">
+        <div class="lb-rank">${medals[i]||('#'+(i+1))}</div>
+        <div class="lb-name">@${r.username}${r.isMe?' <span style="font-size:9px;color:var(--goldd);font-weight:800;">(toi)</span>':''}<div class="lb-sub">Niv.${r.level} · 🪨 ${r.rockCount}</div></div>
+        <div class="lb-score"><b>${r.wins}</b> V · <b>${r.losses}</b> D</div>
+      </div>`).join('');
+      inner=`<div class="overlay-inner">
+        <div class="combat-pick-title">🏆 CLASSEMENT</div>
+        <div class="combat-pick-sub" style="margin-bottom:10px;">Les dresseurs classés par victoires</div>
+        <div class="lb-list">${rowsHtml}</div>
+        ${leaderboard.length<2?`<p style="text-align:center;font-family:'Nunito',sans-serif;font-size:12px;color:rgba(44,42,46,.5);margin-top:12px;">Ajoute des amis pour remplir le classement !</p>`:''}
+        <div class="btn-row" style="margin-top:16px;"><button class="btn btn-gold" data-action="closeLeaderboard">FERMER</button></div>
+      </div>`;
+    }
+    ovL.innerHTML=inner; document.body.appendChild(ovL);
+  }
   // Restaure le défilement de l'overlay (si toujours ouvert) pour un rendu fluide.
   if(_ovScroll){ const nov=document.querySelector('.overlay'); if(nov) nov.scrollTop=_ovScroll; }
 }
@@ -6087,6 +6134,8 @@ document.addEventListener('click',(e)=>{
   else if(action==='dismissChallengeBtn'){ dismissChallenge(); }
   else if(action==='viewFriendStats'){ viewFriendStats(t.dataset.id,t.dataset.name); }
   else if(action==='closeFriendStats'){ friendStats=null; render(); }
+  else if(action==='openLeaderboard'){ openLeaderboard(); }
+  else if(action==='closeLeaderboard'){ leaderboard=null; render(); }
   else if(action==='generateCharacter'){
     const rockId=t.dataset.id;
     const rock=rockId ? findRockById(rockId) : revealRock;
@@ -6283,8 +6332,8 @@ function goBackInApp(){
     return true;
   }
   // 3) Fiches / panneaux rendus (fiche caillou, perso IA, stats ami)
-  if(detailRock||characterResult||friendStats){
-    detailRock=null; characterResult=null; friendStats=null;
+  if(detailRock||characterResult||friendStats||leaderboard){
+    detailRock=null; characterResult=null; friendStats=null; leaderboard=null;
     render();
     return true;
   }
