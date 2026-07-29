@@ -3446,9 +3446,19 @@ let appAnnouncement=null;
 function escHtml(s){ return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function isAdmin(){ try{ return !!(session&&session.user&&(session.user.email||'').toLowerCase()===ADMIN_EMAIL.toLowerCase()); }catch(e){ return false; } }
 function adminPwHash(){ try{ return localStorage.getItem('cdx_admin_pw')||''; }catch(e){ return ''; } }
+// Confirmation en deux touches plutôt qu'un confirm() : la boîte de dialogue
+// native n'apparaît pas dans certaines applications installées, ce qui rendait
+// la réinitialisation impossible.
+let _adminForgotArmed=0;
 function adminForgotPw(){
   if(!isAdmin()) return;
-  if(!confirm('Réinitialiser le mot de passe admin sur cet appareil ? Tu pourras en créer un nouveau juste après.')) return;
+  const now=Date.now();
+  if(now-_adminForgotArmed>5000){
+    _adminForgotArmed=now;
+    showToast('Touche encore pour réinitialiser le mot de passe admin');
+    return;
+  }
+  _adminForgotArmed=0;
   try{ localStorage.removeItem('cdx_admin_pw'); }catch(e){}
   adminUnlocked=false; showToast('Mot de passe réinitialisé — crée-en un nouveau.'); render();
 }
@@ -3613,7 +3623,7 @@ function adminScreen(){
       <input class="input-field" id="adminPwInput" type="password" placeholder="Mot de passe" autocomplete="off">
       <button class="btn btn-gold" style="margin-top:10px;" data-action="adminSubmitPw">${first?'Créer et entrer':'Déverrouiller'}</button>
       <button class="btn btn-ghost" style="margin-top:8px;" data-action="goto" data-screen="account">← Retour</button>
-      ${first?'':`<div style="text-align:center;margin-top:12px;"><span data-action="adminForgotPw" style="font-family:'Nunito',sans-serif;font-size:11px;color:rgba(255,255,255,.4);text-decoration:underline;cursor:pointer;">Mot de passe oublié ? Réinitialiser</span></div>`}</div>`;
+      ${first?'':`<div style="text-align:center;margin-top:14px;"><span data-action="adminForgotPw" style="font-family:'Nunito',sans-serif;font-weight:700;font-size:13px;color:var(--goldd);text-decoration:underline;cursor:pointer;padding:8px;display:inline-block;">Mot de passe oublié ? Réinitialiser</span></div>`}</div>`;
   }
   const tb=(id,label)=>`<button class="admin-tab${adminTabId===id?' active':''}" data-action="adminTab" data-tab="${id}">${label}</button>`;
   return `<div class="admin-wrap">
