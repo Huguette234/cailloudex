@@ -1408,7 +1408,7 @@ const RECYCLE_VALUE = { commun:3, rare:8, epique:18, legendaire:40, mythique:80,
 /* ===== CAILLOUX SECRETS (très rares, mêmes pour tout le monde) =====
    À chaque scan valide, infime chance de tomber sur l'un d'eux (parmi ceux
    qu'on ne possède pas encore). Identité fixe → reconnaissables entre joueurs. */
-const SPECIAL_CHANCE = 0.006; // ~0.6% par scan qu'un secret apparaisse
+const SPECIAL_CHANCE = 0.01; // ~1% par scan qu'un secret apparaisse
 function specialArt(emoji,c1,c2){
   const svg=`<svg xmlns='http://www.w3.org/2000/svg' width='320' height='200'><defs><radialGradient id='g' cx='50%' cy='40%' r='80%'><stop offset='0%' stop-color='${c1}'/><stop offset='60%' stop-color='${c1}'/><stop offset='100%' stop-color='${c2}'/></radialGradient></defs><rect width='320' height='200' fill='url(#g)'/><g opacity='.35' fill='#fff'><circle cx='40' cy='40' r='2'/><circle cx='280' cy='60' r='2.5'/><circle cx='300' cy='150' r='2'/><circle cx='60' cy='160' r='2'/><circle cx='160' cy='30' r='1.6'/></g><text x='160' y='142' font-size='104' text-anchor='middle'>${emoji}</text></svg>`;
   return 'data:image/svg+xml,'+encodeURIComponent(svg);
