@@ -47,16 +47,23 @@ const SCENE_PRESETS: Record<string, string> = {
 };
 
 /**
- * Personne de référence fabriquée par l'IA. Prompt + graine constants : la
- * même personne, la même pose et le même mur ressortent à chaque appel.
- * Elle est ensuite enregistrée côté app et sert de scène à tous les essayages.
+ * Personne de référence fabriquée par l'IA. Le prompt est composé à partir de
+ * deux constantes — la silhouette et le décor — et la graine ne bouge pas : un
+ * même couple (silhouette, décor) redonne toujours la même personne, la même
+ * pose et le même mur. Elle est ensuite enregistrée côté app et sert de scène
+ * à tous les essayages.
  */
-const MODEL_PRESETS: Record<string, string> = {
-  neutre:
-    'Full body fashion lookbook photo of one adult person standing straight and facing the camera, arms relaxed along the body, neutral friendly expression, wearing a plain white t-shirt and plain light grey shorts, entire body visible from head to shoes, centered, plain smooth light grey concrete wall background, soft even daylight, no props, no text, no logo, photorealistic, sharp focus',
-  studio:
-    'Full body fashion lookbook photo of one adult person standing straight and facing the camera, arms relaxed along the body, neutral friendly expression, wearing a plain white t-shirt and plain light grey shorts, entire body visible from head to shoes, centered, seamless off-white studio backdrop, soft softbox lighting, no props, no text, no logo, photorealistic, sharp focus',
+const MODEL_BODIES: Record<string, string> = {
+  homme: 'one adult man, average athletic build, short dark hair, plain white t-shirt and plain light grey shorts',
+  femme: 'one adult woman, average build, shoulder-length dark hair, plain white t-shirt and plain light grey shorts',
 };
+const MODEL_BACKDROPS: Record<string, string> = {
+  neutre: 'plain smooth light grey concrete wall background, soft even daylight',
+  studio: 'seamless off-white studio backdrop, soft even softbox lighting',
+};
+function buildModelPrompt(gender: string, backdrop: string) {
+  return `Full body fashion lookbook photo of ${MODEL_BODIES[gender]}, standing straight and facing the camera, arms relaxed along the body, neutral friendly expression, entire body visible from head to shoes, centered in frame, ${MODEL_BACKDROPS[backdrop]}, no props, no text, no logo, photorealistic, sharp focus`;
+}
 
 /** Consigne figée pour le repli "essayage" via un modèle d'édition multi-images. */
 const TRYON_FALLBACK_PROMPT =
@@ -153,7 +160,10 @@ Deno.serve(async (req) => {
     const scene = body?.scene_image;
     const category = CATEGORIES.has(body?.category) ? body.category : 'auto';
     const presetKey = typeof body?.preset === 'string' && SCENE_PRESETS[body.preset] ? body.preset : 'beton';
-    const modelKey = typeof body?.preset === 'string' && MODEL_PRESETS[body.preset] ? body.preset : 'neutre';
+    const modelKey = typeof body?.preset === 'string' && MODEL_BACKDROPS[body.preset] ? body.preset : 'neutre';
+    const genderKey = typeof body?.gender === 'string' && MODEL_BODIES[body.gender] ? body.gender : 'homme';
+    // Photo du vêtement posé à plat par défaut : c'est l'usage de l'app.
+    const photoType = ['auto', 'model', 'flat-lay'].includes(body?.garment_photo_type) ? body.garment_photo_type : 'flat-lay';
 
     if (mode !== 'model' && !isUsableImage(garment)) {
       return new Response(JSON.stringify({ error: 'missing_garment' }), { status: 400, headers: corsHeaders });
@@ -163,7 +173,7 @@ Deno.serve(async (req) => {
 
     if (mode === 'model') {
       const modelBody = {
-        prompt: MODEL_PRESETS[modelKey],
+        prompt: buildModelPrompt(genderKey, modelKey),
         seed: STUDIO_SEED,
         image_size: 'portrait_4_3',
         num_inference_steps: 28,
@@ -184,8 +194,11 @@ Deno.serve(async (req) => {
         model_image: scene,
         garment_image: garment,
         category,
-        mode: 'balanced',
-        garment_photo_type: 'auto',
+        // 'quality' conserve mieux la longueur, la coupe et les détails
+        // imprimés que 'balanced' ; la graine reste figée, donc le rendu
+        // demeure reproductible.
+        mode: 'quality',
+        garment_photo_type: photoType,
         num_samples: 1,
         seed: STUDIO_SEED,
         output_format: 'jpeg',
@@ -237,6 +250,7 @@ Deno.serve(async (req) => {
         engine: out.engine,
         mode,
         preset: mode === 'scene' ? presetKey : mode === 'model' ? modelKey : null,
+        gender: mode === 'model' ? genderKey : null,
         seed: STUDIO_SEED,
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
