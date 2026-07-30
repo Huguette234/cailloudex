@@ -788,6 +788,8 @@ nav{display:flex;gap:8px;padding:10px 14px max(14px,env(safe-area-inset-bottom))
 .cfx-sparks{position:absolute;inset:0;z-index:1;pointer-events:none;overflow:hidden;}
 .cfx-spark{position:absolute;border-radius:50%;opacity:0;animation:cfxSparkRise linear infinite;}
 @keyframes cfxSparkRise{0%{transform:translateY(0) scale(1);opacity:0;}12%{opacity:.9;}80%{opacity:.5;}100%{transform:translateY(-78vh) scale(.4);opacity:0;}}
+.cfx-terrain{position:absolute;inset:0;z-index:0;pointer-events:none;opacity:.9;}
+.terrain-chip{align-self:center;font-family:'Baloo 2',sans-serif;font-weight:800;font-size:12px;color:var(--txt);background:rgba(255,255,255,.72);border:1px solid rgba(44,42,46,.14);border-radius:999px;padding:4px 14px;box-shadow:0 3px 9px rgba(0,0,0,.15);margin-bottom:2px;white-space:nowrap;}
 .cfx-content{position:relative;z-index:2;display:flex;flex-direction:column;gap:9px;flex:1;}
 .bfield{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:6px;margin:4px 0 2px;}
 .bcard{background:linear-gradient(180deg,rgba(255,255,255,.88),rgba(255,255,255,.66));border:2.5px solid;border-radius:20px;padding:9px 9px 12px;position:relative;overflow:hidden;backdrop-filter:blur(2px);}
@@ -4630,6 +4632,20 @@ const TYPE_STATUS={
 const ENERGY_ACT=24;   // énergie gagnée quand on agit
 const ENERGY_HIT=12;   // énergie gagnée quand on encaisse
 const FUREUR_MULT=3.8; // multiplicateur de dégâts de l'attaque de Fureur
+
+/* ===== TERRAINS & MÉTÉO (solo) — amplifient/affaiblissent un type ===== */
+const TERRAINS=[
+  { key:'volcan',  label:'🌋 Volcan',       boost:'feu',     weaken:'glace',   bg:'radial-gradient(circle at 50% 120%,rgba(255,90,30,.5),transparent 60%)' },
+  { key:'pluie',   label:'🌧️ Pluie battante', boost:'glace',   weaken:'feu',     bg:'radial-gradient(circle at 50% -10%,rgba(90,150,220,.45),transparent 60%)' },
+  { key:'foret',   label:'🌲 Forêt',        boost:'nature',  weaken:'metal',   bg:'radial-gradient(circle at 50% 120%,rgba(40,170,90,.42),transparent 62%)' },
+  { key:'nuit',    label:'🌙 Pleine lune',  boost:'ombre',   weaken:'lumiere', bg:'radial-gradient(circle at 50% -10%,rgba(120,80,190,.45),transparent 60%)' },
+  { key:'soleil',  label:'☀️ Plein soleil', boost:'lumiere', weaken:'ombre',   bg:'radial-gradient(circle at 50% -10%,rgba(255,220,120,.5),transparent 60%)' },
+  { key:'orage',   label:'⛈️ Orage',        boost:'chaos',   weaken:'nature',  bg:'radial-gradient(circle at 50% -10%,rgba(220,80,180,.42),transparent 60%)' },
+  { key:'mine',    label:'⛏️ Mine de fer',  boost:'metal',   weaken:'chaos',   bg:'radial-gradient(circle at 50% 120%,rgba(150,160,175,.42),transparent 62%)' },
+];
+function pickTerrain(){ return TERRAINS[Math.floor(Math.random()*TERRAINS.length)]; }
+// Facteur de dégâts d'un type sur ce terrain : boosté ×1.3, affaibli ×0.8, sinon 1
+function terrainFactor(terrain,type){ if(!terrain) return 1; if(terrain.boost===type) return 1.3; if(terrain.weaken===type) return 0.8; return 1; }
 // La Fureur se remplit quand on ENCAISSE des dégâts (mécanique de come-back).
 // Encaisser ~65% de ses PV totaux remplit la jauge.
 function gainFureur(side,dmg){
@@ -4743,6 +4759,11 @@ async function initBattle(playerRock){
     usedBuffs.push('💪 Caillou Costaud');
   }
   const bot=makeBotRock(effRock, arena?{ statMult:arenaBotStatMult(arenaRun.wave) }:null);
+  // Terrain aléatoire : amplifie/affaiblit un type (appliqué à l'attaque effective)
+  const terrain=pickTerrain();
+  const pTF=terrainFactor(terrain,effRock.rockType), bTF=terrainFactor(terrain,bot.rockType);
+  if(pTF!==1) effRock={...effRock, atk:Math.max(1,Math.round(effRock.atk*pTF))};
+  if(bTF!==1) bot.atk=Math.max(1,Math.round(bot.atk*bTF));
   const maxHp=combatMaxHP(effRock.def);
   battleState={
     playerRock:effRock, botRock:bot,
@@ -4767,6 +4788,9 @@ async function initBattle(playerRock){
     if((meta.inventory?.crit||0)>0){ meta.inventory.crit--; battleState.critPending=true; usedBuffs.push('💥 Frappe Critique'); }
     if(usedBuffs.length){ saveMeta(); setTimeout(()=>showToast('✨ Objets activés : '+usedBuffs.join(', ')),250); }
   }
+  battleState.terrain=terrain;
+  const boostT=ROCK_TYPES.find(t=>t.key===terrain.boost);
+  addCombatLog(`${terrain.label} — le type ${boostT?boostT.label.replace(/^\S+\s/,''):terrain.boost} est amplifié !`,'neutral');
   // Ordre du tour : le plus rapide attaque en premier (égalité → joueur)
   const playerFirst=(effRock.vit||0)>=(bot.vit||0);
   battleState.playerFirst=playerFirst;
@@ -5283,11 +5307,13 @@ function combatFightScreen(){
 
   return `<div class="cfx">
     <div class="cfx-bg"></div>
+    ${s.terrain?`<div class="cfx-terrain" style="background:${s.terrain.bg};"></div>`:''}
     <div class="cfx-glow cfx-glow-foe" style="background:radial-gradient(circle,${botTint}66,transparent 68%);"></div>
     <div class="cfx-glow cfx-glow-mine" style="background:radial-gradient(circle,${playerTint}66,transparent 68%);"></div>
     <div class="cfx-floor"></div>
     <div class="cfx-sparks">${sparks}</div>
     <div class="cfx-content">
+    ${s.terrain?`<div class="terrain-chip">${s.terrain.label}</div>`:''}
     <div class="bfield">
       <div class="bcard bcard-foe" style="border-color:${botHex};box-shadow:0 10px 26px rgba(0,0,0,.5),0 0 22px ${botTint}55,inset 0 0 22px ${botTint}18;">
         <div class="bcard-role"><span class="bcard-role-pill foe">🎯 ADVERSAIRE</span></div>
