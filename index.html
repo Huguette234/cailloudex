@@ -666,6 +666,15 @@ nav{display:flex;gap:8px;padding:10px 14px max(14px,env(safe-area-inset-bottom))
 .lb-sub{font-family:'Nunito',sans-serif;font-weight:700;font-size:10.5px;color:rgba(44,42,46,.55);margin-top:1px;}
 .lb-score{font-family:'Nunito',sans-serif;font-size:11px;color:rgba(44,42,46,.55);white-space:nowrap;text-align:right;}
 .lb-score b{font-family:'Playfair Display',Georgia,serif;font-size:15px;color:var(--txt);}
+/* Rivalité tête-à-tête */
+.rival-box{margin-top:14px;padding:12px 14px;border-radius:16px;background:linear-gradient(160deg,rgba(255,107,53,.12),rgba(196,92,255,.1));border:1.5px solid rgba(196,92,255,.28);}
+.rival-title{font-family:'Baloo 2',sans-serif;font-weight:800;font-size:11px;letter-spacing:.08em;color:var(--goldd);text-align:center;}
+.rival-score{display:flex;align-items:center;justify-content:center;gap:14px;margin:6px 0 2px;font-family:'Playfair Display',Georgia,serif;font-weight:900;font-size:34px;line-height:1;}
+.rival-me{color:#1E8A4C;}
+.rival-them{color:#C0392B;}
+.rival-dash{color:rgba(44,42,46,.4);font-size:24px;}
+.rival-lbl{display:flex;justify-content:center;gap:40px;font-family:'Baloo 2',sans-serif;font-weight:700;font-size:11px;color:rgba(44,42,46,.6);}
+.rival-verdict{text-align:center;font-family:'Nunito',sans-serif;font-size:12px;color:rgba(44,42,46,.72);margin-top:6px;font-style:italic;}
 /* ---- Coffre de récompense de fin de combat ---- */
 .chest-wrap{display:flex;flex-direction:column;align-items:center;margin:4px 0 8px;}
 .chest{width:150px;height:124px;position:relative;cursor:pointer;}
@@ -1638,6 +1647,17 @@ async function viewFriendStats(friendId,friendUsername){
     if(!row){ showToast('❌ Impossible de charger ce profil'); return; }
     friendStats={ username:friendUsername, wins:row.wins||0, losses:row.losses||0, xp:row.xp||0, rockCount:row.rock_count||0 };
     render();
+    // Rivalité : bilan tête-à-tête (ignoré si la table match_history n'existe pas encore)
+    try{
+      const me=session.user.id;
+      const { data:mh } = await sb.from('match_history').select('winner_id')
+        .or(`and(winner_id.eq.${me},loser_id.eq.${friendId}),and(winner_id.eq.${friendId},loser_id.eq.${me})`);
+      if(mh && friendStats && friendStats.username===friendUsername){
+        friendStats.h2hMe=mh.filter(r=>r.winner_id===me).length;
+        friendStats.h2hThem=mh.filter(r=>r.winner_id===friendId).length;
+        render();
+      }
+    }catch(e){}
   }catch(e){ showToast('❌ Erreur: '+(e?.message||e)); }
 }
 async function loadFriendsList(){
@@ -4011,6 +4031,7 @@ async function sendChallenge(friendId,friendUsername){
   showToast(`⚔️ Défi envoyé à ${friendUsername} !`);
   sendPushToFriend(friendId, '⚔️ Défi CaillouDEX !', `${meta.username||'Un joueur'} te défie en combat ! Ouvre l'app pour accepter.`);
   onlineState={ isHost:true, isChallenge:true, targetUsername:friendUsername, roomCode:code,
+    opponentId:friendId, opponentUsername:friendUsername,
     peer:null, conn:null, myRock:null, opponentRock:null, cd:0, botTimer:null, cdTimer:null };
   screen='online-wait'; render();
   const peer=new Peer(code,getPeerConfig());
@@ -4096,7 +4117,7 @@ async function acceptChallenge(){
   hideChallengeNotif();
   try{ await sb.from('challenges').update({ status:'accepted' }).eq('id',ch.id); }catch(e){}
   pendingChallenge=null;
-  joinOnlineSalle(ch.room_code);
+  joinOnlineSalle(ch.room_code, { id:ch.challenger_id, username:ch.challenger_username });
 }
 function dismissChallenge(){
   if(!pendingChallenge) return;
@@ -4107,11 +4128,12 @@ function dismissChallenge(){
   render();
 }
 
-async function joinOnlineSalle(code){
+async function joinOnlineSalle(code, opp){
   try{ await loadPeerJS(); }
   catch(e){ showToast('❌ Module réseau indisponible'); return; }
   await loadIceServers();
   onlineState={ isHost:false, roomCode:code, peer:null, conn:null, diag:'① Recherche du serveur…',
+    opponentId:opp&&opp.id, opponentUsername:opp&&opp.username,
     myRock:null, opponentRock:null, cd:0, botTimer:null, cdTimer:null };
   screen='online-wait'; render();
   const peer=new Peer(getPeerConfig());
@@ -4212,6 +4234,18 @@ function startRematch(){
   screen='online-pick'; render();
 }
 
+// Enregistre une victoire en ligne pour l'historique / les rivalités (fire-and-forget).
+// Seul le gagnant écrit une ligne → un seul enregistrement par match. Ignoré si la
+// table n'existe pas encore ou si l'adversaire n'est pas un ami identifié.
+function recordOnlineWin(){
+  try{
+    if(!session||!sb||!onlineState||!onlineState.opponentId) return;
+    sb.from('match_history').insert({
+      winner_id:session.user.id, winner_username:meta.username||'Joueur',
+      loser_id:onlineState.opponentId, loser_username:onlineState.opponentUsername||'Adversaire',
+    }).then(()=>{},()=>{});
+  }catch(e){}
+}
 async function playerOnlineAction(moveId){
   if(!battleState||battleState.turn!=='player') return;
   if(moveId==='flee'){
@@ -4255,7 +4289,7 @@ async function playerOnlineAction(moveId){
     battleState.winner='player'; battleState.turn='end';
     incrementStat('wins',1);
     addXp(30); addGravillons(20); addGems(WIN_GEMS);
-    grantFoodLoot();
+    grantFoodLoot(); recordOnlineWin();
     screen='combat-result'; render(); return;
   }
   battleState.turn='opponent'; render();
@@ -4268,7 +4302,7 @@ async function applyOnlineOpponentAction(msg){
     battleState.winner='player'; battleState.turn='end';
     incrementStat('wins',1);
     addXp(30); addGravillons(20); addGems(WIN_GEMS);
-    grantFoodLoot();
+    grantFoodLoot(); recordOnlineWin();
     screen='combat-result'; render(); return;
   }
   if(msg.action==='feed'){
@@ -5634,6 +5668,14 @@ function render(){
         <div class="result-stat-item"><div class="result-stat-val">${friendStats.wins}</div><div class="result-stat-lbl">VICTOIRES</div></div>
         <div class="result-stat-item"><div class="result-stat-val">${friendStats.losses}</div><div class="result-stat-lbl">DÉFAITES</div></div>
       </div>
+      ${friendStats.h2hMe!=null?(()=>{
+        const m=friendStats.h2hMe, t=friendStats.h2hThem, tot=m+t;
+        const verdict=tot===0?'Aucun duel entre vous… défie-le/la !':m>t?'🔥 Tu domines ce duel !':m<t?'😤 Il/elle mène — prends ta revanche !':'⚖️ Parfaitement à égalité !';
+        return `<div class="rival-box"><div class="rival-title">⚔️ VOTRE RIVALITÉ</div>
+          <div class="rival-score"><span class="rival-me">${m}</span><span class="rival-dash">—</span><span class="rival-them">${t}</span></div>
+          <div class="rival-lbl"><span>toi</span><span>@${friendStats.username}</span></div>
+          <div class="rival-verdict">${verdict}</div></div>`;
+      })():''}
       <div class="btn-row" style="margin-top:16px;">
         <button class="btn btn-gold" data-action="closeFriendStats">FERMER</button>
       </div>
