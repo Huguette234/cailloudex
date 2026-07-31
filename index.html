@@ -906,25 +906,45 @@ nav{display:flex;gap:8px;padding:10px 14px max(14px,env(safe-area-inset-bottom))
 .fu-foe .fureur-txt{text-shadow:0 0 18px #B24BE0,0 0 40px #8020C0,0 3px 6px rgba(0,0,0,.6);}
 .fureur-txt span{display:block;font-family:'Baloo 2',sans-serif;font-weight:800;font-size:16px;margin-top:6px;color:rgba(255,255,255,.9);text-shadow:0 2px 5px rgba(0,0,0,.7);}
 @keyframes furTxt{0%{transform:scale(.4);opacity:0;}55%{transform:scale(1.12);opacity:1;}100%{transform:scale(1);opacity:1;}}
-/* K.O. façon Mortal Kombat */
+/* K.O. sanglant, en biais, à la rache */
 .ko-ov{position:fixed;inset:0;z-index:90;pointer-events:none;display:flex;flex-direction:column;align-items:center;justify-content:center;
-  background:radial-gradient(circle at 50% 45%,rgba(70,0,0,.45),rgba(0,0,0,.85));opacity:1;transition:opacity .3s ease-in;}
+  background:radial-gradient(circle at 50% 46%,rgba(95,0,0,.5),rgba(8,0,0,.92));opacity:1;transition:opacity .32s ease-in;overflow:hidden;}
 .ko-ov.out{opacity:0;}
 .ko-flash{position:absolute;inset:0;background:#fff;opacity:0;animation:koFlash .42s ease-out;}
-@keyframes koFlash{0%{opacity:0;}10%{opacity:.95;}100%{opacity:0;}}
-.ko-word{font-family:'Playfair Display',Georgia,serif;font-weight:900;font-size:96px;letter-spacing:.04em;color:#FF1E1E;line-height:1;
-  text-shadow:0 0 26px #FF0000,0 0 64px #B00000,0 4px 0 #7A0000,0 7px 14px rgba(0,0,0,.7);
-  animation:koSlam .5s cubic-bezier(.2,1.6,.4,1);}
-@keyframes koSlam{0%{transform:scale(3.2);opacity:0;}45%{transform:scale(.9);opacity:1;}70%{transform:scale(1.09);}100%{transform:scale(1);}}
-.ko-line{width:72%;max-width:340px;height:5px;margin-top:8px;border-radius:3px;
-  background:linear-gradient(90deg,transparent,#FF1E1E 20%,#FF7A7A 50%,#FF1E1E 80%,transparent);box-shadow:0 0 18px #FF0000;
-  animation:koLine .45s ease-out .3s both;}
-@keyframes koLine{from{transform:scaleX(0);opacity:0;}to{transform:scaleX(1);opacity:1;}}
-.ko-outcome{margin-top:18px;font-family:'Baloo 2',sans-serif;font-weight:800;font-size:30px;letter-spacing:.12em;
-  animation:koOutcome .5s ease-out .62s both;}
-.ko-outcome.win{color:#FFD24A;text-shadow:0 0 20px #FFB300,0 2px 6px rgba(0,0,0,.7);}
-.ko-outcome.lose{color:#FF5A5A;text-shadow:0 0 20px #B00000,0 2px 6px rgba(0,0,0,.7);}
-@keyframes koOutcome{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:translateY(0);}}
+@keyframes koFlash{0%{opacity:0;}9%{opacity:.95;}100%{opacity:0;}}
+.ko-splat{position:absolute;top:50%;left:50%;width:min(94vw,460px);height:min(74vw,360px);opacity:0;
+  transform:translate(-50%,-56%) rotate(-7deg) scale(.15);filter:blur(.4px);
+  background:
+    radial-gradient(ellipse 42% 32% at 50% 50%,#8e0b1a 0 60%,transparent 63%),
+    radial-gradient(circle at 16% 26%,#7a0714 0 8%,transparent 9%),
+    radial-gradient(circle at 86% 64%,#7a0714 0 10%,transparent 11%),
+    radial-gradient(circle at 28% 80%,#7a0714 0 5%,transparent 6%),
+    radial-gradient(circle at 70% 18%,#7a0714 0 4%,transparent 5%),
+    radial-gradient(circle at 93% 38%,#7a0714 0 3%,transparent 4%),
+    radial-gradient(circle at 8% 58%,#7a0714 0 3.5%,transparent 4.5%),
+    radial-gradient(circle at 60% 92%,#7a0714 0 3%,transparent 4%),
+    radial-gradient(circle at 40% 8%,#7a0714 0 2.5%,transparent 3.5%);
+  animation:koSplat .5s cubic-bezier(.2,1.4,.4,1) forwards;}
+@keyframes koSplat{0%{opacity:0;transform:translate(-50%,-56%) rotate(-7deg) scale(.15);}55%{opacity:.9;transform:translate(-50%,-56%) rotate(-7deg) scale(1.07);}100%{opacity:.82;transform:translate(-50%,-56%) rotate(-7deg) scale(1);}}
+.ko-stage{position:relative;transform:rotate(-8deg);display:flex;flex-direction:column;align-items:center;}
+.ko-word{position:relative;font-family:'Playfair Display',Georgia,serif;font-weight:900;font-size:104px;letter-spacing:.02em;line-height:.9;
+  color:#DA1E2B;transform:skewX(-5deg);
+  text-shadow:0 0 10px #ff0000,2px 3px 0 #6e0410,5px 8px 0 #3a010a,0 9px 22px rgba(0,0,0,.85);
+  animation:koSlam .46s cubic-bezier(.2,1.7,.35,1);}
+@keyframes koSlam{0%{transform:skewX(-5deg) scale(3.2) rotate(6deg);opacity:0;}45%{transform:skewX(-5deg) scale(.88) rotate(-2deg);opacity:1;}72%{transform:skewX(-5deg) scale(1.1) rotate(1deg);}100%{transform:skewX(-5deg) scale(1) rotate(0);}}
+.ko-drip{position:absolute;bottom:8px;width:7px;height:var(--h,28px);background:linear-gradient(#DA1E2B,#5e0410);border-radius:0 0 7px 7px;transform-origin:top;transform:scaleY(0);
+  animation:koDrip .65s ease-in var(--d,.2s) forwards;box-shadow:0 0 6px rgba(180,0,0,.6);}
+.ko-drip::after{content:'';position:absolute;bottom:-5px;left:50%;transform:translateX(-50%);width:10px;height:11px;border-radius:50%;background:#5e0410;box-shadow:0 0 5px rgba(150,0,0,.6);}
+@keyframes koDrip{from{transform:scaleY(0);}to{transform:scaleY(1);}}
+.ko-slash{width:82%;max-width:380px;height:16px;margin-top:0;background:linear-gradient(90deg,transparent,#B00016 8%,#F01020 28%,#7a0714 52%,#F01020 74%,#B00016 92%,transparent);
+  clip-path:polygon(0 42%,6% 8%,13% 64%,24% 16%,37% 74%,50% 10%,64% 68%,78% 22%,90% 62%,100% 30%,95% 96%,80% 58%,64% 98%,50% 52%,37% 99%,24% 60%,13% 98%,6% 66%);
+  transform:rotate(2deg);opacity:0;filter:drop-shadow(0 0 8px #a00);animation:koSlashIn .38s ease-out .3s both;}
+@keyframes koSlashIn{from{opacity:0;transform:rotate(2deg) scaleX(.15);}to{opacity:1;transform:rotate(2deg) scaleX(1);}}
+.ko-outcome{margin-top:22px;font-family:'Baloo 2',sans-serif;font-weight:800;font-size:32px;letter-spacing:.13em;transform:rotate(-3deg);
+  animation:koOutcome .5s ease-out .72s both;}
+.ko-outcome.win{color:#FFD24A;text-shadow:2px 2px 0 #6e0410,0 0 20px #ff8c00;}
+.ko-outcome.lose{color:#FF4646;text-shadow:2px 2px 0 #3a010a,0 0 20px #b00000;}
+@keyframes koOutcome{from{opacity:0;transform:rotate(-3deg) translateY(14px) scale(.9);}to{opacity:1;transform:rotate(-3deg) translateY(0) scale(1);}}
 /* Emotes (combat entre amis) */
 .emote-bar{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-top:10px;}
 .emote-btn{font-size:20px;line-height:1;width:40px;height:40px;border-radius:12px;cursor:pointer;
@@ -4962,13 +4982,20 @@ function koCinematic(winner){
     const won=winner==='player';
     const ov=document.createElement('div'); ov.className='ko-ov';
     ov.innerHTML=`<div class="ko-flash"></div>
-      <div class="ko-word">K.O.</div>
-      <div class="ko-line"></div>
+      <div class="ko-splat"></div>
+      <div class="ko-stage">
+        <div class="ko-word">K.O.
+          <span class="ko-drip" style="left:18%;--h:30px;--d:.12s;"></span>
+          <span class="ko-drip" style="left:46%;--h:44px;--d:.28s;"></span>
+          <span class="ko-drip" style="left:72%;--h:24px;--d:.2s;"></span>
+        </div>
+        <div class="ko-slash"></div>
+      </div>
       <div class="ko-outcome ${won?'win':'lose'}">${won?'VICTOIRE':'DÉFAITE'}</div>`;
     document.body.appendChild(ov);
-    if(navigator.vibrate) navigator.vibrate([70,60,130,60,220]);
-    setTimeout(()=>ov.classList.add('out'), 1550);
-    setTimeout(()=>{ ov.remove(); res(); }, 1880);
+    if(navigator.vibrate) navigator.vibrate([80,50,150,50,90,60,240]);
+    setTimeout(()=>ov.classList.add('out'), 1650);
+    setTimeout(()=>{ ov.remove(); res(); }, 1980);
   });
 }
 function fureurCinematic(side){
