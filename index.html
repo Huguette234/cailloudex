@@ -837,6 +837,30 @@ nav{display:flex;gap:8px;padding:10px 14px max(14px,env(safe-area-inset-bottom))
 .bzone{display:flex;align-items:center;justify-content:center;}
 .bcard-img .combatant-visual{width:104px;height:104px;border-radius:12px;}
 .bcard-img .combatant-visual.char-photo{object-fit:cover;filter:drop-shadow(0 6px 12px rgba(0,0,0,.65));}
+/* ===== Arène immersive (style Pokémon : adversaire en haut, toi en bas) ===== */
+.im-arena{position:relative;height:47vh;min-height:326px;max-height:456px;margin:2px 0 4px;}
+.im-sprite{position:absolute;width:47%;max-width:194px;display:flex;align-items:flex-end;justify-content:center;z-index:2;}
+.im-sprite::after{content:'';position:absolute;bottom:-2px;left:50%;transform:translateX(-50%);width:60%;height:15px;border-radius:50%;background:radial-gradient(ellipse,rgba(0,0,0,.4),transparent 72%);z-index:-1;}
+.im-sprite .combatant-visual{width:100%;height:auto;aspect-ratio:1/1;border-radius:18px;}
+.im-sprite .combatant-visual.char-photo{object-fit:cover;filter:drop-shadow(0 10px 18px rgba(0,0,0,.5));}
+.im-sprite .arena2-emoji-badge{width:100px;height:100px;font-size:52px;}
+.im-foe{top:0;right:1%;}
+.im-mine{bottom:0;left:1%;}
+.im-plate{position:absolute;width:53%;z-index:3;background:linear-gradient(180deg,rgba(255,255,255,.92),rgba(255,255,255,.74));border:2px solid;border-radius:16px;padding:8px 10px 9px;box-shadow:0 8px 20px rgba(0,0,0,.26),inset 0 1px 0 rgba(255,255,255,.65);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);}
+.im-plate-foe{top:5%;left:1%;}
+.im-plate-mine{bottom:5%;right:1%;}
+.im-plate-head{display:flex;align-items:center;gap:6px;margin-bottom:4px;flex-wrap:wrap;}
+.im-role{font-family:'Nunito',sans-serif;font-weight:800;font-size:8px;letter-spacing:.05em;padding:2px 7px;border-radius:999px;white-space:nowrap;}
+.im-role.foe{color:#B3281F;background:rgba(220,60,50,.14);border:1px solid rgba(200,60,50,.4);}
+.im-role.mine{color:#15854A;background:rgba(40,170,90,.16);border:1px solid rgba(40,170,90,.42);}
+.im-type{font-family:'Baloo 2',sans-serif;font-weight:800;font-size:8px;border:1px solid;border-radius:999px;padding:1px 6px;white-space:nowrap;}
+.im-plate-name{font-family:'Baloo 2',sans-serif;font-weight:800;font-size:13px;color:var(--txt);line-height:1.05;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:6px;}
+.im-hprow{display:flex;align-items:center;gap:7px;}
+.im-hpbar{flex:1;}
+.im-plate .bcard-hprow{font-family:'Nunito',sans-serif;font-size:10px;color:rgba(44,42,46,.6);white-space:nowrap;}
+.im-plate .bcard-hprow b{font-family:'Playfair Display',Georgia,serif;font-size:13px;color:var(--txt);}
+.im-plate .nrg-wrap,.im-plate .fur-wrap{margin-top:4px;}
+.im-vs{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);z-index:4;}
 .bcard-img .arena2-emoji-badge{width:82px;height:82px;font-size:42px;border-radius:50%;}
 .bcard-typechip{position:absolute;top:7px;left:7px;font-family:'Nunito',sans-serif;font-weight:800;font-size:9px;border:1.5px solid;border-radius:999px;padding:2px 8px;z-index:3;background:rgba(255,255,255,.85);box-shadow:0 2px 6px rgba(120,100,50,.22);}
 .bcard-name{font-family:'Baloo 2',sans-serif;font-weight:800;font-size:13px;color:var(--txt);text-align:center;line-height:1.14;margin-bottom:8px;height:2.28em;display:flex;align-items:center;justify-content:center;overflow:hidden;text-shadow:0 1px 0 rgba(255,255,255,.6);}
@@ -5442,6 +5466,17 @@ function combatFightScreen(){
   const nrgBar=(side)=>{ if(!isSolo) return ''; const e=Math.max(0,Math.min(100,s[side+'Energy']||0)); const full=e>=100; return `<div class="nrg-wrap"><div class="nrg-bg"><div class="nrg-fill${full?' full':''}" style="width:${e}%;"></div></div><span class="nrg-lbl${full?' full':''}">⚡${e}</span></div>`; };
   const furBar=(side)=>{ if(!isSolo) return ''; const f=Math.max(0,Math.min(100,s[side+'Fureur']||0)); const full=f>=100; return `<div class="fur-wrap"><div class="fur-bg"><div class="fur-fill${full?' full':''}" style="width:${f}%;"></div></div><span class="fur-lbl${full?' full':''}">🔥${f}</span></div>`; };
 
+  const typeChipS=(r)=>{ const t=ROCK_TYPES.find(x=>x.key===r.rockType); return t?`<span class="im-type" style="color:${typeTextCol(t.color)};border-color:${t.color}66;">${t.label}</span>`:''; };
+  const plate=(side)=>{
+    const isFoe=side==='bot'; const rock=isFoe?s.botRock:s.playerRock;
+    const hex=isFoe?botHex:playerHex; const hp=isFoe?s.botHP:s.playerHP, max=isFoe?s.botMaxHP:s.playerMaxHP, pct=(isFoe?bPct:pPct)*100;
+    return `<div class="${isFoe?'bcard-foe':'bcard-mine'} im-plate im-plate-${isFoe?'foe':'mine'}" style="border-color:${hex};">
+      <div class="im-plate-head"><span class="im-role ${isFoe?'foe':'mine'}">${isFoe?'🎯 ADVERSAIRE':'💪 TOI'}</span>${typeChipS(rock)}</div>
+      <div class="im-plate-name">${rock.name}</div>
+      <div class="im-hprow"><div class="arena-bar-bg im-hpbar"><div class="arena-bar-fill hp-shine" style="width:${pct}%;background:${hpBarColor(pct/100)};"></div></div><span class="bcard-hprow"><b>${hp}</b>/<span>${max}</span></span></div>
+      ${nrgBar(side)}${furBar(side)}${statBadges(side)}
+    </div>`;
+  };
   return `<div class="cfx">
     <div class="cfx-bg"></div>
     ${s.terrain?`<div class="cfx-terrain" style="background:${s.terrain.bg};"></div>`:''}
@@ -5451,34 +5486,12 @@ function combatFightScreen(){
     <div class="cfx-sparks">${sparks}</div>
     <div class="cfx-content">
     ${s.terrain?`<div class="terrain-chip">${s.terrain.label}</div>`:''}
-    <div class="bfield">
-      <div class="bcard bcard-foe" style="border-color:${botHex};box-shadow:0 10px 26px rgba(0,0,0,.5),0 0 22px ${botTint}55,inset 0 0 22px ${botTint}18;">
-        <div class="bcard-role"><span class="bcard-role-pill foe">🎯 ADVERSAIRE</span></div>
-        <div class="bcard-img" style="box-shadow:inset 0 0 26px ${botTint}55;">
-          <div class="bot-zone bzone">${botVisual}</div>
-          ${typeChip(s.botRock)}
-        </div>
-        <div class="bcard-name">${s.botRock.name}</div>
-        <div class="bcard-hprow"><b>${s.botHP}</b>/<span>${s.botMaxHP} PV</span></div>
-        <div class="arena-bar-bg"><div class="arena-bar-fill hp-shine" style="width:${bPct*100}%;background:${hpBarColor(bPct)};"></div></div>
-        ${nrgBar('bot')}
-        ${furBar('bot')}
-        ${statBadges('bot')}
-      </div>
-      <div class="cfx-vs"><span class="cfx-vs-ring"></span><span class="cfx-vs-pulse"></span><b>VS</b></div>
-      <div class="bcard bcard-mine" style="border-color:${playerHex};box-shadow:0 10px 26px rgba(0,0,0,.5),0 0 22px ${playerTint}55,inset 0 0 22px ${playerTint}18;">
-        <div class="bcard-role"><span class="bcard-role-pill mine">💪 TOI</span></div>
-        <div class="bcard-img" style="box-shadow:inset 0 0 26px ${playerTint}55;">
-          <div class="player-zone bzone">${playerVisual}</div>
-          ${typeChip(s.playerRock)}
-        </div>
-        <div class="bcard-name">${s.playerRock.name}</div>
-        <div class="bcard-hprow"><b>${s.playerHP}</b>/<span>${s.playerMaxHP} PV</span></div>
-        <div class="arena-bar-bg"><div class="arena-bar-fill hp-shine" style="width:${pPct*100}%;background:${hpBarColor(pPct)};"></div></div>
-        ${nrgBar('player')}
-        ${furBar('player')}
-        ${statBadges('player')}
-      </div>
+    <div class="im-arena">
+      ${plate('bot')}
+      <div class="im-sprite im-foe bot-zone">${botVisual}</div>
+      <div class="im-sprite im-mine player-zone">${playerVisual}</div>
+      ${plate('player')}
+      <div class="cfx-vs im-vs"><span class="cfx-vs-ring"></span><span class="cfx-vs-pulse"></span><b>VS</b></div>
     </div>
     <div class="combat-log">
       ${s.log.slice(0,3).map((l,i)=>`<div class="log-line ${l.cls}" style="opacity:${1-i*0.28};">${l.text}</div>`).join('')}
