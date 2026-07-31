@@ -657,6 +657,18 @@ nav{display:flex;gap:8px;padding:10px 14px max(14px,env(safe-area-inset-bottom))
 .diff-desc{font-family:'Nunito',sans-serif;font-size:11.5px;color:rgba(44,42,46,.6);text-align:center;margin-bottom:14px;}
 .diff-desc b{color:var(--goldd);}
 .cp-pill{font-family:'Baloo 2',sans-serif;font-weight:800;font-size:11px;color:var(--goldd);cursor:pointer;border:1px solid rgba(154,116,20,.45);border-radius:20px;padding:4px 10px;white-space:nowrap;background:rgba(255,255,255,.5);}
+/* Bannière Boss de la semaine */
+.boss-banner{display:flex;align-items:center;gap:12px;margin:2px 0 12px;padding:10px 14px;border-radius:16px;cursor:pointer;
+  background:linear-gradient(135deg,rgba(196,60,60,.16),rgba(120,40,190,.14));border:1.5px solid rgba(196,60,60,.4);
+  box-shadow:0 6px 16px rgba(120,20,40,.22);transition:transform .12s;}
+.boss-banner:active{transform:scale(.98);}
+.boss-banner.beaten{opacity:.72;border-color:rgba(44,42,46,.2);background:linear-gradient(135deg,rgba(120,120,120,.12),rgba(120,120,120,.08));}
+.boss-banner-emoji{font-size:32px;line-height:1;filter:drop-shadow(0 2px 4px rgba(0,0,0,.3));}
+.boss-banner-info{flex:1;min-width:0;}
+.boss-banner-title{font-family:'Baloo 2',sans-serif;font-weight:800;font-size:10px;letter-spacing:.08em;color:#C0392B;}
+.boss-banner-name{font-family:'Playfair Display',Georgia,serif;font-weight:900;font-size:16px;color:var(--txt);line-height:1.1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.boss-banner-cta{font-family:'Baloo 2',sans-serif;font-weight:800;font-size:12px;color:#fff;background:linear-gradient(135deg,#E0503C,#B01030);border-radius:999px;padding:7px 14px;white-space:nowrap;box-shadow:0 3px 8px rgba(150,20,40,.4);}
+.boss-banner.beaten .boss-banner-cta{background:rgba(44,42,46,.5);}
 /* Classement des dresseurs */
 .lb-list{display:flex;flex-direction:column;gap:7px;max-height:56vh;overflow-y:auto;}
 .lb-row{display:flex;align-items:center;gap:10px;background:linear-gradient(160deg,rgba(255,255,255,.82),rgba(255,255,255,.64));border:1px solid rgba(255,255,255,.9);border-radius:14px;padding:8px 12px;box-shadow:0 4px 12px rgba(0,0,0,.14);}
@@ -4526,6 +4538,29 @@ const BOT_POOL = [
   {name:'Gaston le Gneiss', emoji:'🔵', rockType:'glace', specialMove:'Blague Glaciale'},
 ];
 
+/* ===== BOSS DE LA SEMAINE (même boss pour tous, tournant chaque semaine) ===== */
+const BOSS_POOL=[
+  { name:'Golgoth le Monolithe', emoji:'🗿', rockType:'metal',   hex:'#95A5A6', atk:86, def:90, vit:6,  specialMove:'Écrasement Tectonique', personality:'Un bloc de trois tonnes qui n\'a jamais connu la défaite. Ni la joie.' },
+  { name:'Pyrothème l\'Ardent',  emoji:'🌋', rockType:'feu',     hex:'#FF6B35', atk:95, def:72, vit:9,  specialMove:'Éruption Cataclysmique', personality:'Né dans un volcan, élevé par la colère. Déteste le froid et les gens.' },
+  { name:'Cryostase la Reine',   emoji:'❄️', rockType:'glace',   hex:'#74B9FF', atk:82, def:88, vit:7,  specialMove:'Zéro Absolu', personality:'Glaciale au propre comme au figuré. Un iceberg avec des ambitions.' },
+  { name:'Ombrelith le Voilé',   emoji:'🌑', rockType:'ombre',   hex:'#8E44AD', atk:90, def:78, vit:10, specialMove:'Éclipse Totale', personality:'Personne ne l\'a jamais vraiment vu. C\'est peut-être mieux ainsi.' },
+  { name:'Chaoseris le Fracturé',emoji:'💥', rockType:'chaos',   hex:'#FF4081', atk:98, def:70, vit:8,  specialMove:'Rupture Dimensionnelle', personality:'Suit une seule règle : il n\'y a pas de règles. Terrifiant en réunion.' },
+  { name:'Sylverdant le Titan',  emoji:'🌳', rockType:'nature',  hex:'#27AE60', atk:80, def:96, vit:5,  specialMove:'Colère de la Forêt', personality:'Aussi vieux que la première mousse. Patient, massif, impitoyable.' },
+];
+function weekSeedNum(){ const d=new Date(); const y=d.getUTCFullYear(); const onejan=Date.UTC(y,0,1); const week=Math.ceil(((Date.UTC(y,d.getUTCMonth(),d.getUTCDate())-onejan)/86400000+1)/7); return y*53+week; }
+function currentWeekKey(){ return 'W'+weekSeedNum(); }
+function getWeeklyBoss(){ return BOSS_POOL[weekSeedNum()%BOSS_POOL.length]; }
+function bossBeatenThisWeek(){ try{ return localStorage.getItem('cdx_boss_week')===currentWeekKey(); }catch(e){ return false; } }
+function markBossBeaten(){ try{ localStorage.setItem('cdx_boss_week',currentWeekKey()); }catch(e){} }
+let bossRun=false;      // combat de boss en cours
+let bossPicking=false;  // on choisit son champion pour le boss
+function makeBossRock(){
+  const b=getWeeklyBoss();
+  return Object.assign({}, b, { rarity:'legendaire', rarityLabel:'💀 BOSS' });
+}
+function enterBossPick(){ bossPicking=true; arenaPicking=false; arenaRun=null; screen='combat-pick'; render(); }
+function startBossBattle(rock){ bossRun=true; bossPicking=false; initBattle(rock); }
+
 const BOT_PORTRAIT_LS='cdx_botimg_';
 async function generateBotCharacter(botRock){
   const key=botRock.name;
@@ -4758,7 +4793,7 @@ async function initBattle(playerRock){
     effRock={...playerRock, atk:Math.round(playerRock.atk*1.2), def:Math.round(playerRock.def*1.2)};
     usedBuffs.push('💪 Caillou Costaud');
   }
-  const bot=makeBotRock(effRock, arena?{ statMult:arenaBotStatMult(arenaRun.wave) }:null);
+  const bot=bossRun ? makeBossRock() : makeBotRock(effRock, arena?{ statMult:arenaBotStatMult(arenaRun.wave) }:null);
   // Terrain aléatoire : amplifie/affaiblit un type (appliqué à l'attaque effective)
   const terrain=pickTerrain();
   const pTF=terrainFactor(terrain,effRock.rockType), bTF=terrainFactor(terrain,bot.rockType);
@@ -4777,7 +4812,11 @@ async function initBattle(playerRock){
     playerEnergy:0, botEnergy:0, playerStatus:[], botStatus:[], turnCount:0,
     playerFureur:0, botFureur:0,
   };
-  if(arena){
+  if(bossRun){
+    battleState.boss=true;
+    battleState.aiIq=0.95;
+    battleState.log=[{text:`💀 BOSS DE LA SEMAINE — ${bot.name} surgit !`, cls:'neutral'}];
+  } else if(arena){
     battleState.arena=true;
     battleState.wave=arenaRun.wave;
     battleState.aiIq=arenaBotIq(arenaRun.wave);
@@ -4839,6 +4878,23 @@ function announceTurn(kind){
 function endBattle(winner){
   battleState.winner=winner; battleState.turn='end';
   if(battleState.arena) return endArenaWave(winner);
+  if(battleState.boss){
+    if(winner==='player'){
+      const first=!bossBeatenThisWeek();
+      markBossBeaten();
+      const gems=first?25:5, grav=first?100:20, xp=first?80:20;
+      incrementStat('wins',1);
+      addGems(gems); addGravillons(grav); addXp(xp);
+      const food=first?grantFoodLoot(true):null;
+      battleState.chestTier='boss';
+      battleState.lootSummary={gems,grav,xp,food};
+      battleState.chestOpen=false;
+      battleState.bossFirstWin=first;
+    } else { incrementStat('losses',1); }
+    bossRun=false;
+    screen='combat-result'; render();
+    return;
+  }
   if(winner==='player'){
     const rw=getDifficulty().reward;
     const gems=Math.max(1,Math.round(WIN_GEMS*rw)), grav=Math.round(10*rw), xp=Math.round(15*rw);
@@ -5186,23 +5242,36 @@ function combatPickScreen(){
     <p style="font-family:'Nunito',sans-serif;font-size:13px;color:rgba(44,42,46,.5);margin:8px 0 20px;">Capture d'abord des cailloux<br>avant de les envoyer au combat.</p>
     <button class="btn btn-gold" data-action="goto" data-screen="scanner">📷 CAPTURER</button>
   </div>`;
-  const arena=arenaPicking;
-  const rightBtns=arena
-    ? `<span class="cp-pill" data-action="exitArena">← Combat normal</span>`
+  const arena=arenaPicking, boss=bossPicking;
+  const wb=getWeeklyBoss(), bossDone=bossBeatenThisWeek();
+  const rightBtns=(arena||boss)
+    ? `<span class="cp-pill" data-action="${boss?'exitBossPick':'exitArena'}">← Combat normal</span>`
     : `<span class="cp-pill" data-action="enterArena">🏟️ ARÈNE</span><span class="cp-pill" data-action="goto" data-screen="online-menu">🌐 EN LIGNE</span>`;
-  const cardAction=arena?'arenaStart':'startBattle';
+  const cardAction=boss?'bossStart':arena?'arenaStart':'startBattle';
+  const cardBtn=boss?'AFFRONTER':arena?'ENTRER':'CHOISIR';
+  const title=boss?'💀 BOSS':arena?'🏟️ ARÈNE':'⚔️ CHOISIR UN CAILLOU';
   return `<div class="combat-pick-wrap">
     <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:10px;">
-      <div class="combat-pick-title" style="margin-bottom:0;">${arena?'🏟️ ARÈNE':'⚔️ CHOISIR UN CAILLOU'}</div>
+      <div class="combat-pick-title" style="margin-bottom:0;">${title}</div>
       <div style="display:flex;gap:6px;flex-shrink:0;">${rightBtns}</div>
     </div>
-    ${arena
+    ${boss
+      ? `<div class="combat-pick-sub">Choisis ton champion pour affronter <b>${wb.name}</b> ${wb.emoji} — ⚔️${wb.atk} 🛡️${wb.def} 💨${wb.vit}. Redoutable !</div>`
+      : arena
       ? `<div class="combat-pick-sub">Choisis ton champion — enchaîne les vagues de bots de plus en plus forts ! 🏆 Record : <b>${arenaBest}</b> vague${arenaBest>1?'s':''}</div>`
       : `<div class="combat-pick-sub">Lequel vas-tu envoyer au combat ?</div>
     <div class="diff-row">
       ${COMBAT_DIFFICULTIES.map(d=>`<button class="diff-pill${d.key===combatDifficulty?' sel':''}" data-action="setDifficulty" data-key="${d.key}">${d.label}</button>`).join('')}
     </div>
     <div class="diff-desc">${getDifficulty().desc} · récompenses <b>×${getDifficulty().reward}</b></div>
+    <div class="boss-banner${bossDone?' beaten':''}" data-action="enterBossPick">
+      <div class="boss-banner-emoji">${wb.emoji}</div>
+      <div class="boss-banner-info">
+        <div class="boss-banner-title">💀 BOSS DE LA SEMAINE</div>
+        <div class="boss-banner-name">${wb.name}</div>
+      </div>
+      <div class="boss-banner-cta">${bossDone?'✅ Rejouer':'AFFRONTER'}</div>
+    </div>
     ${(()=>{ const b=[]; if((meta.inventory?.shield||0)>0)b.push('🛡️ Bouclier'); if((meta.inventory?.crit||0)>0)b.push('💥 Crit ×2'); if((meta.inventory?.mighty||0)>0)b.push('💪 Costaud'); return b.length?`<div class="buff-row">${b.map(x=>`<span class="buff-pill">${x} <span style="opacity:.6;">prêt</span></span>`).join('')}</div>`:''; })()}`}
     <div class="combat-pick-grid">
       ${dex.map(r=>`<div class="combat-pick-card" data-action="${cardAction}" data-id="${r.id}">
@@ -5211,7 +5280,7 @@ function combatPickScreen(){
           <div class="combat-pick-name">${r.name}</div>
           <div class="combat-pick-stats">⚔️${r.atk} 🛡️${r.def} 💨${r.vit} · ${r.rarityLabel}</div>
         </div>
-        <div class="combat-pick-btn">${arena?'ENTRER':'CHOISIR'}</div>
+        <div class="combat-pick-btn">${cardBtn}</div>
       </div>`).join('')}
     </div>
   </div>`;
@@ -5358,11 +5427,14 @@ function combatResultScreen(){
   const s=battleState;
   const won=s.winner==='player';
   const draw=s.winner==='draw';
-  const banner=won?'VICTOIRE !':draw?'ÉGALITÉ':'DÉFAITE...';
-  const sub=won?`${s.playerRock.name} écrase ${s.botRock.name} dans un nuage de poussière !`
+  const banner=won?(s.boss?'BOSS VAINCU !':'VICTOIRE !'):draw?'ÉGALITÉ':'DÉFAITE...';
+  const sub=won?(s.boss
+      ? `${s.playerRock.name} terrasse le boss ${s.botRock.name} ! 💀${s.bossFirstWin?' Récompense hebdomadaire débloquée 🎁':' (déjà battu cette semaine — petit lot)'}`
+      : `${s.playerRock.name} écrase ${s.botRock.name} dans un nuage de poussière !`)
     :draw?'Les deux cailloux s\'effondrent simultanément. Nul !'
+    :s.boss?`Le boss ${s.botRock.name} t\'a réduit en gravier... Réessaie !`
     :`${s.botRock.name} t\'a complètement roulé dessus.`;
-  const emoji=won?'🏆':draw?'🤝':'💀';
+  const emoji=won?(s.boss?'👑':'🏆'):draw?'🤝':'💀';
   return `<div class="result-wrap">
     <div style="font-size:64px;animation:resultBounce .5s cubic-bezier(.34,1.56,.64,1);">${emoji}</div>
     <div class="result-banner ${won?'result-win':draw?'result-draw':'result-lose'}">${banner}</div>
@@ -6168,8 +6240,8 @@ document.addEventListener('click',(e)=>{
   const action=t.dataset.action;
   if(action==='capture'){ document.getElementById('fileInput').click(); }
   else if(action==='goto'){
-    // Quitter la navigation normale annule une éventuelle partie d'arène en cours
-    if(t.dataset.screen!=='combat-pick'){ arenaRun=null; arenaPicking=false; }
+    // Quitter la navigation normale annule une éventuelle partie d'arène/boss en cours
+    if(t.dataset.screen!=='combat-pick'){ arenaRun=null; arenaPicking=false; bossRun=false; bossPicking=false; }
     screen=t.dataset.screen; detailRock=null;
     if(screen==='dex') dexType=null; // on entre par le menu des types
     render();
@@ -6273,8 +6345,14 @@ document.addEventListener('click',(e)=>{
     const rock=dex.find(r=>r.id===t.dataset.id);
     if(rock) initBattle(rock);
   }
-  else if(action==='enterArena'){ arenaPicking=true; render(); }
+  else if(action==='enterArena'){ arenaPicking=true; bossPicking=false; render(); }
   else if(action==='exitArena'){ arenaPicking=false; render(); }
+  else if(action==='enterBossPick'){ enterBossPick(); }
+  else if(action==='exitBossPick'){ bossPicking=false; render(); }
+  else if(action==='bossStart'){
+    const rock=dex.find(r=>r.id===t.dataset.id);
+    if(rock) startBossBattle(rock);
+  }
   else if(action==='arenaStart'){
     const rock=dex.find(r=>r.id===t.dataset.id);
     if(rock) startArena(rock);
@@ -6407,7 +6485,7 @@ function goBackInApp(){
   }
   // 4) Un sous-écran -> retour à l'accueil
   if(screen!=='home' && screen!=='login' && screen!=='loading'){
-    arenaRun=null; arenaPicking=false;
+    arenaRun=null; arenaPicking=false; bossRun=false; bossPicking=false;
     screen='home'; detailRock=null; render();
     if(typeof checkPendingChallenge==='function'){
       const prev=pendingChallenge?pendingChallenge.id:null;
