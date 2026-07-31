@@ -906,6 +906,25 @@ nav{display:flex;gap:8px;padding:10px 14px max(14px,env(safe-area-inset-bottom))
 .fu-foe .fureur-txt{text-shadow:0 0 18px #B24BE0,0 0 40px #8020C0,0 3px 6px rgba(0,0,0,.6);}
 .fureur-txt span{display:block;font-family:'Baloo 2',sans-serif;font-weight:800;font-size:16px;margin-top:6px;color:rgba(255,255,255,.9);text-shadow:0 2px 5px rgba(0,0,0,.7);}
 @keyframes furTxt{0%{transform:scale(.4);opacity:0;}55%{transform:scale(1.12);opacity:1;}100%{transform:scale(1);opacity:1;}}
+/* K.O. façon Mortal Kombat */
+.ko-ov{position:fixed;inset:0;z-index:90;pointer-events:none;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  background:radial-gradient(circle at 50% 45%,rgba(70,0,0,.45),rgba(0,0,0,.85));opacity:1;transition:opacity .3s ease-in;}
+.ko-ov.out{opacity:0;}
+.ko-flash{position:absolute;inset:0;background:#fff;opacity:0;animation:koFlash .42s ease-out;}
+@keyframes koFlash{0%{opacity:0;}10%{opacity:.95;}100%{opacity:0;}}
+.ko-word{font-family:'Playfair Display',Georgia,serif;font-weight:900;font-size:96px;letter-spacing:.04em;color:#FF1E1E;line-height:1;
+  text-shadow:0 0 26px #FF0000,0 0 64px #B00000,0 4px 0 #7A0000,0 7px 14px rgba(0,0,0,.7);
+  animation:koSlam .5s cubic-bezier(.2,1.6,.4,1);}
+@keyframes koSlam{0%{transform:scale(3.2);opacity:0;}45%{transform:scale(.9);opacity:1;}70%{transform:scale(1.09);}100%{transform:scale(1);}}
+.ko-line{width:72%;max-width:340px;height:5px;margin-top:8px;border-radius:3px;
+  background:linear-gradient(90deg,transparent,#FF1E1E 20%,#FF7A7A 50%,#FF1E1E 80%,transparent);box-shadow:0 0 18px #FF0000;
+  animation:koLine .45s ease-out .3s both;}
+@keyframes koLine{from{transform:scaleX(0);opacity:0;}to{transform:scaleX(1);opacity:1;}}
+.ko-outcome{margin-top:18px;font-family:'Baloo 2',sans-serif;font-weight:800;font-size:30px;letter-spacing:.12em;
+  animation:koOutcome .5s ease-out .62s both;}
+.ko-outcome.win{color:#FFD24A;text-shadow:0 0 20px #FFB300,0 2px 6px rgba(0,0,0,.7);}
+.ko-outcome.lose{color:#FF5A5A;text-shadow:0 0 20px #B00000,0 2px 6px rgba(0,0,0,.7);}
+@keyframes koOutcome{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:translateY(0);}}
 /* Emotes (combat entre amis) */
 .emote-bar{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-top:10px;}
 .emote-btn{font-size:20px;line-height:1;width:40px;height:40px;border-radius:12px;cursor:pointer;
@@ -4937,6 +4956,21 @@ function addCombatLog(text,cls='neutral'){
   if(battleState.log.length>4) battleState.log.pop();
 }
 
+// Annonce dramatique de K.O. (style Mortal Kombat) avant l'écran de résultat
+function koCinematic(winner){
+  return new Promise(res=>{
+    const won=winner==='player';
+    const ov=document.createElement('div'); ov.className='ko-ov';
+    ov.innerHTML=`<div class="ko-flash"></div>
+      <div class="ko-word">K.O.</div>
+      <div class="ko-line"></div>
+      <div class="ko-outcome ${won?'win':'lose'}">${won?'VICTOIRE':'DÉFAITE'}</div>`;
+    document.body.appendChild(ov);
+    if(navigator.vibrate) navigator.vibrate([70,60,130,60,220]);
+    setTimeout(()=>ov.classList.add('out'), 1550);
+    setTimeout(()=>{ ov.remove(); res(); }, 1880);
+  });
+}
 function fureurCinematic(side){
   return new Promise(res=>{
     const isP=side==='player';
@@ -4969,7 +5003,10 @@ function endBattle(winner){
   if(lel && screen==='combat-fight'){
     lel.classList.remove('lunge','hit-shake','sprite-idle'); lel.classList.add('faint');
     if(navigator.vibrate) navigator.vibrate([40,60,120]);
-    return setTimeout(()=>finishBattle(winner),820);
+    return setTimeout(()=>{
+      if(winner==='player'||winner==='bot') koCinematic(winner).then(()=>finishBattle(winner));
+      else finishBattle(winner);
+    },620);
   }
   return finishBattle(winner);
 }
