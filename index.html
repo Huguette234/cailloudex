@@ -1270,7 +1270,7 @@ nav{display:flex;gap:8px;padding:10px 14px max(14px,env(safe-area-inset-bottom))
 <div class="frame" id="app"></div>
 <div class="grain-overlay"></div>
 <div class="vignette-overlay"></div>
-<input type="file" id="fileInput" accept="image/*" capture="environment" style="display:none">
+<input type="file" id="fileInput" accept="image/*" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0;overflow:hidden;">
 <script>
 /* ===== DATA ===== */
 const STAT_CAP = 150;
@@ -6429,7 +6429,7 @@ document.addEventListener('click',(e)=>{
   const t=e.target.closest('[data-action]');
   if(!t) return;
   const action=t.dataset.action;
-  if(action==='capture'){ document.getElementById('fileInput').click(); }
+  if(action==='capture'){ const fi=document.getElementById('fileInput'); if(fi){ try{ fi.click(); }catch(err){ showToast('❌ Impossible d\'ouvrir l\'appareil photo. Autorise l\'accès aux fichiers/photos dans les réglages.'); } } }
   else if(action==='goto'){
     // Quitter la navigation normale annule une éventuelle partie d'arène/boss en cours
     if(t.dataset.screen!=='combat-pick'){ arenaRun=null; arenaPicking=false; bossRun=false; bossPicking=false; }
