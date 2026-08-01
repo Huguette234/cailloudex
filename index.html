@@ -667,6 +667,15 @@ nav{display:flex;gap:8px;padding:10px 14px max(14px,env(safe-area-inset-bottom))
 .series-board{font-family:'Baloo 2',sans-serif;font-weight:800;font-size:13.5px;color:rgba(44,42,46,.72);margin:2px 0 8px;background:rgba(196,92,255,.1);border:1px solid rgba(196,92,255,.28);border-radius:12px;padding:8px 12px;display:inline-block;}
 .series-board b{color:rgba(44,42,46,.85);}
 .series-board .sb-win{color:#2E7D32;}
+/* Interrupteur son (réglages) */
+.sound-toggle-row{display:flex;align-items:center;justify-content:space-between;gap:12px;max-width:340px;margin:14px auto 4px;padding:11px 16px;border-radius:14px;cursor:pointer;
+  background:linear-gradient(160deg,rgba(255,255,255,.82),rgba(255,255,255,.64));border:1px solid rgba(44,42,46,.12);box-shadow:0 3px 10px rgba(0,0,0,.1);
+  font-family:'Baloo 2',sans-serif;font-weight:800;font-size:14px;color:var(--txt);}
+.sound-toggle-row:active{transform:scale(.99);}
+.sound-sw{position:relative;width:46px;height:26px;border-radius:999px;background:rgba(44,42,46,.24);flex-shrink:0;transition:background .2s ease;}
+.sound-sw.on{background:linear-gradient(135deg,#6FCF53,#3A8C20);}
+.sound-sw i{position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 2px 4px rgba(0,0,0,.3);transition:left .2s cubic-bezier(.2,.9,.3,1.3);}
+.sound-sw.on i{left:23px;}
 .diff-row{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-bottom:6px;}
 .diff-pill{font-family:'Baloo 2',sans-serif;font-weight:800;font-size:12px;color:rgba(44,42,46,.7);background:rgba(255,255,255,.7);border:1.5px solid rgba(44,42,46,.14);border-radius:999px;padding:6px 12px;cursor:pointer;transition:transform .1s,box-shadow .15s;}
 .diff-pill.sel{color:var(--txt);background:linear-gradient(135deg,#FFE79A,var(--legendaire) 60%,#EBBE2E);border-color:rgba(255,240,190,.6);box-shadow:0 3px 10px rgba(184,142,20,.4);transform:translateY(-1px);}
@@ -2619,7 +2628,76 @@ function showToast(msg){
   const t=document.createElement('div'); t.className='toast'; t.textContent=msg;
   document.body.appendChild(t);
   setTimeout(()=>t.remove(),2800);
+  // Son contextuel selon le type de message
+  const m=String(msg||'');
+  if(/^(❌|⛔|🚫)/.test(m)) playSfx('error');
+  else if(/^(💰|🪙|💎|🎯)/.test(m)) playSfx('coin');
+  else if(/^(✅|🎉|✨)/.test(m)) playSfx('success');
 }
+
+/* ===== SONS (synthétisés via Web Audio — aucun fichier, marche hors-ligne) ===== */
+let _audioCtx=null;
+let soundOn=(()=>{ try{ return localStorage.getItem('cdx_sound')!=='off'; }catch(e){ return true; } })();
+function setSoundOn(on){ soundOn=!!on; try{ localStorage.setItem('cdx_sound', on?'on':'off'); }catch(e){} if(on){ sfxUnlock(); playSfx('success'); } }
+function sfxUnlock(){
+  try{
+    if(!_audioCtx){ const AC=window.AudioContext||window.webkitAudioContext; if(!AC) return; _audioCtx=new AC(); }
+    if(_audioCtx.state==='suspended') _audioCtx.resume();
+  }catch(e){}
+}
+function _tone(o){
+  if(!soundOn||!_audioCtx) return;
+  try{
+    const ctx=_audioCtx, t0=ctx.currentTime+(o.delay||0), dur=o.dur||0.15;
+    const osc=ctx.createOscillator(), g=ctx.createGain();
+    osc.type=o.type||'sine';
+    osc.frequency.setValueAtTime(o.freq, t0);
+    if(o.glideEnd) osc.frequency.exponentialRampToValueAtTime(Math.max(1,o.glideEnd), t0+dur);
+    const vol=(o.vol!=null?o.vol:0.2);
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.exponentialRampToValueAtTime(vol, t0+0.008);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0+dur);
+    osc.connect(g); g.connect(ctx.destination);
+    osc.start(t0); osc.stop(t0+dur+0.03);
+  }catch(e){}
+}
+function _noise(o){
+  if(!soundOn||!_audioCtx) return;
+  try{
+    const ctx=_audioCtx, t0=ctx.currentTime+(o.delay||0), dur=o.dur||0.18;
+    const n=Math.floor(ctx.sampleRate*dur);
+    const buf=ctx.createBuffer(1,n,ctx.sampleRate); const d=buf.getChannelData(0);
+    for(let i=0;i<n;i++) d[i]=(Math.random()*2-1)*(1-i/n);
+    const src=ctx.createBufferSource(); src.buffer=buf;
+    const g=ctx.createGain(); const vol=(o.vol!=null?o.vol:0.25);
+    g.gain.setValueAtTime(vol, t0); g.gain.exponentialRampToValueAtTime(0.0001, t0+dur);
+    let node=src;
+    if(o.filterFreq){ const f=ctx.createBiquadFilter(); f.type=o.filterType||'lowpass'; f.frequency.value=o.filterFreq; src.connect(f); node=f; }
+    node.connect(g); g.connect(ctx.destination);
+    src.start(t0); src.stop(t0+dur+0.03);
+  }catch(e){}
+}
+function playSfx(name){
+  if(!soundOn) return;
+  sfxUnlock(); if(!_audioCtx) return;
+  switch(name){
+    case 'tap': _tone({freq:520,type:'triangle',dur:0.05,vol:0.05}); break;
+    case 'capture': [523,659,784,1047].forEach((f,i)=>_tone({freq:f,type:'triangle',dur:0.18,vol:0.13,delay:i*0.07})); break;
+    case 'rare': [523,659,784,1047,1319].forEach((f,i)=>_tone({freq:f,type:'sawtooth',dur:0.22,vol:0.11,delay:i*0.08})); break;
+    case 'hit': _noise({dur:0.14,vol:0.20,filterFreq:1800}); _tone({freq:180,type:'square',dur:0.12,vol:0.13,glideEnd:70}); break;
+    case 'crit': _noise({dur:0.18,vol:0.28,filterFreq:3200}); _tone({freq:320,type:'square',dur:0.16,vol:0.17,glideEnd:90}); break;
+    case 'ko': _noise({dur:0.5,vol:0.38,filterFreq:1200}); _tone({freq:150,type:'sawtooth',dur:0.5,vol:0.20,glideEnd:45}); break;
+    case 'fureur': _tone({freq:120,type:'sawtooth',dur:0.6,vol:0.18,glideEnd:620}); _noise({dur:0.6,vol:0.10,filterFreq:900,delay:0.05}); break;
+    case 'victory': [523,659,784,1047].forEach((f,i)=>_tone({freq:f,type:'triangle',dur:0.25,vol:0.15,delay:i*0.12})); break;
+    case 'defeat': [440,392,330,262].forEach((f,i)=>_tone({freq:f,type:'sine',dur:0.3,vol:0.14,delay:i*0.14})); break;
+    case 'chest': [784,988,1319].forEach((f,i)=>_tone({freq:f,type:'triangle',dur:0.2,vol:0.13,delay:i*0.06})); _noise({dur:0.3,vol:0.05,filterFreq:6000,filterType:'highpass',delay:0.1}); break;
+    case 'coin': _tone({freq:988,type:'square',dur:0.08,vol:0.11}); _tone({freq:1319,type:'square',dur:0.1,vol:0.11,delay:0.07}); break;
+    case 'error': _tone({freq:200,type:'square',dur:0.18,vol:0.13,glideEnd:120}); break;
+    case 'success': _tone({freq:659,type:'triangle',dur:0.12,vol:0.11}); _tone({freq:988,type:'triangle',dur:0.14,vol:0.11,delay:0.09}); break;
+  }
+}
+// Retour haptique centralisé
+function haptic(p){ try{ if(navigator.vibrate) navigator.vibrate(p); }catch(e){} }
 
 /* ===== CONFETTI ===== */
 function spawnConfetti(count,hex){
@@ -3499,6 +3577,7 @@ function openPack(){
   const cta=document.querySelector('.pack-open-btn'); if(cta) cta.style.opacity='0';
   const fl=document.createElement('div'); fl.className='flash-white'; document.body.appendChild(fl); setTimeout(()=>fl.remove(),340);
   if(navigator.vibrate) navigator.vibrate(revealRock.confettiCount>40?[30,50,40,50,120]:[40,60]);
+  playSfx((revealRock._special||revealRock.confettiCount>40)?'rare':'capture');
   spawnConfetti(revealRock.confettiCount,revealRock.hex);
   showRarityBanner(revealRock);
   if(revealRock._special) setTimeout(()=>showToast('✨✨ CAILLOU SECRET DÉCOUVERT ! ✨✨'),600);
@@ -3946,6 +4025,10 @@ function accountScreen(){
           <div class="level-xp-text">${lvl.xpIntoLevel} / ${lvl.xpForNext} XP · ${meta.xp||0} XP au total</div>
         </div>
       </div>`; })()}
+    <div class="sound-toggle-row" data-action="toggleSound">
+      <span>🔊 Sons &amp; effets</span>
+      <span class="sound-sw ${soundOn?'on':''}"><i></i></span>
+    </div>
     <p class="setup-sub">
       🤖 IA active pour tout le monde — noms personnalisés<br>
       et détection anti-triche, sans clé à configurer.<br><br>
@@ -4750,6 +4833,7 @@ function playAttackAnim(attackerId,defenderId,opts={}){
     setTimeout(()=>{
       if(defEl) defEl.classList.add('hit-shake');
       spawnHitFx(defenderId,opts);
+      if(!opts.heal) playSfx(opts.crit||opts.ultimate?'crit':'hit');
       resolve();
       setTimeout(()=>{
         if(atkEl) atkEl.classList.remove('lunge');
@@ -5177,6 +5261,8 @@ function koCinematic(winner){
       <div class="ko-stage">${koSVG()}<div class="ko-outcome ${won?'win':'lose'}">${won?'VICTOIRE':'DÉFAITE'}</div></div>`;
     document.body.appendChild(ov);
     if(navigator.vibrate) navigator.vibrate([80,50,150,50,90,60,240]);
+    playSfx('ko');
+    setTimeout(()=>playSfx(won?'victory':'defeat'), 720);
     setTimeout(()=>ov.classList.add('out'), 1750);
     setTimeout(()=>{ ov.remove(); res(); }, 2080);
   });
@@ -5189,6 +5275,7 @@ function fureurCinematic(side){
     ov.innerHTML=`<div class="fureur-flash"></div><div class="fureur-streaks"></div><div class="fureur-txt">🔥 FUREUR 🔥<span>${rock.name}</span></div>`;
     document.body.appendChild(ov);
     if(navigator.vibrate) navigator.vibrate([30,40,80,40,140]);
+    playSfx('fureur');
     setTimeout(()=>ov.classList.add('out'),840);
     setTimeout(()=>{ ov.remove(); res(); },1160);
   });
@@ -5480,8 +5567,9 @@ function openChest(){
   if(battleState) battleState.chestOpen=true;
   c.classList.remove('idle'); c.classList.add('open');
   if(navigator.vibrate) navigator.vibrate([15,30,60]);
+  playSfx('chest');
   const hint=document.querySelector('.chest-hint'); if(hint) hint.style.display='none';
-  const loot=document.querySelector('.chest-loot'); if(loot) setTimeout(()=>loot.classList.add('show'),360);
+  const loot=document.querySelector('.chest-loot'); if(loot) setTimeout(()=>{ loot.classList.add('show'); playSfx('coin'); },360);
 }
 async function playerAction(moveId){
   if(!battleState||battleState.turn!=='player') return;
@@ -6764,13 +6852,16 @@ async function rerollRockAI(rockId){
 }
 
 document.addEventListener('click',(e)=>{
+  sfxUnlock(); // débloque l'audio dès le 1er geste utilisateur (requis sur mobile)
   const t=e.target.closest('[data-action]');
   if(!t) return;
   const action=t.dataset.action;
+  playSfx('tap');
   if(action==='capture'){ showCaptureChoice(); }
   else if(action==='capCamera'){ closeCaptureChoice(); const fi=document.getElementById('fileInput'); if(fi){ try{ fi.click(); }catch(err){ showToast('❌ Impossible d\'ouvrir l\'appareil photo. Autorise l\'accès à la caméra dans les réglages.'); } } }
   else if(action==='capGallery'){ closeCaptureChoice(); const fg=document.getElementById('fileInputGal'); if(fg){ try{ fg.click(); }catch(err){ showToast('❌ Impossible d\'ouvrir la galerie. Autorise l\'accès aux photos dans les réglages.'); } } }
   else if(action==='capCancel'){ closeCaptureChoice(); }
+  else if(action==='toggleSound'){ setSoundOn(!soundOn); render(); }
   else if(action==='onlineSetBet'){
     if(onlineState && !onlineState.myRock){
       const v=parseInt(t.dataset.bet,10)||0;
