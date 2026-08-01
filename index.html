@@ -2699,6 +2699,90 @@ function playSfx(name){
 // Retour haptique centralisé
 function haptic(p){ try{ if(navigator.vibrate) navigator.vibrate(p); }catch(e){} }
 
+/* ===== MUSIQUE DE FOND (nappes ambient synthétisées, en boucle) ===== */
+let musicOn=(()=>{ try{ return localStorage.getItem('cdx_music')!=='off'; }catch(e){ return true; } })();
+let _music={playing:false, timer:null, nextTime:0, step:0, gain:null};
+const _MUSIC_CHORD_DUR=4.0;
+const _MUSIC_PROG=[
+  { notes:[220.00,261.63,329.63], bass:110.00 }, // Am
+  { notes:[174.61,220.00,261.63], bass:87.31  }, // F
+  { notes:[130.81,164.81,196.00], bass:65.41  }, // C
+  { notes:[196.00,246.94,293.66], bass:98.00  }, // G
+];
+function setMusicOn(on){
+  musicOn=!!on; try{ localStorage.setItem('cdx_music', on?'on':'off'); }catch(e){}
+  if(on) startMusic(); else stopMusic();
+}
+function _scheduleChord(idx, t){
+  const ctx=_audioCtx; if(!ctx||!_music.gain) return;
+  const chord=_MUSIC_PROG[idx]; const dur=_MUSIC_CHORD_DUR;
+  // Nappe : 3 oscillateurs doux filtrés, montée et descente lentes
+  chord.notes.forEach(freq=>{
+    const osc=ctx.createOscillator(); osc.type='triangle'; osc.frequency.value=freq;
+    const g=ctx.createGain();
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(0.09, t+0.9);
+    g.gain.setValueAtTime(0.09, t+dur-0.4);
+    g.gain.exponentialRampToValueAtTime(0.0001, t+dur+0.5);
+    const lp=ctx.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=1400;
+    osc.connect(lp); lp.connect(g); g.connect(_music.gain);
+    osc.start(t); osc.stop(t+dur+0.6);
+  });
+  // Basse ronde
+  const bass=ctx.createOscillator(); bass.type='sine'; bass.frequency.value=chord.bass;
+  const bg=ctx.createGain();
+  bg.gain.setValueAtTime(0.0001, t);
+  bg.gain.exponentialRampToValueAtTime(0.11, t+0.4);
+  bg.gain.exponentialRampToValueAtTime(0.0001, t+dur+0.2);
+  bass.connect(bg); bg.connect(_music.gain); bass.start(t); bass.stop(t+dur+0.3);
+  // Petite cloche cristalline, éparse et discrète
+  const bell=ctx.createOscillator(); bell.type='sine'; bell.frequency.value=chord.notes[chord.notes.length-1]*2;
+  const belg=ctx.createGain();
+  belg.gain.setValueAtTime(0.0001, t+0.25);
+  belg.gain.exponentialRampToValueAtTime(0.05, t+0.4);
+  belg.gain.exponentialRampToValueAtTime(0.0001, t+2.4);
+  bell.connect(belg); belg.connect(_music.gain); bell.start(t+0.25); bell.stop(t+2.5);
+}
+function _musicTick(){
+  if(!_music.playing||!_audioCtx) return;
+  const ctx=_audioCtx;
+  while(_music.nextTime < ctx.currentTime+1.2){
+    _scheduleChord(_music.step % _MUSIC_PROG.length, _music.nextTime);
+    _music.nextTime += _MUSIC_CHORD_DUR;
+    _music.step++;
+  }
+  _music.timer=setTimeout(_musicTick, 300);
+}
+function startMusic(){
+  if(_music.playing||!musicOn) return;
+  sfxUnlock(); if(!_audioCtx) return;
+  _music.playing=true;
+  _music.gain=_audioCtx.createGain();
+  _music.gain.gain.setValueAtTime(0.0001, _audioCtx.currentTime);
+  _music.gain.gain.exponentialRampToValueAtTime(0.16, _audioCtx.currentTime+2.5); // fondu d'entrée
+  _music.gain.connect(_audioCtx.destination);
+  _music.nextTime=_audioCtx.currentTime+0.15;
+  _musicTick();
+}
+function stopMusic(){
+  _music.playing=false; clearTimeout(_music.timer);
+  if(_music.gain&&_audioCtx){
+    try{
+      const g=_music.gain;
+      g.gain.cancelScheduledValues(_audioCtx.currentTime);
+      g.gain.setValueAtTime(Math.max(0.0002,g.gain.value), _audioCtx.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.0001, _audioCtx.currentTime+0.7);
+      setTimeout(()=>{ try{ g.disconnect(); }catch(e){} }, 900);
+    }catch(e){}
+  }
+  _music.gain=null;
+}
+// Économie de batterie : coupe la musique quand l'app passe en arrière-plan
+document.addEventListener('visibilitychange',()=>{
+  if(document.hidden) stopMusic();
+  else if(musicOn) startMusic();
+});
+
 /* ===== CONFETTI ===== */
 function spawnConfetti(count,hex){
   if(count<=0) return;
@@ -4028,6 +4112,10 @@ function accountScreen(){
     <div class="sound-toggle-row" data-action="toggleSound">
       <span>🔊 Sons &amp; effets</span>
       <span class="sound-sw ${soundOn?'on':''}"><i></i></span>
+    </div>
+    <div class="sound-toggle-row" data-action="toggleMusic" style="margin-top:8px;">
+      <span>🎵 Musique de fond</span>
+      <span class="sound-sw ${musicOn?'on':''}"><i></i></span>
     </div>
     <p class="setup-sub">
       🤖 IA active pour tout le monde — noms personnalisés<br>
@@ -6853,6 +6941,7 @@ async function rerollRockAI(rockId){
 
 document.addEventListener('click',(e)=>{
   sfxUnlock(); // débloque l'audio dès le 1er geste utilisateur (requis sur mobile)
+  if(musicOn) startMusic(); // idempotent : démarre la musique au 1er geste
   const t=e.target.closest('[data-action]');
   if(!t) return;
   const action=t.dataset.action;
@@ -6862,6 +6951,7 @@ document.addEventListener('click',(e)=>{
   else if(action==='capGallery'){ closeCaptureChoice(); const fg=document.getElementById('fileInputGal'); if(fg){ try{ fg.click(); }catch(err){ showToast('❌ Impossible d\'ouvrir la galerie. Autorise l\'accès aux photos dans les réglages.'); } } }
   else if(action==='capCancel'){ closeCaptureChoice(); }
   else if(action==='toggleSound'){ setSoundOn(!soundOn); render(); }
+  else if(action==='toggleMusic'){ setMusicOn(!musicOn); render(); }
   else if(action==='onlineSetBet'){
     if(onlineState && !onlineState.myRock){
       const v=parseInt(t.dataset.bet,10)||0;
