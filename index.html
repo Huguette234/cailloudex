@@ -4362,7 +4362,7 @@ async function playerOnlineAction(moveId){
     incrementStat('wins',1);
     addXp(30); addGravillons(20); addGems(WIN_GEMS);
     grantFoodLoot(); recordOnlineWin();
-    screen='combat-result'; render(); return;
+    return playKoThen('player', ()=>{ screen='combat-result'; render(); });
   }
   battleState.turn='opponent'; render();
 }
@@ -4402,7 +4402,7 @@ async function applyOnlineOpponentAction(msg){
   if(battleState.playerHP<=0){
     battleState.winner='bot'; battleState.turn='end';
     incrementStat('losses',1);
-    screen='combat-result'; render(); return;
+    return playKoThen('bot', ()=>{ screen='combat-result'; render(); });
   }
   battleState.turn='player'; render();
 }
@@ -4998,21 +4998,24 @@ function announceTurn(kind){
     setTimeout(()=>{ el.remove(); res(); },1080);
   });
 }
-function endBattle(winner){
-  if(!battleState) return;
-  battleState.winner=winner; battleState.turn='end';
-  // Animation de K.O. : le perdant s'effondre avant l'écran de résultat
+// Joue l'effondrement du perdant puis l'annonce K.O., avant d'exécuter cb()
+function playKoThen(winner, cb){
   const loserId=winner==='player'?'botSprite':winner==='bot'?'playerSprite':null;
   const lel=loserId?document.getElementById(loserId):null;
   if(lel && screen==='combat-fight'){
     lel.classList.remove('lunge','hit-shake','sprite-idle'); lel.classList.add('faint');
     if(navigator.vibrate) navigator.vibrate([40,60,120]);
     return setTimeout(()=>{
-      if(winner==='player'||winner==='bot') koCinematic(winner).then(()=>finishBattle(winner));
-      else finishBattle(winner);
+      if(winner==='player'||winner==='bot') koCinematic(winner).then(cb);
+      else cb();
     },620);
   }
-  return finishBattle(winner);
+  return cb();
+}
+function endBattle(winner){
+  if(!battleState) return;
+  battleState.winner=winner; battleState.turn='end';
+  playKoThen(winner, ()=>finishBattle(winner));
 }
 function finishBattle(winner){
   if(!battleState) return;
