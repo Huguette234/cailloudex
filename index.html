@@ -4048,6 +4048,8 @@ function handleOnlineMsg(msg){
     if(screen==='combat-result') render();
   }
   if(msg.type==='action') applyOnlineOpponentAction(msg);
+  if(msg.type==='atk') onlineDefend(msg);
+  if(msg.type==='atk-result') onlineAttackResult(msg);
   if(msg.type==='emote') showEmoteBubble('foe',msg.emoji);
 }
 const COMBAT_EMOTES=['😎','🔥','😭','😂','😤','👑','🫡','😱'];
@@ -4301,6 +4303,7 @@ async function startOnlineBattle(){
     log:[{text:`⚔️ ${pr.name} vs ${br.name} — que le meilleur caillou gagne !`,cls:'neutral'}],
     turn:myFirst?'player':'opponent', winner:null, online:true, entered:false,
     playerSpriteUrl, botSpriteUrl,
+    playerFureur:0, botFureur:0,
   };
   screen='combat-fight'; render();
 }
@@ -4343,29 +4346,52 @@ async function playerOnlineAction(moveId){
     battleState.turn='opponent'; render();
     return;
   }
-  const moves=getAvailableMoves(battleState.playerRock);
-  const move=moves.find(m=>m.id===moveId);
-  if(!move) return;
-  if(move.onceOnly){
-    const usedFlag=moveId==='special'?'playerSpecialUsed':'playerUltimateUsed';
-    if(battleState[usedFlag]){ showToast('Déjà utilisée !'); return; }
+  const pr=battleState.playerRock, br=battleState.botRock;
+  const isFureur=moveId==='fureur';
+  if(isFureur && (battleState.playerFureur||0)<100){ showToast('🔥 Jauge de Fureur pas encore pleine !'); return; }
+  let move=null;
+  if(!isFureur){
+    move=getAvailableMoves(pr).find(m=>m.id===moveId);
+    if(!move) return;
+    if(move.onceOnly){
+      const usedFlag=moveId==='special'?'playerSpecialUsed':'playerUltimateUsed';
+      if(battleState[usedFlag]){ showToast('Déjà utilisée !'); return; }
+    }
   }
   battleState.turn='animating'; render();
-  const tMult=move.isType?typeMultiplier(battleState.playerRock.rockType,battleState.botRock.rockType):1;
-  const dmg=calcDmg(battleState.playerRock.atk,battleState.botRock.def,move.mult*tMult);
-  await playAttackAnim('playerSprite','botSprite',{dmg,ultimate:moveId==='ultimate',effective:tMult>1?'super':tMult<1?'weak':null,color:attackColor(battleState.playerRock,moveId)});
+  // VISER : mini-jeu de précision qui multiplie tes dégâts
+  const timing=await timingChallenge('attack');
+  const isType=!!(move&&move.isType);
+  const tMult=(isType||isFureur)?typeMultiplier(pr.rockType,br.rockType):1;
+  const baseMult=isFureur?FUREUR_MULT:move.mult;
+  let dmg=Math.max(1,Math.round(calcDmg(pr.atk,br.def,baseMult*tMult)*timing));
+  if(isFureur){ battleState.playerFureur=0; missionEvent({type:'fureur'}); }
+  await playAttackAnim('playerSprite','botSprite',{dmg,crit:timing>=1.6,ultimate:moveId==='ultimate'||isFureur,effective:tMult>1?'super':tMult<1?'weak':null,color:attackColor(pr,isFureur?'ultimate':moveId)});
   if(moveId==='special') battleState.playerSpecialUsed=true;
   if(moveId==='ultimate') battleState.playerUltimateUsed=true;
-  battleState.botHP=Math.max(0,battleState.botHP-dmg);
-  try{ onlineState.conn.send({type:'action',action:moveId,dmg}); }catch(e){}
-  const typeTxt=move.isType?(tMult>1?' (super efficace !)':tMult<1?' (peu efficace...)':''):'';
-  let msg;
-  if(moveId==='ultimate') msg=`🌟 ULTIME ! ${battleState.playerRock.name} déchaîne sa puissance`;
-  else if(moveId==='special') msg=`⚡ ${battleState.playerRock.name} : ${battleState.playerRock.specialMove||'Spéciale'}`;
-  else if(moveId==='type') msg=`${move.label} ${battleState.playerRock.name} frappe`;
-  else msg=`${battleState.playerRock.name} frappe`;
-  addCombatLog(`${msg} : -${dmg} PV${typeTxt}`,'dmg-bot');
-  if(battleState.botHP<=0){
+  // On envoie le coup ; l'adversaire pare et nous renvoie le résultat (PV faisant foi).
+  try{ onlineState.conn.send({type:'atk',action:moveId,dmg,fureur:battleState.playerFureur||0}); }catch(e){}
+  battleState._pendingHit={dmg,moveId,isFureur,tMult,perf:timing>=1.6};
+  // turn reste 'animating' jusqu'à réception du résultat
+  render();
+}
+// Réception du résultat de MON attaque (PV de l'adversaire faisant foi)
+function onlineAttackResult(msg){
+  if(!battleState) return;
+  const p=battleState._pendingHit||{}; battleState._pendingHit=null;
+  battleState.botHP=Math.max(0,msg.oppHP!=null?msg.oppHP:battleState.botHP-(msg.dmg||0));
+  if(msg.fureur!=null) battleState.botFureur=msg.fureur;
+  const pr=battleState.playerRock;
+  let m;
+  if(p.isFureur) m=`🔥 FUREUR ! ${pr.name} déchaîne sa rage`;
+  else if(p.moveId==='ultimate') m=`🌟 ULTIME ! ${pr.name} déchaîne sa puissance`;
+  else if(p.moveId==='special') m=`⚡ ${pr.name} : ${pr.specialMove||'Spéciale'}`;
+  else if(p.moveId==='type') m=`${pr.name} frappe avec son type`;
+  else m=`${pr.name} frappe`;
+  const eff=p.tMult>1?' (super efficace !)':p.tMult<1?' (peu efficace...)':'';
+  const par=(msg.parried?' 🛡️paré':'');
+  addCombatLog(`${m} : -${msg.dmg} PV${eff}${p.perf?' ✨':''}${par}`,'dmg-bot');
+  if(msg.dead){
     battleState.winner='player'; battleState.turn='end';
     incrementStat('wins',1);
     addXp(30); addGravillons(20); addGems(WIN_GEMS);
@@ -4392,22 +4418,32 @@ async function applyOnlineOpponentAction(msg){
     battleState.turn='player'; render();
     return;
   }
-  battleState.turn='animating'; render();
-  const dmg=msg.dmg||0;
-  await playAttackAnim('botSprite','playerSprite',{dmg,ultimate:msg.action==='ultimate',color:attackColor(battleState.botRock,msg.action)});
-  battleState.playerHP=Math.max(0,battleState.playerHP-dmg);
-  if(msg.action==='special'){
-    battleState.botSpecialUsed=true;
-    addCombatLog(`⚡ ${battleState.botRock.name} : ${battleState.botRock.specialMove||'Spéciale'} ! -${dmg} PV 💥`,'dmg-player');
-  } else if(msg.action==='ultimate'){
-    battleState.botUltimateUsed=true;
-    addCombatLog(`🌟 ULTIME ! ${battleState.botRock.name} déchaîne sa puissance : -${dmg} PV 💥`,'dmg-player');
-  } else if(msg.action==='type'){
-    addCombatLog(`${battleState.botRock.name} frappe avec son type : -${dmg} PV`,'dmg-player');
-  } else {
-    addCombatLog(`${battleState.botRock.name} contre-attaque : -${dmg} PV.`,'dmg-player');
-  }
-  if(battleState.playerHP<=0){
+}
+// Défense : l'adversaire m'attaque → j'encaisse, je PARE, puis je renvoie le résultat (mes PV font foi)
+async function onlineDefend(msg){
+  if(!battleState||battleState.turn!=='opponent') return;
+  battleState.turn='animating';
+  if(msg.fureur!=null) battleState.botFureur=msg.fureur;
+  render();
+  const raw=msg.dmg||0;
+  const isBig=msg.action==='ultimate'||msg.action==='fureur';
+  await playAttackAnim('botSprite','playerSprite',{dmg:raw,ultimate:isBig,color:attackColor(battleState.botRock,msg.action)});
+  // PARER : mini-jeu pour réduire les dégâts encaissés
+  const parry=await timingChallenge('parry');
+  const finalDmg=Math.max(1,Math.round(raw*parry));
+  battleState.playerHP=Math.max(0,battleState.playerHP-finalDmg);
+  gainFureur('player',finalDmg);
+  const dead=battleState.playerHP<=0;
+  const par=parry<=0.15?' 🛡️PARFAIT':parry<1?' 🛡️paré':'';
+  let m;
+  if(msg.action==='fureur') m=`🔥 FUREUR ! ${battleState.botRock.name} déchaîne sa rage`;
+  else if(msg.action==='ultimate') m=`🌟 ULTIME ! ${battleState.botRock.name} déchaîne sa puissance`;
+  else if(msg.action==='special') m=`⚡ ${battleState.botRock.name} : ${battleState.botRock.specialMove||'Spéciale'}`;
+  else if(msg.action==='type') m=`${battleState.botRock.name} frappe avec son type`;
+  else m=`${battleState.botRock.name} attaque`;
+  addCombatLog(`${m} : -${finalDmg} PV${par}`,'dmg-player');
+  try{ onlineState.conn.send({type:'atk-result',dmg:finalDmg,oppHP:battleState.playerHP,dead,parried:parry<1,fureur:battleState.playerFureur||0}); }catch(e){}
+  if(dead){
     battleState.winner='bot'; battleState.turn='end';
     incrementStat('losses',1);
     return playKoThen('bot', ()=>{ screen='combat-result'; render(); });
@@ -4786,7 +4822,7 @@ function terrainFactor(terrain,type){ if(!terrain) return 1; if(terrain.boost===
 // La Fureur se remplit quand on ENCAISSE des dégâts (mécanique de come-back).
 // Encaisser ~65% de ses PV totaux remplit la jauge.
 function gainFureur(side,dmg){
-  if(!battleState||battleState.online||!dmg) return;
+  if(!battleState||!dmg) return;
   const max=battleState[side+'MaxHP']||1;
   const g=Math.round(dmg/max*100*1.5);
   battleState[side+'Fureur']=Math.min(100,(battleState[side+'Fureur']||0)+g);
@@ -5477,11 +5513,13 @@ function combatMovesHtml(){
     const fu=(s.playerFureur||0)>=100 ? `<button class="btn btn-fureur mv-btn" ${busy?'disabled style="opacity:.5;"':''} data-action="combatMove" data-move="fureur">🔥 FUREUR</button>` : '';
     return fu+moves;
   }
-  return getAvailableMoves(s.playerRock).map(m=>{
+  const onlineMoves=getAvailableMoves(s.playerRock).map(m=>{
     const used=(m.id==='special'&&s.playerSpecialUsed)||(m.id==='ultimate'&&s.playerUltimateUsed);
     const cls=m.id==='ultimate'?'btn-ultimate':m.id==='special'?'btn-purple':'btn-gold';
     return `<button class="btn ${cls}" ${busy||used?'disabled style="opacity:.4;"':''} data-action="combatMove" data-move="${m.id}">${m.label}</button>`;
   }).join('');
+  const onlineFu=(s.playerFureur||0)>=100 ? `<button class="btn btn-fureur mv-btn" ${busy?'disabled style="opacity:.5;"':''} data-action="combatMove" data-move="fureur">🔥 FUREUR</button>` : '';
+  return onlineFu+onlineMoves;
 }
 function combatSecondaryHtml(){
   const s=battleState; const busy=s.turn!=='player'; const f=bestAvailableFood();
@@ -5499,13 +5537,14 @@ function patchCombat(){
     const hp=s[side+'HP'], max=s[side+'MaxHP'], pct=max?hp/max:0;
     const hprow=card.querySelector('.bcard-hprow'); if(hprow) hprow.innerHTML=`<b>${hp}</b>/<span>${max} PV</span>`;
     const fill=card.querySelector('.arena-bar-fill'); if(fill){ fill.style.width=(pct*100)+'%'; fill.style.background=hpBarColor(pct); }
+    // Fureur : affichée en solo ET en ligne
+    const f=Math.max(0,Math.min(100,s[side+'Fureur']||0)), ffull=f>=100;
+    const ff=card.querySelector('.fur-fill'); if(ff){ ff.style.width=f+'%'; ff.classList.toggle('full',ffull); }
+    const fl=card.querySelector('.fur-lbl'); if(fl){ fl.textContent='🔥'+f; fl.classList.toggle('full',ffull); }
     if(isSolo){
       const e=Math.max(0,Math.min(100,s[side+'Energy']||0)), full=e>=100;
       const nf=card.querySelector('.nrg-fill'); if(nf){ nf.style.width=e+'%'; nf.classList.toggle('full',full); }
       const nl=card.querySelector('.nrg-lbl'); if(nl){ nl.textContent='⚡'+e; nl.classList.toggle('full',full); }
-      const f=Math.max(0,Math.min(100,s[side+'Fureur']||0)), ffull=f>=100;
-      const ff=card.querySelector('.fur-fill'); if(ff){ ff.style.width=f+'%'; ff.classList.toggle('full',ffull); }
-      const fl=card.querySelector('.fur-lbl'); if(fl){ fl.textContent='🔥'+f; fl.classList.toggle('full',ffull); }
       const sb=card.querySelector('.stbadges'); if(sb){ const arr=s[side+'Status']||[]; sb.innerHTML=arr.map(st=>{const d=STATUS_DEFS[st.kind]||{icon:'?',color:'#fff'};return `<span class="stbadge" style="border-color:${d.color};color:${d.color};">${d.icon}<i>${st.turns}</i></span>`;}).join(''); }
     }
   });
@@ -5551,7 +5590,7 @@ function combatFightScreen(){
   const isSolo=!s.online;
   const statBadges=(side)=>{ if(!isSolo) return ''; const arr=s[side+'Status']||[]; if(!arr.length) return '<div class="stbadges"></div>'; return `<div class="stbadges">`+arr.map(st=>{const d=STATUS_DEFS[st.kind]||{icon:'?',name:'',color:'#fff'};return `<span class="stbadge" style="border-color:${d.color};color:${d.color};">${d.icon}<i>${st.turns}</i></span>`;}).join('')+`</div>`; };
   const nrgBar=(side)=>{ if(!isSolo) return ''; const e=Math.max(0,Math.min(100,s[side+'Energy']||0)); const full=e>=100; return `<div class="nrg-wrap"><div class="nrg-bg"><div class="nrg-fill${full?' full':''}" style="width:${e}%;"></div></div><span class="nrg-lbl${full?' full':''}">⚡${e}</span></div>`; };
-  const furBar=(side)=>{ if(!isSolo) return ''; const f=Math.max(0,Math.min(100,s[side+'Fureur']||0)); const full=f>=100; return `<div class="fur-wrap"><div class="fur-bg"><div class="fur-fill${full?' full':''}" style="width:${f}%;"></div></div><span class="fur-lbl${full?' full':''}">🔥${f}</span></div>`; };
+  const furBar=(side)=>{ const f=Math.max(0,Math.min(100,s[side+'Fureur']||0)); const full=f>=100; return `<div class="fur-wrap"><div class="fur-bg"><div class="fur-fill${full?' full':''}" style="width:${f}%;"></div></div><span class="fur-lbl${full?' full':''}">🔥${f}</span></div>`; };
 
   const typeChipS=(r)=>{ const t=ROCK_TYPES.find(x=>x.key===r.rockType); return t?`<span class="im-type" style="color:${typeTextCol(t.color)};border-color:${t.color}66;">${t.label}</span>`:''; };
   const plate=(side)=>{
