@@ -907,6 +907,23 @@ nav{display:flex;gap:8px;padding:10px 14px max(14px,env(safe-area-inset-bottom))
 .fureur-txt span{display:block;font-family:'Baloo 2',sans-serif;font-weight:800;font-size:16px;margin-top:6px;color:rgba(255,255,255,.9);text-shadow:0 2px 5px rgba(0,0,0,.7);}
 @keyframes furTxt{0%{transform:scale(.4);opacity:0;}55%{transform:scale(1.12);opacity:1;}100%{transform:scale(1);opacity:1;}}
 /* K.O. — "KO" peint au pinceau, sanglant, sur fond noir */
+.cap-choice-ov{position:fixed;inset:0;z-index:120;display:flex;align-items:flex-end;justify-content:center;
+  background:rgba(0,0,0,.55);opacity:0;transition:opacity .2s ease;backdrop-filter:blur(3px);}
+.cap-choice-ov.show{opacity:1;}
+.cap-choice{width:100%;max-width:420px;margin:0 12px 14px;background:#1c2233;border:1px solid rgba(255,255,255,.12);
+  border-radius:22px;padding:18px 16px 16px;box-shadow:0 -8px 40px rgba(0,0,0,.5);
+  transform:translateY(30px);transition:transform .24s cubic-bezier(.2,.9,.3,1.2);}
+.cap-choice-ov.show .cap-choice{transform:translateY(0);}
+.cap-choice-title{text-align:center;font-weight:800;font-size:1.05rem;color:#fff;margin-bottom:14px;letter-spacing:.3px;}
+.cap-choice-btn{display:block;width:100%;border:none;border-radius:16px;padding:16px;font-size:1.05rem;font-weight:800;
+  color:#fff;margin-bottom:10px;cursor:pointer;text-align:center;box-shadow:0 4px 14px rgba(0,0,0,.3);
+  transition:transform .1s ease,filter .15s ease;}
+.cap-choice-btn:active{transform:scale(.97);filter:brightness(1.1);}
+.cap-choice-btn.cap-cam{background:linear-gradient(135deg,#ff7a3d,#f24e1e);}
+.cap-choice-btn.cap-gal{background:linear-gradient(135deg,#3aa0ff,#2d6bdb);}
+.cap-choice-cancel{display:block;width:100%;border:none;border-radius:16px;padding:13px;font-size:.98rem;font-weight:700;
+  color:#b8c0d4;background:rgba(255,255,255,.06);cursor:pointer;margin-top:2px;}
+.cap-choice-cancel:active{filter:brightness(1.2);}
 .ko-ov{position:fixed;inset:0;z-index:90;pointer-events:none;display:flex;align-items:center;justify-content:center;
   background:radial-gradient(circle at 50% 44%,rgba(40,0,0,.72),rgba(0,0,0,.96));opacity:1;transition:opacity .34s ease-in;overflow:hidden;}
 .ko-ov.out{opacity:0;}
@@ -1271,6 +1288,7 @@ nav{display:flex;gap:8px;padding:10px 14px max(14px,env(safe-area-inset-bottom))
 <div class="grain-overlay"></div>
 <div class="vignette-overlay"></div>
 <input type="file" id="fileInput" accept="image/*" capture="environment" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0;overflow:hidden;">
+<input type="file" id="fileInputGal" accept="image/*" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0;overflow:hidden;">
 <script>
 /* ===== DATA ===== */
 const STAT_CAP = 150;
@@ -6468,7 +6486,10 @@ document.addEventListener('click',(e)=>{
   const t=e.target.closest('[data-action]');
   if(!t) return;
   const action=t.dataset.action;
-  if(action==='capture'){ const fi=document.getElementById('fileInput'); if(fi){ try{ fi.click(); }catch(err){ showToast('❌ Impossible d\'ouvrir l\'appareil photo. Autorise l\'accès aux fichiers/photos dans les réglages.'); } } }
+  if(action==='capture'){ showCaptureChoice(); }
+  else if(action==='capCamera'){ closeCaptureChoice(); const fi=document.getElementById('fileInput'); if(fi){ try{ fi.click(); }catch(err){ showToast('❌ Impossible d\'ouvrir l\'appareil photo. Autorise l\'accès à la caméra dans les réglages.'); } } }
+  else if(action==='capGallery'){ closeCaptureChoice(); const fg=document.getElementById('fileInputGal'); if(fg){ try{ fg.click(); }catch(err){ showToast('❌ Impossible d\'ouvrir la galerie. Autorise l\'accès aux photos dans les réglages.'); } } }
+  else if(action==='capCancel'){ closeCaptureChoice(); }
   else if(action==='goto'){
     // Quitter la navigation normale annule une éventuelle partie d'arène/boss en cours
     if(t.dataset.screen!=='combat-pick'){ arenaRun=null; arenaPicking=false; bossRun=false; bossPicking=false; }
@@ -6657,6 +6678,30 @@ document.addEventListener('click',(e)=>{
 document.getElementById('fileInput').addEventListener('change',(e)=>{
   const file=e.target.files[0]; e.target.value=''; handleFile(file);
 });
+document.getElementById('fileInputGal').addEventListener('change',(e)=>{
+  const file=e.target.files[0]; e.target.value=''; handleFile(file);
+});
+
+// ===== Menu de capture : Appareil photo / Galerie (compat MIUI/HyperOS) =====
+function showCaptureChoice(){
+  if(document.querySelector('.cap-choice-ov')) return;
+  const ov=document.createElement('div');
+  ov.className='cap-choice-ov';
+  ov.setAttribute('data-action','capCancel');
+  ov.innerHTML=`
+    <div class="cap-choice" onclick="event.stopPropagation()">
+      <div class="cap-choice-title">📸 Capturer un caillou</div>
+      <button class="cap-choice-btn cap-cam" data-action="capCamera">📷 Appareil photo</button>
+      <button class="cap-choice-btn cap-gal" data-action="capGallery">🖼️ Galerie</button>
+      <button class="cap-choice-cancel" data-action="capCancel">Annuler</button>
+    </div>`;
+  document.body.appendChild(ov);
+  requestAnimationFrame(()=>ov.classList.add('show'));
+}
+function closeCaptureChoice(){
+  const ov=document.querySelector('.cap-choice-ov');
+  if(ov){ ov.classList.remove('show'); setTimeout(()=>ov.remove(),200); }
+}
 
 // --- Suivi d'erreurs (best-effort, anti-spam) : pour voir ce qui casse en prod ---
 let _errCount=0, _errWindow=0;
