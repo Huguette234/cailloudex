@@ -906,15 +906,23 @@ nav{display:flex;gap:8px;padding:10px 14px max(14px,env(safe-area-inset-bottom))
 .fu-foe .fureur-txt{text-shadow:0 0 18px #B24BE0,0 0 40px #8020C0,0 3px 6px rgba(0,0,0,.6);}
 .fureur-txt span{display:block;font-family:'Baloo 2',sans-serif;font-weight:800;font-size:16px;margin-top:6px;color:rgba(255,255,255,.9);text-shadow:0 2px 5px rgba(0,0,0,.7);}
 @keyframes furTxt{0%{transform:scale(.4);opacity:0;}55%{transform:scale(1.12);opacity:1;}100%{transform:scale(1);opacity:1;}}
-/* K.O. — "KO" rugueux en SVG, encadré de deux traits droits */
+/* K.O. — "KO" peint au pinceau, sanglant, sur fond noir */
 .ko-ov{position:fixed;inset:0;z-index:90;pointer-events:none;display:flex;align-items:center;justify-content:center;
-  background:radial-gradient(circle at 50% 46%,rgba(80,0,0,.5),rgba(8,0,0,.92));opacity:1;transition:opacity .32s ease-in;overflow:hidden;}
+  background:radial-gradient(circle at 50% 44%,rgba(40,0,0,.72),rgba(0,0,0,.96));opacity:1;transition:opacity .34s ease-in;overflow:hidden;}
 .ko-ov.out{opacity:0;}
 .ko-flash{position:absolute;inset:0;background:#fff;opacity:0;animation:koFlash .42s ease-out;}
 @keyframes koFlash{0%{opacity:0;}9%{opacity:.95;}100%{opacity:0;}}
-.ko-stage{transform:rotate(-5deg);}
-.ko-svg{width:min(88vw,410px);height:auto;display:block;filter:drop-shadow(0 12px 26px rgba(0,0,0,.7));animation:koSlam .5s cubic-bezier(.2,1.6,.4,1);}
-@keyframes koSlam{0%{transform:scale(3) rotate(7deg);opacity:0;}45%{transform:scale(.9) rotate(-2deg);opacity:1;}72%{transform:scale(1.07) rotate(1deg);}100%{transform:scale(1) rotate(0);}}
+.ko-smoke{position:absolute;inset:0;pointer-events:none;opacity:.5;
+  background:radial-gradient(ellipse 40% 30% at 18% 30%,rgba(200,200,205,.14),transparent 60%),radial-gradient(ellipse 34% 26% at 86% 26%,rgba(200,200,205,.12),transparent 60%),radial-gradient(ellipse 46% 22% at 70% 82%,rgba(190,190,200,.1),transparent 62%);
+  filter:blur(6px);animation:koSmoke 4s ease-in-out infinite;}
+@keyframes koSmoke{0%,100%{transform:translateX(0) scale(1);}50%{transform:translateX(14px) scale(1.06);}}
+.ko-stage{position:relative;display:flex;flex-direction:column;align-items:center;transform:rotate(-4deg);}
+.ko-svg{width:min(94vw,480px);height:auto;display:block;filter:drop-shadow(0 10px 22px rgba(120,0,0,.5));animation:koSlam .5s cubic-bezier(.2,1.6,.4,1);}
+@keyframes koSlam{0%{transform:scale(2.6) rotate(6deg);opacity:0;}45%{transform:scale(.92) rotate(-2deg);opacity:1;}72%{transform:scale(1.06) rotate(1deg);}100%{transform:scale(1) rotate(0);}}
+.ko-outcome{margin-top:-6px;font-family:'Baloo 2',sans-serif;font-weight:800;font-size:36px;letter-spacing:.16em;transform:rotate(-2deg);animation:koOutcome .5s ease-out .55s both;}
+.ko-outcome.win{color:#FFD24A;text-shadow:2px 2px 0 #5e0410,0 0 22px #ff8c00;}
+.ko-outcome.lose{color:#FF4646;text-shadow:2px 2px 0 #3a010a,0 0 22px #b00000;}
+@keyframes koOutcome{from{opacity:0;transform:rotate(-2deg) translateY(14px) scale(.9);}to{opacity:1;transform:rotate(-2deg) translateY(0) scale(1);}}
 /* Emotes (combat entre amis) */
 .emote-bar{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-top:10px;}
 .emote-btn{font-size:20px;line-height:1;width:40px;height:40px;border-radius:12px;cursor:pointer;
@@ -4946,31 +4954,53 @@ function addCombatLog(text,cls='neutral'){
   if(battleState.log.length>4) battleState.log.pop();
 }
 
-// Annonce de K.O. : "KO" rugueux (SVG), encadré de deux traits droits
-function koSVG(won){
-  const outcome=won?'VICTOIRE':'DÉFAITE';
-  const oCol=won?'#FFD24A':'#FF4040';
-  return `<svg class="ko-svg" viewBox="0 0 440 372" xmlns="http://www.w3.org/2000/svg">
+// Annonce de K.O. : "KO" peint au pinceau, sanglant (SVG brush strokes)
+function koSVG(){
+  const rnd=(a,b)=>a+Math.random()*(b-a);
+  // éclaboussures de sang irrégulières
+  const splat=Array.from({length:26},()=>`<circle cx="${rnd(30,590).toFixed(0)}" cy="${rnd(20,330).toFixed(0)}" r="${rnd(1.5,11).toFixed(1)}"/>`).join('');
+  // coulures qui dégoulinent
+  const drips=[[168,300],[212,320],[300,300],[452,318],[520,300],[368,290]].map(([x,y])=>`<path d="M${x} ${y} q ${rnd(-4,4).toFixed(0)} ${rnd(22,44).toFixed(0)} 0 ${rnd(34,70).toFixed(0)}" stroke-width="${rnd(3.5,7).toFixed(1)}"/>`).join('');
+  return `<svg class="ko-svg" viewBox="0 0 620 360" xmlns="http://www.w3.org/2000/svg">
     <defs>
-      <linearGradient id="koGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FF2E38"/><stop offset=".55" stop-color="#E5111E"/><stop offset="1" stop-color="#8E0512"/></linearGradient>
-      <filter id="koRough" x="-14%" y="-24%" width="128%" height="150%">
-        <feTurbulence type="fractalNoise" baseFrequency="0.011 0.052" numOctaves="3" seed="11" result="n"/>
-        <feDisplacementMap in="SourceGraphic" in2="n" scale="10" xChannelSelector="R" yChannelSelector="G"/>
+      <linearGradient id="koGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FF2A20"/><stop offset=".5" stop-color="#D8000E"/><stop offset="1" stop-color="#6E0005"/></linearGradient>
+      <filter id="koRough" x="-30%" y="-30%" width="160%" height="160%">
+        <feTurbulence type="fractalNoise" baseFrequency="0.014 0.036" numOctaves="4" seed="8" result="n"/>
+        <feDisplacementMap in="SourceGraphic" in2="n" scale="24" xChannelSelector="R" yChannelSelector="G"/>
       </filter>
     </defs>
-    <text x="220" y="252" text-anchor="middle" font-family="Impact,'Arial Black','Baloo 2',sans-serif" font-weight="900" font-size="200" fill="url(#koGrad)" stroke="#4a020c" stroke-width="3.5" filter="url(#koRough)">KO</text>
-    <text x="220" y="336" text-anchor="middle" font-family="'Baloo 2',sans-serif" font-weight="800" font-size="46" fill="${oCol}" stroke="#3a010a" stroke-width="2.2" style="letter-spacing:5px;">${outcome}</text>
+    <g filter="url(#koRough)" fill="url(#koGrad)" stroke="url(#koGrad)" stroke-linecap="round" stroke-linejoin="round">
+      <!-- K : trois coups de pinceau -->
+      <path d="M150 55 L184 315" stroke-width="42" fill="none"/>
+      <path d="M176 195 L320 78" stroke-width="34" fill="none"/>
+      <path d="M170 188 L338 322" stroke-width="34" fill="none"/>
+      <!-- éclats/flicks du K -->
+      <path d="M300 92 L372 44" stroke-width="9" fill="none"/>
+      <path d="M330 314 L392 350" stroke-width="8" fill="none"/>
+      <path d="M150 60 L116 22" stroke-width="7" fill="none"/>
+      <path d="M184 315 L200 360" stroke-width="6" fill="none"/>
+      <!-- O : anneau au pinceau -->
+      <ellipse cx="470" cy="185" rx="112" ry="128" stroke-width="42" fill="none"/>
+      <path d="M556 96 L620 52" stroke-width="11" fill="none"/>
+      <path d="M470 313 L548 348" stroke-width="8" fill="none"/>
+      <path d="M360 150 L322 120" stroke-width="7" fill="none"/>
+      <!-- éclaboussures -->
+      <g stroke="none">${splat}</g>
+      <!-- coulures -->
+      <g fill="none">${drips}</g>
+    </g>
   </svg>`;
 }
 function koCinematic(winner){
   return new Promise(res=>{
     const won=winner==='player';
     const ov=document.createElement('div'); ov.className='ko-ov';
-    ov.innerHTML=`<div class="ko-flash"></div><div class="ko-stage">${koSVG(won)}</div>`;
+    ov.innerHTML=`<div class="ko-flash"></div><div class="ko-smoke"></div>
+      <div class="ko-stage">${koSVG()}<div class="ko-outcome ${won?'win':'lose'}">${won?'VICTOIRE':'DÉFAITE'}</div></div>`;
     document.body.appendChild(ov);
     if(navigator.vibrate) navigator.vibrate([80,50,150,50,90,60,240]);
-    setTimeout(()=>ov.classList.add('out'), 1650);
-    setTimeout(()=>{ ov.remove(); res(); }, 1980);
+    setTimeout(()=>ov.classList.add('out'), 1750);
+    setTimeout(()=>{ ov.remove(); res(); }, 2080);
   });
 }
 function fureurCinematic(side){
