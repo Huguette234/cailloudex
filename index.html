@@ -680,6 +680,32 @@ nav{display:flex;gap:8px;padding:10px 14px max(14px,env(safe-area-inset-bottom))
 .boss-banner-name{font-family:'Playfair Display',Georgia,serif;font-weight:900;font-size:16px;color:var(--txt);line-height:1.1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .boss-banner-cta{font-family:'Baloo 2',sans-serif;font-weight:800;font-size:12px;color:#fff;background:linear-gradient(135deg,#E0503C,#B01030);border-radius:999px;padding:7px 14px;white-space:nowrap;box-shadow:0 3px 8px rgba(150,20,40,.4);}
 .boss-banner.beaten .boss-banner-cta{background:rgba(44,42,46,.5);}
+/* Bannière Tournoi */
+.tournoy-banner{display:flex;align-items:center;gap:12px;margin:2px 0 12px;padding:10px 14px;border-radius:16px;cursor:pointer;
+  background:linear-gradient(135deg,rgba(224,168,44,.20),rgba(196,120,20,.14));border:1.5px solid rgba(200,150,30,.5);
+  box-shadow:0 6px 16px rgba(150,110,20,.22);transition:transform .12s;}
+.tournoy-banner:active{transform:scale(.98);}
+.tournoy-banner-emoji{font-size:32px;line-height:1;filter:drop-shadow(0 2px 4px rgba(0,0,0,.3));}
+.tournoy-banner-info{flex:1;min-width:0;}
+.tournoy-banner-title{font-family:'Baloo 2',sans-serif;font-weight:800;font-size:10px;letter-spacing:.08em;color:#9A7414;}
+.tournoy-banner-name{font-family:'Baloo 2',sans-serif;font-weight:700;font-size:12px;color:rgba(44,42,46,.7);line-height:1.15;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.tournoy-banner-cta{font-family:'Baloo 2',sans-serif;font-weight:800;font-size:12px;color:#5A3E00;background:linear-gradient(135deg,#FFD86A,#E0A82C);border-radius:999px;padding:7px 16px;white-space:nowrap;box-shadow:0 3px 8px rgba(180,130,20,.4);}
+/* Bracket de tournoi */
+.tbr-wrap{display:flex;flex-direction:column;gap:10px;width:100%;max-width:420px;margin:0 auto;}
+.tbr-round{background:linear-gradient(160deg,rgba(255,255,255,.85),rgba(255,255,255,.66));border:1.5px solid rgba(200,150,30,.28);border-radius:14px;padding:10px 12px;box-shadow:0 4px 12px rgba(0,0,0,.1);text-align:left;transition:transform .12s;}
+.tbr-round.current{border-color:#E0A82C;box-shadow:0 6px 18px rgba(200,150,30,.35);background:linear-gradient(160deg,rgba(255,246,220,.95),rgba(255,238,196,.8));}
+.tbr-round.locked{opacity:.5;}
+.tbr-round.won{border-color:rgba(76,175,80,.5);background:linear-gradient(160deg,rgba(232,248,232,.9),rgba(212,240,212,.7));}
+.tbr-label{font-family:'Baloo 2',sans-serif;font-weight:800;font-size:10px;letter-spacing:.08em;color:#9A7414;margin-bottom:6px;}
+.tbr-match{display:flex;align-items:center;gap:8px;}
+.tbr-side{flex:1;min-width:0;font-family:'Baloo 2',sans-serif;font-weight:800;font-size:13px;color:var(--txt);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.tbr-side.me{color:#B8860B;}
+.tbr-side.win{color:#2E7D32;}
+.tbr-side.lose{opacity:.5;text-decoration:line-through;}
+.tbr-side.foe{text-align:right;}
+.tbr-vs{font-family:'Baloo 2',sans-serif;font-weight:800;font-size:10px;color:rgba(44,42,46,.4);flex-shrink:0;}
+.tbr-status{font-family:'Nunito',sans-serif;font-size:11px;color:rgba(44,42,46,.6);margin-top:5px;}
+.tbr-round.current .tbr-status{color:#B8860B;font-weight:700;}
 /* Missions du jour */
 .mission-banner{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 0 12px;padding:9px 14px;border-radius:14px;cursor:pointer;
   background:linear-gradient(135deg,rgba(45,156,219,.14),rgba(111,207,151,.12));border:1.5px solid rgba(45,156,219,.32);box-shadow:0 4px 12px rgba(0,0,0,.12);}
@@ -4983,16 +5009,17 @@ function timingChallenge(kind){
 
 async function initBattle(playerRock){
   const arena=!!arenaRun;
+  const tourney=!!tournoyRun;
   const playerSpriteUrl=await makeRockSprite(playerRock.photo,playerRock.id);
   let effRock=playerRock;
   const usedBuffs=[];
-  // Les objets à usage unique ne sont PAS consommés en arène (sinon on en perdrait un par vague)
-  if(!arena && loadout.mighty!==false && (meta.inventory?.mighty||0)>0){
+  // Les objets à usage unique ne sont PAS consommés en arène/tournoi (sinon on en perdrait un par manche)
+  if(!arena && !tourney && loadout.mighty!==false && (meta.inventory?.mighty||0)>0){
     meta.inventory.mighty--;
     effRock={...playerRock, atk:Math.round(playerRock.atk*1.2), def:Math.round(playerRock.def*1.2)};
     usedBuffs.push('💪 Caillou Costaud');
   }
-  const bot=bossRun ? makeBossRock() : makeBotRock(effRock, arena?{ statMult:arenaBotStatMult(arenaRun.wave) }:null);
+  const bot=bossRun ? makeBossRock() : tourney ? tournoyRun.opp : makeBotRock(effRock, arena?{ statMult:arenaBotStatMult(arenaRun.wave) }:null);
   // Terrain aléatoire : amplifie/affaiblit un type (appliqué à l'attaque effective)
   const terrain=pickTerrain();
   const pTF=terrainFactor(terrain,effRock.rockType), bTF=terrainFactor(terrain,bot.rockType);
@@ -5021,6 +5048,12 @@ async function initBattle(playerRock){
     battleState.aiIq=arenaBotIq(arenaRun.wave);
     battleState.playerHP=Math.max(1,Math.round(maxHp*(arenaRun.carryHpFrac||1)));
     battleState.log=[{text:`🏟️ Vague ${arenaRun.wave} — ${bot.name} entre dans l'arène !`, cls:'neutral'}];
+  } else if(tourney){
+    battleState.tourney=true;
+    battleState.round=tournoyRun.round;
+    battleState.aiIq=Math.min(1, 0.55 + tournoyRun.round*0.2);
+    battleState.playerHP=Math.max(1,Math.round(maxHp*(tournoyRun.hpFrac||1)));
+    battleState.log=[{text:`🏆 ${TOURNOY_ROUND_NAMES[tournoyRun.round]} — ${bot.name} se dresse sur ton chemin !`, cls:'neutral'}];
   } else {
     if(loadout.shield!==false && (meta.inventory?.shield||0)>0){ meta.inventory.shield--; battleState.shieldActive=true; usedBuffs.push('🛡️ Bouclier'); }
     if(loadout.crit!==false && (meta.inventory?.crit||0)>0){ meta.inventory.crit--; battleState.critPending=true; usedBuffs.push('💥 Frappe Critique'); }
@@ -5145,6 +5178,7 @@ function endBattle(winner){
 function finishBattle(winner){
   if(!battleState) return;
   if(battleState.arena) return endArenaWave(winner);
+  if(battleState.tourney) return endTournoyMatch(winner);
   if(battleState.boss){
     if(winner==='player'){
       const first=!bossBeatenThisWeek();
@@ -5211,6 +5245,142 @@ function startArena(rock){
   initBattle(rock);
 }
 function arenaRetry(){ arenaRun=null; battleState=null; arenaPicking=true; screen='combat-pick'; render(); }
+
+/* ===== TOURNOI DES CAILLOUX (championnat solo à 8, élimination directe) ===== */
+let tournoyRun=null;       // tournoi en cours
+let tournoyPicking=false;  // on choisit son champion pour le tournoi
+const TOURNOY_ROUND_NAMES=['Quart de finale','Demi-finale','Finale'];
+const TOURNOY_ROUND_MULT=[1.0, 1.16, 1.34]; // difficulté croissante par tour
+const TOURNOY_ROUND_REWARD=[{gems:2,grav:15,xp:15},{gems:4,grav:30,xp:25},{gems:8,grav:60,xp:40}];
+const TOURNOY_CHAMPION_BONUS={gems:20,grav:120,xp:100};
+function tournoyTitles(){ try{ return parseInt(localStorage.getItem('cdx_tournoy_titles')||'0',10)||0; }catch(e){ return 0; } }
+function addTournoyTitle(){ try{ localStorage.setItem('cdx_tournoy_titles', String(tournoyTitles()+1)); }catch(e){} }
+function shuffleArr(a){ a=a.slice(); for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); const t=a[i]; a[i]=a[j]; a[j]=t; } return a; }
+function buildTournoyEntrants(playerRock){
+  const bots=shuffleArr(BOT_POOL).slice(0,7);
+  const base=(playerRock.atk||30)+(playerRock.def||30)+(playerRock.vit||4);
+  const entrants=[{ name:playerRock.name, emoji:'⭐', isPlayer:true, power:base }];
+  bots.forEach(b=>entrants.push({ name:b.name, emoji:b.emoji, rockType:b.rockType, specialMove:b.specialMove, power:Math.round(base*(0.7+Math.random()*0.7)) }));
+  return entrants;
+}
+function simTournoyMatch(a,b){ return (a.power*(0.72+Math.random()*0.56) >= b.power*(0.72+Math.random()*0.56)) ? a : b; }
+function makeTournoyOpponent(ent, round, playerRock){
+  const mult=TOURNOY_ROUND_MULT[round]||1;
+  const bot=makeBotRock(playerRock, { statMult: getDifficulty().statMult*mult });
+  return Object.assign(bot, {
+    name:ent.name, emoji:ent.emoji||bot.emoji,
+    rockType:ent.rockType||bot.rockType, specialMove:ent.specialMove||bot.specialMove,
+    rarityLabel:'🏆 TOURNOI',
+  });
+}
+function startTournoy(rock){
+  const e=buildTournoyEntrants(rock);
+  // On pré-simule tout le bracket adverse : le joueur ne joue QUE ses 3 matchs,
+  // ses adversaires sont donc connus à l'avance (bracket révélé, plus excitant).
+  const wR0p1=simTournoyMatch(e[2],e[3]);   // adversaire en demi
+  const wR0p2=simTournoyMatch(e[4],e[5]);
+  const wR0p3=simTournoyMatch(e[6],e[7]);
+  const wR1p1=simTournoyMatch(wR0p2,wR0p3); // adversaire en finale
+  tournoyRun={
+    rock, round:0, hpFrac:1, pot:{gems:0,grav:0,xp:0},
+    entrants:e,
+    opps:[e[1], wR0p1, wR1p1],
+    bracket:{ r0p1:wR0p1, r0p2:wR0p2, r0p3:wR0p3, r1p1:wR1p1 },
+    champion:false, eliminated:false, myWins:[false,false,false], opp:null,
+  };
+  tournoyPicking=false;
+  screen='tournoy-bracket'; render();
+}
+function tournoyFight(){
+  if(!tournoyRun||tournoyRun.champion||tournoyRun.eliminated) return;
+  const r=tournoyRun.round;
+  tournoyRun.opp=makeTournoyOpponent(tournoyRun.opps[r], r, tournoyRun.rock);
+  initBattle(tournoyRun.rock);
+}
+function endTournoyMatch(winner){
+  const r=tournoyRun.round;
+  if(winner==='player'){
+    tournoyRun.myWins[r]=true;
+    const rw=TOURNOY_ROUND_REWARD[r]||TOURNOY_ROUND_REWARD[0];
+    tournoyRun.pot.gems+=rw.gems; tournoyRun.pot.grav+=rw.grav; tournoyRun.pot.xp+=rw.xp;
+    addGems(rw.gems); addGravillons(rw.grav); addXp(rw.xp);
+    incrementStat('wins',1);
+    missionEvent({type:'win',difficulty:'difficile',playerType:battleState.playerRock.rockType});
+    const frac=battleState.playerMaxHP?battleState.playerHP/battleState.playerMaxHP:1;
+    tournoyRun.hpFrac=Math.min(1, frac+0.30); // petit soin entre les manches
+    if(r>=2){
+      tournoyRun.champion=true;
+      const b=TOURNOY_CHAMPION_BONUS;
+      addGems(b.gems); addGravillons(b.grav); addXp(b.xp);
+      tournoyRun.pot.gems+=b.gems; tournoyRun.pot.grav+=b.grav; tournoyRun.pot.xp+=b.xp;
+      grantFoodLoot(true);
+      addTournoyTitle();
+      if(navigator.vibrate) navigator.vibrate([30,60,30,60,80]);
+      screen='tournoy-result'; render();
+    } else {
+      tournoyRun.round++;
+      if(navigator.vibrate) navigator.vibrate([20,40,20]);
+      screen='tournoy-bracket'; render();
+    }
+  } else {
+    incrementStat('losses',1);
+    tournoyRun.eliminated=true;
+    screen='tournoy-result'; render();
+  }
+}
+function tournoyRetry(){ tournoyRun=null; battleState=null; tournoyPicking=true; screen='combat-pick'; render(); }
+function tournoyQuit(){ tournoyRun=null; tournoyPicking=false; battleState=null; screen='home'; render(); }
+function tournoyBracketScreen(){
+  const r=tournoyRun; if(!r) return '';
+  const rows=[0,1,2].map(i=>{
+    const opp=r.opps[i];
+    const won=r.myWins[i];
+    const current=(i===r.round && !r.champion && !r.eliminated);
+    const locked=(i>r.round);
+    const state=won?'won':current?'current':locked?'locked':'';
+    const oppName=(opp.name||'???');
+    return `<div class="tbr-round ${state}">
+      <div class="tbr-label">${['①','②','③'][i]} ${TOURNOY_ROUND_NAMES[i].toUpperCase()}</div>
+      <div class="tbr-match">
+        <span class="tbr-side me ${won?'win':''}">⭐ ${r.rock.name}</span>
+        <span class="tbr-vs">VS</span>
+        <span class="tbr-side foe ${won?'lose':''}">${opp.emoji||'🪨'} ${oppName}</span>
+      </div>
+      <div class="tbr-status">${won?'✅ Manche gagnée':current?'⚔️ À toi de jouer !':'🔒 À débloquer'}</div>
+    </div>`;
+  }).join('');
+  const cta=(!r.champion&&!r.eliminated)
+    ? `<button class="btn btn-gold" data-action="tournoyFight">⚔️ COMBATTRE — ${TOURNOY_ROUND_NAMES[r.round]}</button>`
+    : '';
+  return `<div class="result-wrap" style="padding-top:14px;">
+    <div style="font-size:52px;">🏆</div>
+    <div style="font-family:'Playfair Display',Georgia,serif;font-size:22px;color:var(--accent);margin:2px 0 2px;">TOURNOI DES CAILLOUX</div>
+    <p class="result-sub" style="margin:0 0 12px;">Ton parcours vers le titre — 🏆 Titres remportés : <b>${tournoyTitles()}</b></p>
+    <div class="tbr-wrap">${rows}</div>
+    <div style="font-family:'Baloo 2',sans-serif;font-weight:800;font-size:13px;color:#9A7414;margin:10px 0 6px;">Cagnotte : +${r.pot.gems} 💎 &nbsp;+${r.pot.grav} 🪙 &nbsp;+${r.pot.xp} XP</div>
+    ${cta}
+    <button class="btn btn-ghost" style="margin-top:8px;" data-action="tournoyQuit">🏳️ Abandonner le tournoi</button>
+  </div>`;
+}
+function tournoyResultScreen(){
+  const r=tournoyRun; if(!r) return '';
+  const champ=r.champion;
+  const reached=r.myWins.filter(Boolean).length; // manches gagnées
+  return `<div class="result-wrap">
+    <div style="font-size:66px;animation:resultBounce .5s cubic-bezier(.34,1.56,.64,1);">${champ?'👑':'💀'}</div>
+    <div class="result-banner ${champ?'result-win':'result-lose'}">${champ?'CHAMPION DU TOURNOI !':'ÉLIMINÉ'}</div>
+    <p class="result-sub">${champ
+      ? `${r.rock.name} soulève le trophée après 3 victoires écrasantes ! 🏆`
+      : `${r.rock.name} s'est arrêté en ${TOURNOY_ROUND_NAMES[r.round].toLowerCase()}. Tu as gagné <b>${reached}</b> manche${reached>1?'s':''} !`}</p>
+    <div style="font-family:'Baloo 2',sans-serif;font-weight:800;font-size:14px;color:#9A7414;margin:2px 0 6px;">Butin total : +${r.pot.gems} 💎 &nbsp;+${r.pot.grav} 🪙 &nbsp;+${r.pot.xp} XP</div>
+    <div class="result-stats">
+      <div class="result-stat-item"><div class="result-stat-val">${reached}/3</div><div class="result-stat-lbl">MANCHES</div></div>
+      <div class="result-stat-item"><div class="result-stat-val">${tournoyTitles()}</div><div class="result-stat-lbl">🏆 TITRES</div></div>
+    </div>
+    <button class="btn btn-gold" data-action="tournoyRetry">🔄 REJOUER LE TOURNOI</button>
+    <button class="btn btn-ghost" style="margin-top:8px;" data-action="goto" data-screen="home">🏠 Accueil</button>
+  </div>`;
+}
 
 /* ===== COFFRE DE RÉCOMPENSE (fin de combat) ===== */
 const CHEST_TIERS = {
@@ -5514,14 +5684,14 @@ function combatPickScreen(){
     <p style="font-family:'Nunito',sans-serif;font-size:13px;color:rgba(44,42,46,.5);margin:8px 0 20px;">Capture d'abord des cailloux<br>avant de les envoyer au combat.</p>
     <button class="btn btn-gold" data-action="goto" data-screen="scanner">📷 CAPTURER</button>
   </div>`;
-  const arena=arenaPicking, boss=bossPicking;
+  const arena=arenaPicking, boss=bossPicking, tourney=tournoyPicking;
   const wb=getWeeklyBoss(), bossDone=bossBeatenThisWeek();
-  const rightBtns=(arena||boss)
-    ? `<span class="cp-pill" data-action="${boss?'exitBossPick':'exitArena'}">← Combat normal</span>`
+  const rightBtns=(arena||boss||tourney)
+    ? `<span class="cp-pill" data-action="${boss?'exitBossPick':tourney?'exitTournoy':'exitArena'}">← Combat normal</span>`
     : `<span class="cp-pill" data-action="enterArena">🏟️ ARÈNE</span><span class="cp-pill" data-action="goto" data-screen="online-menu">🌐 EN LIGNE</span>`;
-  const cardAction=boss?'bossStart':arena?'arenaStart':'startBattle';
-  const cardBtn=boss?'AFFRONTER':arena?'ENTRER':'CHOISIR';
-  const title=boss?'💀 BOSS':arena?'🏟️ ARÈNE':'⚔️ CHOISIR UN CAILLOU';
+  const cardAction=boss?'bossStart':arena?'arenaStart':tourney?'tournoyStart':'startBattle';
+  const cardBtn=boss?'AFFRONTER':arena?'ENTRER':tourney?'ENGAGER':'CHOISIR';
+  const title=boss?'💀 BOSS':arena?'🏟️ ARÈNE':tourney?'🏆 TOURNOI':'⚔️ CHOISIR UN CAILLOU';
   return `<div class="combat-pick-wrap">
     <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:10px;">
       <div class="combat-pick-title" style="margin-bottom:0;">${title}</div>
@@ -5531,6 +5701,8 @@ function combatPickScreen(){
       ? `<div class="combat-pick-sub">Choisis ton champion pour affronter <b>${wb.name}</b> ${wb.emoji} — ⚔️${wb.atk} 🛡️${wb.def} 💨${wb.vit}. Redoutable !</div>`
       : arena
       ? `<div class="combat-pick-sub">Choisis ton champion — enchaîne les vagues de bots de plus en plus forts ! 🏆 Record : <b>${arenaBest}</b> vague${arenaBest>1?'s':''}</div>`
+      : tourney
+      ? `<div class="combat-pick-sub">Choisis ton champion — 3 combats à difficulté croissante jusqu'au titre de champion ! 🏆 Titres : <b>${tournoyTitles()}</b></div>`
       : `<div class="combat-pick-sub">Lequel vas-tu envoyer au combat ?</div>
     <div class="diff-row">
       ${COMBAT_DIFFICULTIES.map(d=>`<button class="diff-pill${d.key===combatDifficulty?' sel':''}" data-action="setDifficulty" data-key="${d.key}">${d.label}</button>`).join('')}
@@ -5543,6 +5715,14 @@ function combatPickScreen(){
         <div class="boss-banner-name">${wb.name}</div>
       </div>
       <div class="boss-banner-cta">${bossDone?'✅ Rejouer':'AFFRONTER'}</div>
+    </div>
+    <div class="tournoy-banner" data-action="enterTournoy">
+      <div class="tournoy-banner-emoji">🏆</div>
+      <div class="tournoy-banner-info">
+        <div class="tournoy-banner-title">🏆 TOURNOI DES CAILLOUX</div>
+        <div class="tournoy-banner-name">Gravis le bracket — 3 combats jusqu'au titre</div>
+      </div>
+      <div class="tournoy-banner-cta">JOUER</div>
     </div>
     ${(()=>{ const ms=getMissions(); const ready=ms.filter(m=>m.prog>=m.target&&!m.claimed).length; const done=ms.filter(m=>m.claimed).length; return `<div class="mission-banner" data-action="openMissions">
       <span class="mission-banner-label">🎯 Missions du jour</span>
@@ -5862,6 +6042,8 @@ function render(){
     else if(screen==='combat-result'){ mainHtml=combatResultScreen(); showNav=true; }
     else if(screen==='arena-next'){ mainHtml=arenaNextScreen(); showNav=true; }
     else if(screen==='arena-result'){ mainHtml=arenaResultScreen(); showNav=true; }
+    else if(screen==='tournoy-bracket'){ mainHtml=tournoyBracketScreen(); showNav=true; }
+    else if(screen==='tournoy-result'){ mainHtml=tournoyResultScreen(); showNav=true; }
     else if(screen==='online-menu'){ mainHtml=onlineMenuScreen(); showNav=true; }
     else if(screen==='online-wait'){ mainHtml=onlineWaitScreen(); showNav=false; }
     else if(screen==='online-pick'){ mainHtml=onlinePickScreen(); showNav=true; }
@@ -6543,7 +6725,7 @@ document.addEventListener('click',(e)=>{
   }
   else if(action==='goto'){
     // Quitter la navigation normale annule une éventuelle partie d'arène/boss en cours
-    if(t.dataset.screen!=='combat-pick'){ arenaRun=null; arenaPicking=false; bossRun=false; bossPicking=false; }
+    if(t.dataset.screen!=='combat-pick'){ arenaRun=null; arenaPicking=false; bossRun=false; bossPicking=false; tournoyRun=null; tournoyPicking=false; }
     screen=t.dataset.screen; detailRock=null;
     if(screen==='dex') dexType=null; // on entre par le menu des types
     render();
@@ -6659,8 +6841,14 @@ document.addEventListener('click',(e)=>{
     const rock=dex.find(r=>r.id===t.dataset.id);
     if(rock) initBattle(rock);
   }
-  else if(action==='enterArena'){ arenaPicking=true; bossPicking=false; render(); }
+  else if(action==='enterArena'){ arenaPicking=true; bossPicking=false; tournoyPicking=false; render(); }
   else if(action==='exitArena'){ arenaPicking=false; render(); }
+  else if(action==='enterTournoy'){ tournoyPicking=true; arenaPicking=false; bossPicking=false; render(); }
+  else if(action==='exitTournoy'){ tournoyPicking=false; render(); }
+  else if(action==='tournoyStart'){ const rock=dex.find(r=>r.id===t.dataset.id); if(rock) startTournoy(rock); }
+  else if(action==='tournoyFight'){ tournoyFight(); }
+  else if(action==='tournoyRetry'){ tournoyRetry(); }
+  else if(action==='tournoyQuit'){ tournoyQuit(); }
   else if(action==='enterBossPick'){ enterBossPick(); }
   else if(action==='exitBossPick'){ bossPicking=false; render(); }
   else if(action==='bossStart'){
@@ -6823,7 +7011,7 @@ function goBackInApp(){
   }
   // 4) Un sous-écran -> retour à l'accueil
   if(screen!=='home' && screen!=='login' && screen!=='loading'){
-    arenaRun=null; arenaPicking=false; bossRun=false; bossPicking=false;
+    arenaRun=null; arenaPicking=false; bossRun=false; bossPicking=false; tournoyRun=null; tournoyPicking=false;
     screen='home'; detailRock=null; render();
     if(typeof checkPendingChallenge==='function'){
       const prev=pendingChallenge?pendingChallenge.id:null;
