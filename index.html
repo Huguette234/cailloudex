@@ -717,6 +717,17 @@ nav{display:flex;gap:8px;padding:10px 14px max(14px,env(safe-area-inset-bottom))
 .region-prog{font-family:'Nunito',sans-serif;font-size:10.5px;color:rgba(44,42,46,.55);margin-top:4px;}
 .region-cta{font-family:'Baloo 2',sans-serif;font-weight:800;font-size:11px;color:#fff;background:var(--rc);border-radius:999px;padding:7px 12px;white-space:nowrap;flex-shrink:0;box-shadow:0 3px 8px rgba(0,0,0,.2);}
 .region-card.active .region-cta{background:#444;}
+/* Bannière événement saisonnier (accueil) */
+.season-banner{display:flex;align-items:center;gap:12px;width:100%;max-width:340px;margin:2px auto 0;padding:10px 14px;border-radius:16px;cursor:pointer;
+  background:linear-gradient(135deg,color-mix(in srgb,var(--sa) 22%,#fff),color-mix(in srgb,var(--sa) 8%,#fff));
+  border:1.5px solid color-mix(in srgb,var(--sa) 55%,transparent);box-shadow:0 5px 15px color-mix(in srgb,var(--sa) 26%,transparent);transition:transform .12s;}
+.season-banner:active{transform:scale(.98);}
+.season-emoji{font-size:30px;line-height:1;filter:drop-shadow(0 2px 4px rgba(0,0,0,.3));animation:seasonBob 2.4s ease-in-out infinite;}
+@keyframes seasonBob{0%,100%{transform:translateY(0) rotate(-4deg);}50%{transform:translateY(-3px) rotate(4deg);}}
+.season-info{flex:1;min-width:0;text-align:left;}
+.season-label{font-family:'Baloo 2',sans-serif;font-weight:800;font-size:9px;letter-spacing:.09em;color:color-mix(in srgb,var(--sa) 70%,#5a4a20);}
+.season-name{font-family:'Playfair Display',Georgia,serif;font-weight:900;font-size:16px;color:var(--txt);line-height:1.1;}
+.season-blurb{font-family:'Nunito',sans-serif;font-size:11px;color:rgba(44,42,46,.6);line-height:1.25;margin-top:1px;}
 .diff-row{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-bottom:6px;}
 .diff-pill{font-family:'Baloo 2',sans-serif;font-weight:800;font-size:12px;color:rgba(44,42,46,.7);background:rgba(255,255,255,.7);border:1.5px solid rgba(44,42,46,.14);border-radius:999px;padding:6px 12px;cursor:pointer;transition:transform .1s,box-shadow .15s;}
 .diff-pill.sel{color:var(--txt);background:linear-gradient(135deg,#FFE79A,var(--legendaire) 60%,#EBBE2E);border-color:rgba(255,240,190,.6);box-shadow:0 3px 10px rgba(184,142,20,.4);transform:translateY(-1px);}
@@ -2941,6 +2952,8 @@ function resolveRockType(ai){
   if(cc==='clair'&&shiny){ w.glace+=5; }  // pâle + brillant/cristallin = glace
   const _reg=activeRegion();              // région active -> son type devient plus fréquent
   if(_reg && !regionDone(_reg.key)) w[_reg.type]=(w[_reg.type]||1)+10;
+  const _ev=currentSeasonEvent();         // événement de la semaine -> type à l'honneur
+  if(_ev) w[_ev.type]=(w[_ev.type]||1)+6;
   const keys=Object.keys(w); let tot=0; keys.forEach(k=>tot+=w[k]);
   let r=Math.random()*tot, chosen=keys[0];
   for(const k of keys){ if(r<w[k]){ chosen=k; break; } r-=w[k]; }
@@ -3085,6 +3098,18 @@ const REGIONS=[
 ];
 const REGION_TARGET=8;
 let regionState=null;
+/* ===== ÉVÉNEMENT SAISONNIER (hebdomadaire, déterministe comme le boss) ===== */
+const SEASON_EVENTS=[
+  { type:'feu',     name:'Semaine du Feu',      emoji:'🔥', accent:'#FF6B35', blurb:'Les cailloux de Feu affluent et rapportent un bonus !' },
+  { type:'glace',   name:'Vague de Froid',      emoji:'❄️', accent:'#74B9FF', blurb:'Les cailloux de Glace surgissent de partout !' },
+  { type:'nature',  name:'Éveil de la Nature',  emoji:'🌿', accent:'#27AE60', blurb:'La Nature déborde de cailloux à collectionner !' },
+  { type:'metal',   name:'Ruée vers le Métal',  emoji:'⚙️', accent:'#95A5A6', blurb:'Les cailloux de Métal sortent de terre en masse !' },
+  { type:'ombre',   name:'Nuit des Ombres',     emoji:'🌑', accent:'#8E44AD', blurb:'Les cailloux d\'Ombre rôdent en nombre...' },
+  { type:'lumiere', name:'Festival de Lumière', emoji:'✨', accent:'#F7DC6F', blurb:'La Lumière fait éclore les cailloux radieux !' },
+  { type:'chaos',   name:'Tempête de Chaos',    emoji:'💥', accent:'#FF4081', blurb:'Le Chaos règne : cailloux imprévisibles à foison !' },
+];
+const SEASON_BONUS_GEMS=2;
+function currentSeasonEvent(){ return SEASON_EVENTS[weekSeedNum()%SEASON_EVENTS.length]; }
 function loadRegions(){ let st=null; try{ st=JSON.parse(localStorage.getItem('cdx_regions')||'null'); }catch(e){} if(!st||typeof st!=='object') st={active:null,prog:{},done:{}}; st.prog=st.prog||{}; st.done=st.done||{}; return st; }
 function saveRegions(st){ try{ localStorage.setItem('cdx_regions',JSON.stringify(st)); }catch(e){} }
 function ensureRegions(){ if(!regionState) regionState=loadRegions(); return regionState; }
@@ -3320,6 +3345,14 @@ function homeScreen(){
       <div class="daily-bonus" style="color:#8020C0;background:rgba(196,92,255,.2);" data-action="acceptChallengeBtn">Accepter</div>
       <span data-action="dismissChallengeBtn" style="font-size:14px;color:rgba(44,42,46,.42);cursor:pointer;margin-left:8px;">✕</span>
     </div>`:''}
+    ${(()=>{ const ev=currentSeasonEvent(); return `<div class="season-banner" data-action="goto" data-screen="regions" style="--sa:${ev.accent};">
+      <div class="season-emoji">${ev.emoji}</div>
+      <div class="season-info">
+        <div class="season-label">✦ ÉVÉNEMENT DE LA SEMAINE</div>
+        <div class="season-name">${ev.name}</div>
+        <div class="season-blurb">${ev.blurb}</div>
+      </div>
+    </div>`; })()}
     ${(()=>{
       if(!ch) return '';
       const done=meta.challengeCompletedDate===meta.challengeDate;
@@ -6762,6 +6795,10 @@ async function handleFile(file){
       colorCategory: aiResult?.color_category || null,
       shiny: !!aiResult?.shiny,
     };
+
+    // Bonus événement de la semaine : capture du type à l'honneur -> gemmes en plus
+    const _ev=currentSeasonEvent();
+    if(_ev && revealRock.rockType===_ev.type){ addGems(SEASON_BONUS_GEMS); setTimeout(()=>showToast(`${_ev.emoji} Bonus ${_ev.name} : +${SEASON_BONUS_GEMS} 💎 !`),950); }
 
     // Caillou SECRET (très rare) : remplace l'identité par un spécial non possédé
     const gotSpecial=maybeSpecialRock(revealRock);
