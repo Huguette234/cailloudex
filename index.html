@@ -3002,8 +3002,8 @@ function resolveRockType(ai){
   if(cc==='autre'){ w.feu+=3; w.nature+=3; w.chaos+=2; w.neutre+=1; }
   if(shiny){ w.glace+=4; w.metal+=4; w.lumiere+=3; w.chaos+=2; }
   if(cc==='clair'&&shiny){ w.glace+=5; }  // pâle + brillant/cristallin = glace
-  const _reg=activeRegion();              // région active -> son type devient plus fréquent
-  if(_reg && !regionDone(_reg.key)) w[_reg.type]=(w[_reg.type]||1)+10;
+  const _reg=activeRegion();              // région active -> léger coup de pouce (pas de forçage)
+  if(_reg && !regionDone(_reg.key)) w[_reg.type]=(w[_reg.type]||1)+3;
   const _ev=currentSeasonEvent();         // événement de la semaine -> type à l'honneur
   if(_ev) w[_ev.type]=(w[_ev.type]||1)+6;
   const keys=Object.keys(w); let tot=0; keys.forEach(k=>tot+=w[k]);
@@ -3169,22 +3169,29 @@ function activeRegion(){ const st=ensureRegions(); return st.active?REGIONS.find
 function regionProgress(key){ const st=ensureRegions(); return st.prog[key]||0; }
 function regionDone(key){ const st=ensureRegions(); return !!st.done[key]; }
 function setActiveRegion(key){ const st=ensureRegions(); st.active=(st.active===key?null:key); saveRegions(st); render(); }
-function regionOnCapture(){
+function regionOnCapture(capturedType){
   const st=ensureRegions(); const reg=activeRegion(); if(!reg||st.done[reg.key]) return;
+  // Seuls les cailloux qui ressortent VRAIMENT du type de la région comptent.
+  if(capturedType!==reg.type) return;
   st.prog[reg.key]=(st.prog[reg.key]||0)+1;
-  if(st.prog[reg.key]>=REGION_TARGET){
+  const n=st.prog[reg.key];
+  const t=ROCK_TYPES.find(x=>x.key===reg.type);
+  if(n>=REGION_TARGET){
     st.done[reg.key]=true; saveRegions(st);
     addGems(15); addGravillons(80); addXp(60);
     meta.inventory=meta.inventory||{}; meta.inventory.sacred=(meta.inventory.sacred||0)+1; saveMeta();
-    setTimeout(()=>showToast(`👑 Région conquise : ${reg.name} ! +15 💎 · +1 Caillou Sacré`),750);
-  } else saveRegions(st);
+    setTimeout(()=>showToast(`👑 Région conquise : ${reg.name} ! +15 💎 · +1 Caillou Sacré`),1000);
+  } else {
+    saveRegions(st);
+    setTimeout(()=>showToast(`🌍 ${reg.name} : ${n}/${REGION_TARGET} ${t?t.label:''} ✓`),1000);
+  }
 }
 function regionsScreen(){
   const st=ensureRegions();
   const conquered=REGIONS.filter(r=>st.done[r.key]).length;
   return `<div class="regions-wrap">
     <div class="regions-title">🌍 EXPÉDITIONS</div>
-    <p class="regions-sub">Choisis une région à explorer : son type de caillou devient <b>plus fréquent</b> à la capture. Conquiers-la en capturant <b>${REGION_TARGET}</b> cailloux pour décrocher son légendaire ! <br><span style="color:var(--goldd);font-weight:800;">🏆 ${conquered}/${REGIONS.length} régions conquises</span></p>
+    <p class="regions-sub">Choisis une région à explorer, puis pars capturer de <b>vrais cailloux de son type</b> (ex. des cailloux clairs/blancs pour la Glace 🧊). Il en faut <b>${REGION_TARGET} du bon type</b> pour la conquérir et décrocher son légendaire — les autres cailloux ne comptent pas ! <br><span style="color:var(--goldd);font-weight:800;">🏆 ${conquered}/${REGIONS.length} régions conquises</span></p>
     <div class="regions-grid">
       ${REGIONS.map(r=>{
         const t=ROCK_TYPES.find(x=>x.key===r.type)||{};
@@ -3196,9 +3203,9 @@ function regionsScreen(){
           <div class="region-emoji">${r.emoji}</div>
           <div class="region-body">
             <div class="region-name">${r.name} ${done?'<span class="region-medal">👑</span>':''}</div>
-            <div class="region-type" style="color:${t.color||'#777'};">${t.label||''} plus fréquent</div>
+            <div class="region-type" style="color:${t.color||'#777'};">Objectif : ${REGION_TARGET} × ${t.label||''}</div>
             <div class="region-bar"><div class="region-bar-fill" style="width:${pct}%;background:${t.color||'#9E9E9E'};"></div></div>
-            <div class="region-prog">${done?'✅ Conquise':`${prog}/${REGION_TARGET} cailloux`}</div>
+            <div class="region-prog">${done?'✅ Conquise':`${prog}/${REGION_TARGET} du bon type`}</div>
           </div>
           <div class="region-cta">${active?'⏹ Active':done?'↻ Relancer':'▶ Explorer'}</div>
         </div>`;
@@ -6806,7 +6813,6 @@ async function handleFile(file){
 
     await bumpStreak();
     await saveMeta();
-    regionOnCapture(); // progression d'expédition (région active)
 
     let tier;
     if((meta.inventory?.sacred||0)>0){ meta.inventory.sacred--; tier=pickAtLeast('legendaire'); saveMeta(); setTimeout(()=>showToast('👑 Caillou Sacré activé !'),200); }
@@ -6854,6 +6860,9 @@ async function handleFile(file){
 
     // Caillou SECRET (très rare) : remplace l'identité par un spécial non possédé
     const gotSpecial=maybeSpecialRock(revealRock);
+
+    // Progression d'expédition : ne compte QUE si le caillou est vraiment du type de la région
+    regionOnCapture(revealRock.rockType);
 
     animePhoto=await createAnimeArt(dataUrl,revealRock.hex);
     revealRock.animePhoto=animePhoto;
