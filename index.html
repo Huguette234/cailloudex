@@ -6965,15 +6965,19 @@ async function rerollRockAI(rockId){
 }
 
 document.addEventListener('click',(e)=>{
+  const t=e.target.closest('[data-action]');
+  const action=t?t.dataset.action:null;
+  // IMPORTANT : les actions qui ouvrent l'appareil photo/galerie doivent appeler
+  // input.click() SANS aucun audio avant, dans le même geste. Sur mobile (iOS/MIUI),
+  // démarrer/reprendre l'audio "consomme" le geste utilisateur et bloque l'ouverture
+  // du sélecteur de fichier -> la capture ne se déclenche plus.
+  if(action==='capCamera'){ closeCaptureChoice(); const fi=document.getElementById('fileInput'); if(fi){ try{ fi.click(); }catch(err){ showToast('❌ Impossible d\'ouvrir l\'appareil photo. Autorise l\'accès à la caméra dans les réglages.'); } } return; }
+  if(action==='capGallery'){ closeCaptureChoice(); const fg=document.getElementById('fileInputGal'); if(fg){ try{ fg.click(); }catch(err){ showToast('❌ Impossible d\'ouvrir la galerie. Autorise l\'accès aux photos dans les réglages.'); } } return; }
   sfxUnlock(); // débloque l'audio dès le 1er geste utilisateur (requis sur mobile)
   if(musicOn) startMusic(); // idempotent : démarre la musique au 1er geste
-  const t=e.target.closest('[data-action]');
   if(!t) return;
-  const action=t.dataset.action;
   playSfx('tap');
   if(action==='capture'){ showCaptureChoice(); }
-  else if(action==='capCamera'){ closeCaptureChoice(); const fi=document.getElementById('fileInput'); if(fi){ try{ fi.click(); }catch(err){ showToast('❌ Impossible d\'ouvrir l\'appareil photo. Autorise l\'accès à la caméra dans les réglages.'); } } }
-  else if(action==='capGallery'){ closeCaptureChoice(); const fg=document.getElementById('fileInputGal'); if(fg){ try{ fg.click(); }catch(err){ showToast('❌ Impossible d\'ouvrir la galerie. Autorise l\'accès aux photos dans les réglages.'); } } }
   else if(action==='capCancel'){ closeCaptureChoice(); }
   else if(action==='toggleSound'){ setSoundOn(!soundOn); render(); }
   else if(action==='toggleMusic'){ setMusicOn(!musicOn); render(); }
@@ -7195,7 +7199,7 @@ function showCaptureChoice(){
   ov.className='cap-choice-ov';
   ov.setAttribute('data-action','capCancel');
   ov.innerHTML=`
-    <div class="cap-choice" onclick="event.stopPropagation()">
+    <div class="cap-choice" data-action="capNoop">
       <div class="cap-choice-title">📸 Capturer un caillou</div>
       <button class="cap-choice-btn cap-cam" data-action="capCamera">📷 Appareil photo</button>
       <button class="cap-choice-btn cap-gal" data-action="capGallery">🖼️ Galerie</button>
