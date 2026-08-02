@@ -821,6 +821,29 @@ nav{display:flex;gap:8px;padding:10px 14px max(14px,env(safe-area-inset-bottom))
 .trade-swap{font-size:26px;color:var(--goldd);flex-shrink:0;animation:seasonBob 2s ease-in-out infinite;}
 .trade-status{font-family:'Baloo 2',sans-serif;font-weight:800;font-size:13px;color:rgba(44,42,46,.7);margin-bottom:14px;min-height:20px;}
 .trade-warn{font-family:'Nunito',sans-serif;font-size:11px;color:rgba(190,120,20,.85);margin-top:12px;line-height:1.4;}
+/* Clans */
+.clan-hero{text-align:center;background:linear-gradient(160deg,rgba(196,92,255,.16),rgba(45,156,219,.12));border:1.5px solid rgba(196,92,255,.3);border-radius:18px;padding:16px 14px;margin-bottom:14px;box-shadow:0 6px 16px rgba(120,40,190,.16);}
+.clan-hero-emoji{font-size:44px;line-height:1;filter:drop-shadow(0 2px 5px rgba(0,0,0,.3));}
+.clan-hero-name{font-family:'Playfair Display',Georgia,serif;font-weight:900;font-size:22px;color:var(--accent);margin-top:4px;}
+.clan-hero-tag{font-family:'Baloo 2',sans-serif;font-weight:700;font-size:12px;color:rgba(44,42,46,.55);}
+.clan-hero-score{font-family:'Baloo 2',sans-serif;font-weight:800;font-size:15px;color:var(--goldd);margin-top:6px;}
+.clan-members{display:flex;flex-direction:column;gap:7px;margin-bottom:14px;}
+.clan-member{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 13px;border-radius:12px;background:linear-gradient(160deg,rgba(255,255,255,.82),rgba(255,255,255,.64));border:1px solid rgba(44,42,46,.1);}
+.clan-member.me{border-color:rgba(196,92,255,.45);background:linear-gradient(160deg,rgba(196,92,255,.1),rgba(255,255,255,.7));}
+.cm-name{font-family:'Baloo 2',sans-serif;font-weight:800;font-size:13px;color:var(--txt);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.cm-stats{font-family:'Nunito',sans-serif;font-size:11.5px;color:rgba(44,42,46,.65);white-space:nowrap;flex-shrink:0;}
+.clan-form{background:linear-gradient(160deg,rgba(255,255,255,.82),rgba(255,255,255,.64));border:1px solid rgba(44,42,46,.12);border-radius:16px;padding:14px;}
+.clan-form-lbl{font-family:'Baloo 2',sans-serif;font-weight:800;font-size:13px;color:var(--txt);margin-bottom:8px;text-align:center;}
+.clan-board{margin-top:16px;background:linear-gradient(160deg,rgba(255,255,255,.85),rgba(255,255,255,.66));border:1px solid rgba(44,42,46,.12);border-radius:16px;padding:12px;}
+.clan-board-title{font-family:'Baloo 2',sans-serif;font-weight:800;font-size:12px;letter-spacing:.06em;color:var(--goldd);text-align:center;margin-bottom:10px;}
+.clan-board-row{display:flex;align-items:center;gap:9px;padding:8px 8px;border-radius:10px;}
+.clan-board-row:nth-child(even){background:rgba(44,42,46,.04);}
+.clan-board-row.mine{background:rgba(196,92,255,.13);border:1px solid rgba(196,92,255,.3);}
+.cb-rank{font-family:'Playfair Display',Georgia,serif;font-weight:900;font-size:15px;color:var(--goldd);width:22px;text-align:center;flex-shrink:0;}
+.cb-emoji{font-size:20px;flex-shrink:0;}
+.cb-name{flex:1;min-width:0;font-family:'Baloo 2',sans-serif;font-weight:800;font-size:13px;color:var(--txt);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.cb-name small{color:rgba(44,42,46,.5);font-weight:700;}
+.cb-score{font-family:'Nunito',sans-serif;font-size:11px;color:rgba(44,42,46,.65);white-space:nowrap;flex-shrink:0;}
 .rival-box{margin-top:14px;padding:12px 14px;border-radius:16px;background:linear-gradient(160deg,rgba(255,107,53,.12),rgba(196,92,255,.1));border:1.5px solid rgba(196,92,255,.28);}
 .rival-title{font-family:'Baloo 2',sans-serif;font-weight:800;font-size:11px;letter-spacing:.08em;color:var(--goldd);text-align:center;}
 .rival-score{display:flex;align-items:center;justify-content:center;gap:14px;margin:6px 0 2px;font-family:'Playfair Display',Georgia,serif;font-weight:900;font-size:34px;line-height:1;}
@@ -1961,6 +1984,140 @@ async function claimGifts(){
     render();
   }catch(e){ showToast('❌ Impossible de réclamer les cadeaux.'); }
 }
+
+/* ===== CLANS / ÉQUIPES ===== */
+let myClan=null;      // {id,name,tag,emoji,owner_id} ou null
+let clanMembers=[];   // membres de mon clan (stats dénormalisées)
+let clanBoard=null;   // 'loading' | tableau classé | null
+function clanScore(m){ return (m.wins||0)*3 + Math.floor((m.xp||0)/50); }
+async function loadMyClan(){
+  if(!session||!sb) return;
+  try{
+    const { data:mem } = await sb.from('clan_members').select('clan_id').eq('user_id',session.user.id).maybeSingle();
+    if(!mem){ myClan=null; clanMembers=[]; return; }
+    const { data:clan } = await sb.from('clans').select('*').eq('id',mem.clan_id).maybeSingle();
+    myClan=clan||null;
+    if(myClan){ await syncMyClanStats(); await loadClanMembers(); }
+  }catch(e){ myClan=null; clanMembers=[]; }
+}
+async function syncMyClanStats(){
+  if(!myClan||!sb) return;
+  try{ await sb.from('clan_members').update({ username:meta.username||'Joueur', wins:meta.wins||0, xp:meta.xp||0, rock_count:dex.length, updated_at:new Date().toISOString() }).eq('user_id',session.user.id); }catch(e){}
+}
+async function loadClanMembers(){
+  if(!myClan||!sb) return;
+  try{ const { data } = await sb.from('clan_members').select('*').eq('clan_id',myClan.id); clanMembers=data||[]; }catch(e){ clanMembers=[]; }
+}
+async function createClan(name, emoji){
+  name=(name||'').trim();
+  if(!meta.username){ showToast('Définis d\'abord ton pseudo.'); return; }
+  if(name.length<3){ showToast('Nom de clan trop court (3 lettres min).'); return; }
+  if(myClan){ showToast('Tu es déjà dans un clan.'); return; }
+  try{
+    const tag=name.replace(/[^A-Za-z0-9]/g,'').slice(0,4).toUpperCase()||'CLAN';
+    const { data:clan, error } = await sb.from('clans').insert({ name, tag, emoji:(emoji||'🏰').slice(0,2), owner_id:session.user.id }).select().single();
+    if(error){ if(error.code==='23505'){ showToast('❌ Ce nom de clan est déjà pris.'); return; } throw error; }
+    await sb.from('clan_members').insert({ user_id:session.user.id, clan_id:clan.id, username:meta.username, wins:meta.wins||0, xp:meta.xp||0, rock_count:dex.length });
+    showToast('🏰 Clan « '+name+' » créé !');
+    await loadMyClan(); render();
+  }catch(e){ showToast('❌ Création impossible (la table clans existe-t-elle ?).'); }
+}
+async function joinClanByName(name){
+  name=(name||'').trim(); if(!name) return;
+  if(!meta.username){ showToast('Définis d\'abord ton pseudo.'); return; }
+  if(myClan){ showToast('Quitte d\'abord ton clan actuel.'); return; }
+  try{
+    const { data:clan } = await sb.from('clans').select('*').ilike('name',name).maybeSingle();
+    if(!clan){ showToast('❌ Clan introuvable (nom exact requis).'); return; }
+    const { error } = await sb.from('clan_members').insert({ user_id:session.user.id, clan_id:clan.id, username:meta.username, wins:meta.wins||0, xp:meta.xp||0, rock_count:dex.length });
+    if(error) throw error;
+    showToast('🏰 Tu as rejoint « '+clan.name+' » !');
+    await loadMyClan(); render();
+  }catch(e){ showToast('❌ Impossible de rejoindre ce clan.'); }
+}
+async function leaveClan(){
+  if(!myClan||!sb) return;
+  if(!confirm('Quitter le clan « '+myClan.name+' » ?')) return;
+  const wasOwner=myClan.owner_id===session.user.id; const cid=myClan.id;
+  try{
+    await sb.from('clan_members').delete().eq('user_id',session.user.id);
+    if(wasOwner){ const { data:rest } = await sb.from('clan_members').select('user_id').eq('clan_id',cid).limit(1); if(!rest||!rest.length){ try{ await sb.from('clans').delete().eq('id',cid); }catch(e){} } }
+    myClan=null; clanMembers=[]; showToast('Tu as quitté le clan.'); render();
+  }catch(e){ showToast('❌ Erreur.'); }
+}
+async function loadClanLeaderboard(){
+  if(!sb) return;
+  clanBoard='loading'; render();
+  try{
+    const [{ data:members },{ data:clans }] = await Promise.all([
+      sb.from('clan_members').select('clan_id,wins,xp'),
+      sb.from('clans').select('*'),
+    ]);
+    const byId={}; (clans||[]).forEach(c=>byId[c.id]={clan:c,score:0,members:0});
+    (members||[]).forEach(m=>{ const b=byId[m.clan_id]; if(b){ b.score+=clanScore(m); b.members++; } });
+    clanBoard=Object.values(byId).sort((a,b)=>b.score-a.score).slice(0,20);
+    render();
+  }catch(e){ clanBoard=[]; render(); }
+}
+function clanScreen(){
+  if(!meta.username){ return `<div class="regions-wrap" style="text-align:center;">
+    <div class="regions-title">🏰 CLANS</div>
+    <p class="regions-sub">Définis d'abord ton pseudo pour créer ou rejoindre un clan.</p>
+    <button class="btn btn-purple" data-action="goto" data-screen="username">📛 Définir mon pseudo</button>
+    <button class="btn btn-ghost" style="margin-top:8px;" data-action="goto" data-screen="friends">← Retour</button>
+  </div>`; }
+  const board=clanBoard;
+  const boardHtml = board==='loading' ? `<div class="regions-sub" style="margin-top:14px;">⏳ Chargement du classement…</div>`
+    : Array.isArray(board) ? `<div class="clan-board">
+        <div class="clan-board-title">🏆 CLASSEMENT DES CLANS</div>
+        ${board.length?board.map((e,i)=>`<div class="clan-board-row${myClan&&e.clan.id===myClan.id?' mine':''}">
+          <span class="cb-rank">${i+1}</span>
+          <span class="cb-emoji">${e.clan.emoji||'🏰'}</span>
+          <span class="cb-name">${e.clan.name} <small>[${e.clan.tag||''}]</small></span>
+          <span class="cb-score">${e.score} pts · ${e.members}👤</span>
+        </div>`).join(''):`<p class="regions-sub">Aucun clan pour l'instant. Crée le premier !</p>`}
+      </div>` : '';
+  if(myClan){
+    const total=clanMembers.reduce((s,m)=>s+clanScore(m),0);
+    const sorted=[...clanMembers].sort((a,b)=>clanScore(b)-clanScore(a));
+    return `<div class="regions-wrap">
+      <div class="clan-hero">
+        <div class="clan-hero-emoji">${myClan.emoji||'🏰'}</div>
+        <div class="clan-hero-name">${myClan.name}</div>
+        <div class="clan-hero-tag">[${myClan.tag||''}] · ${clanMembers.length} membre${clanMembers.length>1?'s':''}</div>
+        <div class="clan-hero-score">🏆 ${total} pts de clan</div>
+      </div>
+      <div class="clan-members">
+        ${sorted.map(m=>`<div class="clan-member${m.user_id===session.user.id?' me':''}">
+          <span class="cm-name">@${m.username||'Joueur'}${m.user_id===myClan.owner_id?' 👑':''}</span>
+          <span class="cm-stats">⚔️${m.wins||0} · ⭐${getLevelInfo(m.xp||0).level} · 🪨${m.rock_count||0}</span>
+        </div>`).join('')}
+      </div>
+      <button class="btn btn-gold" data-action="clanBoardBtn">🏆 Classement des clans</button>
+      <button class="btn btn-ghost" style="margin-top:8px;" data-action="leaveClanBtn">🚪 Quitter le clan</button>
+      <button class="btn btn-ghost" style="margin-top:8px;" data-action="goto" data-screen="friends">← Retour</button>
+      ${boardHtml}
+    </div>`;
+  }
+  return `<div class="regions-wrap">
+    <div class="regions-title">🏰 CLANS</div>
+    <p class="regions-sub">Rejoins un clan ou crée le tien ! Les victoires et l'XP de tous les membres alimentent le score du clan.</p>
+    <div class="clan-form">
+      <div class="clan-form-lbl">✨ Créer un clan</div>
+      <input class="input-field" id="clanNameInput" type="text" maxlength="20" placeholder="Nom du clan" autocomplete="off">
+      <input class="input-field" id="clanEmojiInput" type="text" maxlength="2" placeholder="Emoji (ex. 🔥)" autocomplete="off" style="margin-top:8px;">
+      <button class="btn btn-purple" style="margin-top:10px;" data-action="createClanBtn">🏰 Créer mon clan</button>
+    </div>
+    <div class="clan-form" style="margin-top:12px;">
+      <div class="clan-form-lbl">🔎 Rejoindre un clan</div>
+      <input class="input-field" id="clanJoinInput" type="text" maxlength="20" placeholder="Nom exact du clan" autocomplete="off">
+      <button class="btn btn-gold" style="margin-top:10px;" data-action="joinClanBtn">➡️ Rejoindre</button>
+    </div>
+    <button class="btn btn-ghost" style="margin-top:14px;" data-action="clanBoardBtn">🏆 Classement des clans</button>
+    <button class="btn btn-ghost" style="margin-top:8px;" data-action="goto" data-screen="friends">← Retour</button>
+    ${boardHtml}
+  </div>`;
+}
 async function reportUser(userId,username){
   if(!session||!sb||!userId) return;
   const reason=prompt('Signaler @'+username+' ?\nDécris brièvement le problème (facultatif) :');
@@ -1980,7 +2137,10 @@ function friendsScreen(){
   return `<div class="combat-pick-wrap">
     <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:10px;">
       <div class="combat-pick-title" style="margin-bottom:0;">👥 MES AMIS</div>
-      <span class="cp-pill" data-action="openLeaderboard">🏆 Classement</span>
+      <div style="display:flex;gap:6px;flex-shrink:0;">
+        <span class="cp-pill" data-action="openClan">🏰 Clan</span>
+        <span class="cp-pill" data-action="openLeaderboard">🏆 Classement</span>
+      </div>
     </div>
     ${pushBtn}
     ${pendingGifts.length?`<div class="gift-banner" data-action="claimGiftsBtn">
@@ -6753,6 +6913,7 @@ function render(){
     else if(screen==='trade-pick'){ mainHtml=tradePickScreen(); showNav=false; showHeader=false; }
     else if(screen==='trade-confirm'){ mainHtml=tradeConfirmScreen(); showNav=false; showHeader=false; }
     else if(screen==='trade-done'){ mainHtml=tradeDoneScreen(); showNav=false; showHeader=false; }
+    else if(screen==='clan'){ mainHtml=clanScreen(); showNav=false; }
     app.innerHTML=`${showHeader?header():''}<main style="overflow-y:auto;">${mainHtml}</main>${showNav?nav():''}`;
   }
 
@@ -7485,6 +7646,11 @@ document.addEventListener('click',(e)=>{
   else if(action==='giftFriendBtn'){ sendGift(t.dataset.id,t.dataset.name); }
   else if(action==='claimGiftsBtn'){ claimGifts(); }
   else if(action==='tradeFriendBtn'){ sendTradeInvite(t.dataset.id,t.dataset.name); }
+  else if(action==='openClan'){ screen='clan'; clanBoard=null; render(); loadMyClan().then(()=>{ if(screen==='clan') render(); }); }
+  else if(action==='createClanBtn'){ const n=document.getElementById('clanNameInput'), e=document.getElementById('clanEmojiInput'); createClan(n?n.value:'', e?e.value:''); }
+  else if(action==='joinClanBtn'){ const n=document.getElementById('clanJoinInput'); joinClanByName(n?n.value:''); }
+  else if(action==='leaveClanBtn'){ leaveClan(); }
+  else if(action==='clanBoardBtn'){ loadClanLeaderboard(); }
   else if(action==='tradePickRock'){ const rock=dex.find(r=>r.id===t.dataset.id); if(rock) pickTradeRock(rock); }
   else if(action==='tradeConfirmBtn'){ tradeConfirm(); }
   else if(action==='tradeCancelBtn'){ tradeCancel(); }
