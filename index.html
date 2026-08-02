@@ -800,6 +800,11 @@ nav{display:flex;gap:8px;padding:10px 14px max(14px,env(safe-area-inset-bottom))
 .lb-score{font-family:'Nunito',sans-serif;font-size:11px;color:rgba(44,42,46,.55);white-space:nowrap;text-align:right;}
 .lb-score b{font-family:'Playfair Display',Georgia,serif;font-size:15px;color:var(--txt);}
 /* Rivalité tête-à-tête */
+.gift-banner{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 0 14px;padding:11px 15px;border-radius:14px;cursor:pointer;
+  background:linear-gradient(135deg,rgba(111,207,83,.2),rgba(45,156,219,.14));border:1.5px solid rgba(76,175,80,.4);box-shadow:0 4px 12px rgba(50,150,60,.2);
+  font-family:'Baloo 2',sans-serif;font-weight:800;font-size:13px;color:var(--txt);animation:hintPulse 1.3s ease-in-out infinite;}
+.gift-banner:active{transform:scale(.99);}
+.gift-claim{font-family:'Baloo 2',sans-serif;font-weight:800;font-size:12px;color:#fff;background:linear-gradient(135deg,#6FCF53,#3A8C20);border-radius:999px;padding:6px 14px;white-space:nowrap;box-shadow:0 2px 6px rgba(50,140,40,.4);}
 .rival-box{margin-top:14px;padding:12px 14px;border-radius:16px;background:linear-gradient(160deg,rgba(255,107,53,.12),rgba(196,92,255,.1));border:1.5px solid rgba(196,92,255,.28);}
 .rival-title{font-family:'Baloo 2',sans-serif;font-weight:800;font-size:11px;letter-spacing:.08em;color:var(--goldd);text-align:center;}
 .rival-score{display:flex;align-items:center;justify-content:center;gap:14px;margin:6px 0 2px;font-family:'Playfair Display',Georgia,serif;font-weight:900;font-size:34px;line-height:1;}
@@ -1898,6 +1903,48 @@ async function removeFriend(friendId){
     render();
   }catch(e){ showToast('❌ Erreur: '+(e?.message||e)); }
 }
+
+/* ===== CADEAUX ENTRE AMIS (Gravillons, asynchrone) ===== */
+let pendingGifts=[];
+const GIFT_AMOUNT=25;
+function giftedTodayKey(){ return 'cdx_gift_'+todayStr(); }
+function giftedToday(friendId){ try{ const o=JSON.parse(localStorage.getItem(giftedTodayKey())||'{}'); return !!o[friendId]; }catch(e){ return false; } }
+function markGiftedToday(friendId){ try{ const o=JSON.parse(localStorage.getItem(giftedTodayKey())||'{}'); o[friendId]=1; localStorage.setItem(giftedTodayKey(),JSON.stringify(o)); }catch(e){} }
+async function loadGifts(){
+  if(!session||!sb) return;
+  try{
+    const { data, error } = await sb.from('gifts').select('id,amount,from_username').eq('to_id',session.user.id).is('claimed_at',null);
+    if(error) throw error;
+    pendingGifts=data||[];
+  }catch(e){ pendingGifts=[]; } // table absente -> silencieux
+}
+async function sendGift(friendId,friendUsername){
+  if(!session||!sb) return;
+  if(giftedToday(friendId)){ showToast('🎁 Tu as déjà offert un cadeau à @'+friendUsername+' aujourd\'hui !'); return; }
+  if((meta.gravillons||0)<GIFT_AMOUNT){ showToast('❌ Il te faut au moins '+GIFT_AMOUNT+' 🪙 pour offrir un cadeau.'); return; }
+  try{
+    const { error } = await sb.from('gifts').insert({ from_id:session.user.id, to_id:friendId, from_username:meta.username||'Un ami', kind:'gravillons', amount:GIFT_AMOUNT });
+    if(error) throw error;
+    incrementStat('gravillons',-GIFT_AMOUNT);
+    markGiftedToday(friendId);
+    sendPushToFriend(friendId,'🎁 Cadeau reçu !',(meta.username||'Un ami')+' t\'a offert '+GIFT_AMOUNT+' Gravillons !');
+    showToast('🎁 Cadeau envoyé à @'+friendUsername+' : '+GIFT_AMOUNT+' 🪙 !');
+    render();
+  }catch(e){ showToast('❌ Envoi impossible (la table cadeaux n\'existe peut-être pas encore).'); }
+}
+async function claimGifts(){
+  if(!session||!sb||!pendingGifts.length) return;
+  const ids=pendingGifts.map(g=>g.id);
+  const total=pendingGifts.reduce((s,g)=>s+(g.amount||0),0);
+  try{
+    const { error } = await sb.from('gifts').update({ claimed_at:new Date().toISOString() }).in('id',ids).eq('to_id',session.user.id);
+    if(error) throw error;
+    addGravillons(total);
+    pendingGifts=[];
+    showToast('🪙 +'+total+' Gravillons offerts par tes amis !');
+    render();
+  }catch(e){ showToast('❌ Impossible de réclamer les cadeaux.'); }
+}
 async function reportUser(userId,username){
   if(!session||!sb||!userId) return;
   const reason=prompt('Signaler @'+username+' ?\nDécris brièvement le problème (facultatif) :');
@@ -1920,6 +1967,10 @@ function friendsScreen(){
       <span class="cp-pill" data-action="openLeaderboard">🏆 Classement</span>
     </div>
     ${pushBtn}
+    ${pendingGifts.length?`<div class="gift-banner" data-action="claimGiftsBtn">
+      <span>🎁 Tu as reçu ${pendingGifts.length} cadeau${pendingGifts.length>1?'x':''} (${pendingGifts.reduce((s,g)=>s+(g.amount||0),0)} 🪙) !</span>
+      <span class="gift-claim">Réclamer</span>
+    </div>`:''}
     <div class="online-join-col">
       <input class="input-field" id="addFriendInput" type="text" maxlength="20" placeholder="Pseudo de ton ami" autocomplete="off">
       <button class="btn btn-purple" style="margin-top:10px;" data-action="addFriendBtn">➕ Ajouter</button>
@@ -1932,6 +1983,7 @@ function friendsScreen(){
             <div class="combat-pick-name">@${f.username} <span style="font-size:10px;color:rgba(44,42,46,.46);">ℹ️ voir profil</span></div>
           </div>
           <button class="btn-feed" style="width:auto;padding:8px 14px;font-size:11px;" data-action="challengeFriendBtn" data-id="${f.user_id}" data-name="${f.username}">⚔️ Défier</button>
+          <button class="btn-feed" style="width:auto;padding:8px 12px;font-size:11px;${giftedToday(f.user_id)?'opacity:.45;':''}" data-action="giftFriendBtn" data-id="${f.user_id}" data-name="${f.username}" title="Offrir ${GIFT_AMOUNT} Gravillons">🎁</button>
           <span data-action="reportFriendBtn" data-id="${f.user_id}" data-name="${f.username}" title="Signaler" style="font-size:12px;color:rgba(190,120,20,.8);cursor:pointer;margin-left:8px;">⚑</span>
           <span data-action="removeFriendBtn" data-id="${f.user_id}" style="font-size:11px;color:rgba(200,50,50,.75);cursor:pointer;margin-left:6px;">✕</span>
           ${incoming?`<div style="width:100%;margin-top:8px;padding-top:8px;border-top:1px solid rgba(196,92,255,.25);display:flex;align-items:center;justify-content:space-between;">
@@ -7187,7 +7239,7 @@ document.addEventListener('click',(e)=>{
     screen=t.dataset.screen; detailRock=null;
     if(screen==='dex') dexType=null; // on entre par le menu des types
     render();
-    if(screen==='friends'){ Promise.all([loadFriendsList(),checkPendingChallenge()]).then(()=>{ if(screen==='friends') render(); }); }
+    if(screen==='friends'){ Promise.all([loadFriendsList(),loadGifts(),checkPendingChallenge()]).then(()=>{ if(screen==='friends') render(); }); }
     // Accueil : on ne reconstruit la page QUE si un défi est réellement arrivé/parti
     // (évite un 2ᵉ rendu complet qui rechargeait l'avatar -> effet saccadé).
     if(screen==='home'){
@@ -7211,6 +7263,8 @@ document.addEventListener('click',(e)=>{
   else if(action==='reportFriendBtn'){ reportUser(t.dataset.id,t.dataset.name); }
   else if(action==='enablePush'){ enablePush(); }
   else if(action==='challengeFriendBtn'){ sendChallenge(t.dataset.id,t.dataset.name); }
+  else if(action==='giftFriendBtn'){ sendGift(t.dataset.id,t.dataset.name); }
+  else if(action==='claimGiftsBtn'){ claimGifts(); }
   else if(action==='acceptConsent'){ try{localStorage.setItem('cdx_consent',LEGAL_VERSION);}catch(e){} const g=document.getElementById('consentGate'); if(g) g.remove(); if(screen==='home') maybeShowTutorial(); }
   else if(action==='tutoNext'){ if(_tutoIdx<TUTORIAL_STEPS.length-1){ _tutoIdx++; renderTutorial(); } }
   else if(action==='tutoPrev'){ if(_tutoIdx>0){ _tutoIdx--; renderTutorial(); } }
