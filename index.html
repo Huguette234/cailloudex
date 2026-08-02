@@ -696,6 +696,27 @@ nav{display:flex;gap:8px;padding:10px 14px max(14px,env(safe-area-inset-bottom))
 .tuto-dot.on{background:var(--goldd);width:22px;border-radius:999px;}
 .tuto-nav{display:flex;gap:10px;}
 .tuto-nav .btn{margin:0;}
+/* Régions / Expéditions */
+.regions-wrap{padding:16px 12px 30px;max-width:520px;margin:0 auto;}
+.regions-title{font-family:'Playfair Display',Georgia,serif;font-size:24px;color:var(--accent);text-align:center;margin-bottom:6px;}
+.regions-sub{font-family:'Nunito',sans-serif;font-size:12.5px;color:rgba(44,42,46,.6);text-align:center;line-height:1.5;margin:0 auto 16px;max-width:440px;}
+.regions-grid{display:flex;flex-direction:column;gap:11px;margin-bottom:14px;}
+.region-card{display:flex;align-items:center;gap:12px;padding:12px 13px;border-radius:16px;cursor:pointer;
+  background:linear-gradient(160deg,rgba(255,255,255,.85),rgba(255,255,255,.66));border:1.5px solid rgba(44,42,46,.12);
+  box-shadow:0 4px 12px rgba(0,0,0,.1);transition:transform .12s,border-color .15s,box-shadow .15s;}
+.region-card:active{transform:scale(.99);}
+.region-card.active{border-color:var(--rc);box-shadow:0 6px 18px color-mix(in srgb,var(--rc) 35%,transparent);background:linear-gradient(160deg,color-mix(in srgb,var(--rc) 14%,#fff),color-mix(in srgb,var(--rc) 6%,#fff));}
+.region-card.done{border-color:rgba(200,150,30,.5);}
+.region-emoji{font-size:38px;line-height:1;filter:drop-shadow(0 2px 4px rgba(0,0,0,.25));flex-shrink:0;}
+.region-body{flex:1;min-width:0;}
+.region-name{font-family:'Baloo 2',sans-serif;font-weight:800;font-size:15px;color:var(--txt);line-height:1.1;}
+.region-medal{font-size:14px;}
+.region-type{font-family:'Baloo 2',sans-serif;font-weight:700;font-size:11px;margin:1px 0 5px;}
+.region-bar{height:7px;border-radius:999px;background:rgba(44,42,46,.12);overflow:hidden;}
+.region-bar-fill{height:100%;border-radius:999px;transition:width .3s ease;}
+.region-prog{font-family:'Nunito',sans-serif;font-size:10.5px;color:rgba(44,42,46,.55);margin-top:4px;}
+.region-cta{font-family:'Baloo 2',sans-serif;font-weight:800;font-size:11px;color:#fff;background:var(--rc);border-radius:999px;padding:7px 12px;white-space:nowrap;flex-shrink:0;box-shadow:0 3px 8px rgba(0,0,0,.2);}
+.region-card.active .region-cta{background:#444;}
 .diff-row{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-bottom:6px;}
 .diff-pill{font-family:'Baloo 2',sans-serif;font-weight:800;font-size:12px;color:rgba(44,42,46,.7);background:rgba(255,255,255,.7);border:1.5px solid rgba(44,42,46,.14);border-radius:999px;padding:6px 12px;cursor:pointer;transition:transform .1s,box-shadow .15s;}
 .diff-pill.sel{color:var(--txt);background:linear-gradient(135deg,#FFE79A,var(--legendaire) 60%,#EBBE2E);border-color:rgba(255,240,190,.6);box-shadow:0 3px 10px rgba(184,142,20,.4);transform:translateY(-1px);}
@@ -2918,6 +2939,8 @@ function resolveRockType(ai){
   if(cc==='autre'){ w.feu+=3; w.nature+=3; w.chaos+=2; w.neutre+=1; }
   if(shiny){ w.glace+=4; w.metal+=4; w.lumiere+=3; w.chaos+=2; }
   if(cc==='clair'&&shiny){ w.glace+=5; }  // pâle + brillant/cristallin = glace
+  const _reg=activeRegion();              // région active -> son type devient plus fréquent
+  if(_reg && !regionDone(_reg.key)) w[_reg.type]=(w[_reg.type]||1)+10;
   const keys=Object.keys(w); let tot=0; keys.forEach(k=>tot+=w[k]);
   let r=Math.random()*tot, chosen=keys[0];
   for(const k of keys){ if(r<w[k]){ chosen=k; break; } r-=w[k]; }
@@ -3047,6 +3070,66 @@ async function openMap(){
   foot.textContent=`${pts.length} caillou${pts.length>1?'x':''} sur la carte`+(nApprox?` · ${nApprox} placé${nApprox>1?'s':''} par ville`:'');
 }
 function closeMap(){ if(_mapInstance){ try{_mapInstance.remove();}catch(e){} _mapInstance=null; } const o=document.getElementById('mapOverlay'); if(o) o.remove(); }
+
+/* ===== RÉGIONS / EXPÉDITIONS (couche d'exploration) =====
+   Une région active rend son type plus fréquent à la capture. La conquérir
+   (REGION_TARGET captures) récompense gemmes + un Caillou Sacré (= le légendaire
+   de la zone, prochaine capture légendaire garantie). Progression en local. */
+const REGIONS=[
+  { key:'volcan',  name:'Volcan Ardent',     emoji:'🌋', type:'feu',     desc:'Une terre de lave où naissent les cailloux de Feu.' },
+  { key:'toundra', name:'Toundra Gelée',     emoji:'❄️', type:'glace',   desc:'Un désert de glace balayé par le blizzard éternel.' },
+  { key:'foret',   name:'Forêt Ancestrale',  emoji:'🌲', type:'nature',  desc:'Une jungle luxuriante grouillante de vie minérale.' },
+  { key:'mine',    name:'Mine Abandonnée',   emoji:'⛏️', type:'metal',   desc:'Des galeries profondes gorgées de minerais précieux.' },
+  { key:'caverne', name:'Caverne Obscure',   emoji:'🕳️', type:'ombre',   desc:'Des ténèbres d\'où surgissent les cailloux d\'Ombre.' },
+  { key:'oasis',   name:'Oasis de Lumière',  emoji:'🏝️', type:'lumiere', desc:'Un havre éclatant baigné d\'une lumière dorée.' },
+];
+const REGION_TARGET=8;
+let regionState=null;
+function loadRegions(){ let st=null; try{ st=JSON.parse(localStorage.getItem('cdx_regions')||'null'); }catch(e){} if(!st||typeof st!=='object') st={active:null,prog:{},done:{}}; st.prog=st.prog||{}; st.done=st.done||{}; return st; }
+function saveRegions(st){ try{ localStorage.setItem('cdx_regions',JSON.stringify(st)); }catch(e){} }
+function ensureRegions(){ if(!regionState) regionState=loadRegions(); return regionState; }
+function activeRegion(){ const st=ensureRegions(); return st.active?REGIONS.find(r=>r.key===st.active)||null:null; }
+function regionProgress(key){ const st=ensureRegions(); return st.prog[key]||0; }
+function regionDone(key){ const st=ensureRegions(); return !!st.done[key]; }
+function setActiveRegion(key){ const st=ensureRegions(); st.active=(st.active===key?null:key); saveRegions(st); render(); }
+function regionOnCapture(){
+  const st=ensureRegions(); const reg=activeRegion(); if(!reg||st.done[reg.key]) return;
+  st.prog[reg.key]=(st.prog[reg.key]||0)+1;
+  if(st.prog[reg.key]>=REGION_TARGET){
+    st.done[reg.key]=true; saveRegions(st);
+    addGems(15); addGravillons(80); addXp(60);
+    meta.inventory=meta.inventory||{}; meta.inventory.sacred=(meta.inventory.sacred||0)+1; saveMeta();
+    setTimeout(()=>showToast(`👑 Région conquise : ${reg.name} ! +15 💎 · +1 Caillou Sacré`),750);
+  } else saveRegions(st);
+}
+function regionsScreen(){
+  const st=ensureRegions();
+  const conquered=REGIONS.filter(r=>st.done[r.key]).length;
+  return `<div class="regions-wrap">
+    <div class="regions-title">🌍 EXPÉDITIONS</div>
+    <p class="regions-sub">Choisis une région à explorer : son type de caillou devient <b>plus fréquent</b> à la capture. Conquiers-la en capturant <b>${REGION_TARGET}</b> cailloux pour décrocher son légendaire ! <br><span style="color:var(--goldd);font-weight:800;">🏆 ${conquered}/${REGIONS.length} régions conquises</span></p>
+    <div class="regions-grid">
+      ${REGIONS.map(r=>{
+        const t=ROCK_TYPES.find(x=>x.key===r.type)||{};
+        const prog=Math.min(REGION_TARGET, st.prog[r.key]||0);
+        const done=!!st.done[r.key];
+        const active=st.active===r.key;
+        const pct=Math.round(prog/REGION_TARGET*100);
+        return `<div class="region-card${active?' active':''}${done?' done':''}" data-action="selectRegion" data-key="${r.key}" style="--rc:${t.color||'#9E9E9E'};">
+          <div class="region-emoji">${r.emoji}</div>
+          <div class="region-body">
+            <div class="region-name">${r.name} ${done?'<span class="region-medal">👑</span>':''}</div>
+            <div class="region-type" style="color:${t.color||'#777'};">${t.label||''} plus fréquent</div>
+            <div class="region-bar"><div class="region-bar-fill" style="width:${pct}%;background:${t.color||'#9E9E9E'};"></div></div>
+            <div class="region-prog">${done?'✅ Conquise':`${prog}/${REGION_TARGET} cailloux`}</div>
+          </div>
+          <div class="region-cta">${active?'⏹ Active':done?'↻ Relancer':'▶ Explorer'}</div>
+        </div>`;
+      }).join('')}
+    </div>
+    <button class="btn btn-ghost" style="margin-top:6px;" data-action="goto" data-screen="home">🏠 Accueil</button>
+  </div>`;
+}
 function resizeImage(file,maxSize=800){
   return new Promise((resolve,reject)=>{
     const reader=new FileReader();
@@ -3253,6 +3336,7 @@ function homeScreen(){
     <div class="home-links">
       <span data-action="goto" data-screen="combat-pick">⚔️ Combat</span>
       <span data-action="goto" data-screen="splash">🌊 Plouf</span>
+      <span data-action="goto" data-screen="regions">🌍 Régions</span>
       <span data-action="openMap">🗺️ Carte</span>
       <span data-action="goto" data-screen="friends">👥 Amis</span>
       <span data-action="goto" data-screen="shop">🛒 Boutique</span>
@@ -6366,6 +6450,7 @@ function render(){
     else if(screen==='online-menu'){ mainHtml=onlineMenuScreen(); showNav=true; }
     else if(screen==='online-wait'){ mainHtml=onlineWaitScreen(); showNav=false; }
     else if(screen==='online-pick'){ mainHtml=onlinePickScreen(); showNav=true; }
+    else if(screen==='regions'){ mainHtml=regionsScreen(); showNav=false; }
     app.innerHTML=`${showHeader?header():''}<main style="overflow-y:auto;">${mainHtml}</main>${showNav?nav():''}`;
   }
 
@@ -6636,6 +6721,7 @@ async function handleFile(file){
 
     await bumpStreak();
     await saveMeta();
+    regionOnCapture(); // progression d'expédition (région active)
 
     let tier;
     if((meta.inventory?.sacred||0)>0){ meta.inventory.sacred--; tier=pickAtLeast('legendaire'); saveMeta(); setTimeout(()=>showToast('👑 Caillou Sacré activé !'),200); }
@@ -7094,6 +7180,7 @@ document.addEventListener('click',(e)=>{
   else if(action==='tutoSkip'){ markTutorialDone(); closeTutorial(); }
   else if(action==='tutoDone'){ markTutorialDone(); closeTutorial(); }
   else if(action==='replayTutorial'){ startTutorial(); }
+  else if(action==='selectRegion'){ setActiveRegion(t.dataset.key); }
   else if(action==='capNoop'){ /* clic dans la carte du menu capture : ne rien faire */ }
   else if(action==='acceptChallengeBtn'){ acceptChallenge(); }
   else if(action==='dismissChallengeBtn'){ dismissChallenge(); }
