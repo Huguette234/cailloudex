@@ -1251,6 +1251,8 @@ nav{display:flex;gap:8px;padding:10px 14px max(14px,env(safe-area-inset-bottom))
 .scan2-hint{position:absolute;bottom:13px;left:0;right:0;text-align:center;font-family:'Baloo 2',sans-serif;font-weight:700;font-size:11px;color:rgba(255,255,255,.55);pointer-events:none;}
 .scan2-shutter-wrap{display:flex;justify-content:center;margin-top:16px;}
 .scan2-shutter{position:relative;width:80px;height:80px;border-radius:50%;border:none;background:none;cursor:pointer;padding:0;}
+.scan2-locked{opacity:.5;filter:grayscale(.6);cursor:not-allowed;}
+.scan2-shutter.locked{opacity:.5;filter:grayscale(.7);cursor:not-allowed;}
 .scan2-shutter-ring{position:absolute;inset:0;border-radius:50%;border:4px solid var(--glow);box-shadow:0 0 18px -2px var(--glow);}
 .scan2-shutter-core{position:absolute;inset:7px;border-radius:50%;background:radial-gradient(circle at 40% 34%,#fff,#ece4c6);display:flex;align-items:center;justify-content:center;font-size:31px;box-shadow:0 4px 12px rgba(0,0,0,.45);transition:transform .09s;}
 .scan2-shutter:active .scan2-shutter-core{transform:scale(.88);}
@@ -3978,6 +3980,8 @@ function scannerScreen(){
   const guaranteedBadge=gTier?`<div class="guaranteed-badge" style="border-color:${gTier.hex};color:${gTier.hex};box-shadow:0 0 16px ${gTier.hex}55;">✨ Prochaine capture : <b>${gTier.label}</b> garantie</div>`:'';
   const luckyBadge=isLuckyActive()?`<div class="hint-soft" style="color:rgba(30,138,76,.95);font-weight:700;">🍀 Porte-Bonheur actif — rareté boostée</div>`:'';
   const scans=getScansToday(); const left=Math.max(0,DAILY_SCAN_LIMIT-scans);
+  const reached=left<=0;
+  const capAttr=reached?'':'data-action="capture"';
   const glow=gTier?gTier.hex:'#F7DC6F';
   return `<div class="scan2">
     ${guaranteedBadge}
@@ -3985,20 +3989,20 @@ function scannerScreen(){
       <div class="scan2-title">✨ Quel caillou vas-tu révéler ?</div>
       <div class="scan2-counter${left<=2?' low':''}">📸 ${scans}/${DAILY_SCAN_LIMIT}</div>
     </div>
-    <div class="scan2-vf${gTier?' vf-guaranteed':''}" data-action="capture" style="--glow:${glow};">
+    <div class="scan2-vf${gTier?' vf-guaranteed':''}${reached?' scan2-locked':''}" ${capAttr} style="--glow:${glow};">
       <div class="scan2-radar"></div>
       <div class="scan2-scanline"></div>
       <div class="corner c-tl"></div><div class="corner c-tr"></div><div class="corner c-bl"></div><div class="corner c-br"></div>
-      <div class="scan2-read tl">◇ PRÊT</div>
-      <div class="scan2-read tr">AUTH ✓</div>
+      <div class="scan2-read tl">${reached?'✕ HORS LIGNE':'◇ PRÊT'}</div>
+      <div class="scan2-read tr">${reached?'LIMITE':'AUTH ✓'}</div>
       <div class="scan2-center">
         <div class="scan2-reticle"><span class="r-ring"></span><span class="r-h"></span><span class="r-v"></span></div>
-        <div class="scan2-mascot">${mascotSvg()}</div>
+        <div class="scan2-mascot">${reached?'🔒':mascotSvg()}</div>
       </div>
-      <div class="scan2-hint">Vise ton caillou et touche pour capturer</div>
+      <div class="scan2-hint">${reached?'Limite du jour atteinte — reviens demain !':'Vise ton caillou et touche pour capturer'}</div>
     </div>
     <div class="scan2-shutter-wrap">
-      <button class="scan2-shutter" data-action="capture" aria-label="Capturer"><span class="scan2-shutter-ring"></span><span class="scan2-shutter-core">📸</span></button>
+      <button class="scan2-shutter${reached?' locked':''}" ${capAttr} aria-label="Capturer"><span class="scan2-shutter-ring"></span><span class="scan2-shutter-core">${reached?'🔒':'📸'}</span></button>
     </div>
     <div class="scan2-shutter-label">${left>0?`Il te reste <b>${left}</b> scan${left>1?'s':''} aujourd'hui`:`Limite du jour atteinte — reviens demain`}</div>
     <div class="scan2-odds">
@@ -7258,6 +7262,7 @@ function render(){
 let photoToggleState={};
 async function handleFile(file){
   if(!file) return;
+  if(getScansToday()>=DAILY_SCAN_LIMIT){ showToast(`⏱️ Limite de ${DAILY_SCAN_LIMIT} scans atteinte pour aujourd'hui — reviens demain !`); return; }
   try{
     const dataUrl=await resizeImage(file);
     const mod=await moderateImage(dataUrl);
@@ -7720,7 +7725,10 @@ document.addEventListener('click',(e)=>{
   if(musicOn) startMusic(); // idempotent : démarre la musique au 1er geste
   if(!t) return;
   playSfx('tap');
-  if(action==='capture'){ showCaptureChoice(); }
+  if(action==='capture'){
+    if(getScansToday()>=DAILY_SCAN_LIMIT){ showToast(`⏱️ Limite de ${DAILY_SCAN_LIMIT} scans atteinte pour aujourd'hui — reviens demain !`); return; }
+    showCaptureChoice();
+  }
   else if(action==='capCancel'){ closeCaptureChoice(); }
   else if(action==='toggleSound'){ setSoundOn(!soundOn); const sw=t.querySelector('.sound-sw'); if(sw) sw.classList.toggle('on',soundOn); }
   else if(action==='toggleMusic'){ setMusicOn(!musicOn); const sw=t.querySelector('.sound-sw'); if(sw) sw.classList.toggle('on',musicOn); }
