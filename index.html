@@ -579,6 +579,17 @@ nav{display:flex;gap:8px;padding:10px 14px max(14px,env(safe-area-inset-bottom))
 .dexc-pv{position:absolute;top:9px;right:9px;font-family:'Playfair Display',Georgia,serif;font-size:15px;color:#fff;background:linear-gradient(135deg,#E8384F,#B01030);border:2px solid rgba(255,255,255,.85);border-radius:12px;padding:3px 10px;box-shadow:0 2px 8px rgba(0,0,0,.5);z-index:2;}
 .dexc-pv span{font-size:9px;opacity:.9;margin-left:1px;}
 .dexc-no{position:absolute;top:9px;left:9px;font-family:'Baloo 2',sans-serif;font-weight:800;font-size:11px;color:#fff;background:rgba(0,0,0,.5);border-radius:8px;padding:2px 8px;z-index:2;}
+.dexc-fav{position:absolute;top:6px;right:6px;z-index:3;width:30px;height:30px;display:flex;align-items:center;justify-content:center;font-size:17px;color:rgba(255,255,255,.85);background:rgba(0,0,0,.4);border-radius:50%;cursor:pointer;transition:transform .1s ease;}
+.dexc-fav:active{transform:scale(1.25);}
+.dexc-fav.on{color:#FFD54A;text-shadow:0 0 8px rgba(255,200,40,.9);}
+/* Dex : recherche / tri / favoris */
+.dex-controls{margin-bottom:14px;}
+.dex-search{width:100%;box-sizing:border-box;border:1.5px solid rgba(44,42,46,.16);border-radius:12px;padding:11px 14px;font-family:'Nunito',sans-serif;font-size:14px;color:var(--txt);background:rgba(255,255,255,.85);outline:none;}
+.dex-search:focus{border-color:var(--accent);}
+.dex-ctrl-row{display:flex;gap:8px;margin-top:8px;}
+.dex-sort{flex:1;border:1.5px solid rgba(44,42,46,.16);border-radius:12px;padding:9px 10px;font-family:'Baloo 2',sans-serif;font-weight:700;font-size:12px;color:var(--txt);background:rgba(255,255,255,.85);outline:none;cursor:pointer;}
+.dex-fav-toggle{border:1.5px solid rgba(44,42,46,.16);border-radius:12px;padding:9px 14px;font-family:'Baloo 2',sans-serif;font-weight:800;font-size:12px;color:rgba(44,42,46,.7);background:rgba(255,255,255,.85);cursor:pointer;white-space:nowrap;}
+.dex-fav-toggle.on{background:linear-gradient(135deg,#FFD86A,#E0A82C);border-color:transparent;color:#5A3E00;box-shadow:0 3px 8px rgba(200,150,30,.35);}
 .dexc-lvl{position:absolute;bottom:9px;right:9px;font-family:'Playfair Display',Georgia,serif;font-size:11px;color:#0d1b2a;background:var(--accent);border-radius:8px;padding:2px 8px;z-index:2;}
 .dexc-body{padding:12px 14px 14px;}
 .dexc-name{font-family:'Playfair Display',Georgia,serif;font-size:17px;color:#fff;line-height:1.1;margin-bottom:7px;}
@@ -1593,6 +1604,18 @@ const ACHIEVEMENTS = [
   { id:'streak30',tier:'platine', icon:'🏅', label:'Obsession Clinique', desc:'30 jours de suite. C\'est trop.' },
   { id:'level50', tier:'platine', icon:'💠', label:'Lithologue Suprême', desc:'Atteins le niveau 50' },
   { id:'level100',tier:'platine', icon:'🌌', label:'Légende des Z\'Hommes', desc:'Atteins le niveau 100' },
+  // COMBAT
+  { id:'win1',    tier:'bronze', icon:'⚔️', label:'Première Victoire', desc:'Gagne ton 1er combat' },
+  { id:'win25',   tier:'argent', icon:'🥊', label:'Bagarreur',        desc:'Gagne 25 combats' },
+  { id:'win100',  tier:'or',     icon:'🏆', label:'Gladiateur',       desc:'Gagne 100 combats' },
+  { id:'arena10', tier:'argent', icon:'🏟️', label:'Habitué de l\'Arène', desc:'Franchis 10 vagues d\'arène' },
+  { id:'boss1',   tier:'or',     icon:'💀', label:'Tueur de Boss',    desc:'Bats un Boss de la semaine' },
+  { id:'tourney1',tier:'or',     icon:'🏅', label:'Champion du Tournoi', desc:'Remporte un Tournoi des cailloux' },
+  { id:'colossal',tier:'platine',icon:'🦖', label:'Titan',            desc:'Un caillou de puissance ATK+DEF ≥ 220' },
+  // EXPLORATION
+  { id:'region1', tier:'argent', icon:'🌍', label:'Explorateur',      desc:'Conquiers ta 1ère région' },
+  { id:'regionAll',tier:'platine',icon:'🗺️', label:'Maître Explorateur', desc:'Conquiers les 6 régions' },
+  { id:'allTypes',tier:'or',     icon:'🌈', label:'Collection Complète', desc:'Possède un caillou de chaque type' },
 ];
 
 const CHALLENGE_TYPES = [
@@ -2490,6 +2513,16 @@ function checkAndUnlockBadges(){
     level30:(_,m)=>getLevelInfo(m.xp||0).level>=30,
     level50:(_,m)=>getLevelInfo(m.xp||0).level>=50,
     level100:(_,m)=>getLevelInfo(m.xp||0).level>=100,
+    win1:(_,m)=>(m.wins||0)>=1,
+    win25:(_,m)=>(m.wins||0)>=25,
+    win100:(_,m)=>(m.wins||0)>=100,
+    arena10:()=>{ try{ return (arenaBest||0)>=10; }catch(e){ return false; } },
+    boss1:()=>{ try{ return localStorage.getItem('cdx_boss_ever')==='1'; }catch(e){ return false; } },
+    tourney1:()=>{ try{ return tournoyTitles()>=1; }catch(e){ return false; } },
+    colossal:d=>d.some(r=>(r.atk||0)+(r.def||0)>=220),
+    region1:()=>{ try{ return Object.values(ensureRegions().done||{}).filter(Boolean).length>=1; }catch(e){ return false; } },
+    regionAll:()=>{ try{ return Object.values(ensureRegions().done||{}).filter(Boolean).length>=6; }catch(e){ return false; } },
+    allTypes:d=>ROCK_TYPES.every(t=>d.some(r=>(r.rockType||'neutre')===t.key)),
   };
   const fresh=ACHIEVEMENTS.filter(a=>{
     if(already.has(a.id)) return false;
@@ -4134,6 +4167,7 @@ function dexCard(r){
   return `<div class="dexc${(r.rarity==='galaxie'||r.rarity==='secret')?' galaxie-holo':''}" style="border-color:${r.hex}77;" data-action="detail" data-id="${r.id}">
     <div class="dexc-imgwrap">
       <img class="dexc-img" src="${img}" alt="${r.name}">
+      <div class="dexc-fav${isFav(r.id)?' on':''}" data-action="toggleFav" data-id="${r.id}">${isFav(r.id)?'⭐':'☆'}</div>
       <div class="dexc-no">N°${String(r.catalogNumber).padStart(4,'0')}</div>
       <div class="dexc-pv">❤️ ${pv}<span>PV</span></div>
       ${r.upgradeLevel?`<div class="dexc-lvl">NIV.${r.upgradeLevel}</div>`:''}
@@ -4218,23 +4252,40 @@ function typeTextCol(hex){
   const mix=c=>Math.round(c*0.5+26*0.5);
   return `rgb(${mix(r)},${mix(g)},${mix(b)})`;
 }
-function dexScreen(){
-  if(dex.length===0) return `<div class="empty">${mascotSvg('happy')}<p>Ton Dex est vide.<br>Va scanner ton premier caillou ! 🪨<br><span style="font-size:11px;opacity:.6;">${hasApiKey()?'IA active — chaque capture est unique !':'Active l\'IA pour des noms personnalisés'}</span></p></div>`;
+/* ===== FAVORIS + RECHERCHE/TRI DU DEX ===== */
+let favSet=null;
+let dexQuery='', dexSort='recent', dexFavOnly=false;
+function loadFavs(){ if(favSet) return favSet; try{ favSet=new Set(JSON.parse(localStorage.getItem('cdx_favs')||'[]')); }catch(e){ favSet=new Set(); } return favSet; }
+function isFav(id){ return loadFavs().has(String(id)); }
+function toggleFav(id){ const s=loadFavs(); id=String(id); if(s.has(id)) s.delete(id); else s.add(id); try{ localStorage.setItem('cdx_favs',JSON.stringify([...s])); }catch(e){} }
+function sortDex(list){
+  const rr=r=>{ const i=RARITY_TIERS.findIndex(t=>t.key===r.rarity); return i<0?0:i; };
+  const pw=r=>(r.atk||0)+(r.def||0)+(r.vit||0);
+  const arr=list.slice();
+  if(dexSort==='power') arr.sort((a,b)=>pw(b)-pw(a));
+  else if(dexSort==='rarity') arr.sort((a,b)=>rr(b)-rr(a)||pw(b)-pw(a));
+  else if(dexSort==='name') arr.sort((a,b)=>(a.name||'').localeCompare(b.name||''));
+  else arr.sort((a,b)=>(b.catalogNumber||0)-(a.catalogNumber||0));
+  return arr;
+}
+function dexControlsHtml(){
+  const favN=dex.filter(r=>isFav(r.id)).length;
+  return `<div class="dex-controls">
+    <input class="dex-search" id="dexSearch" type="text" placeholder="🔎 Rechercher un caillou..." value="${(dexQuery||'').replace(/"/g,'&quot;')}" oninput="dexQuery=this.value; updateDexResults();" autocomplete="off">
+    <div class="dex-ctrl-row">
+      <select class="dex-sort" onchange="dexSort=this.value; updateDexResults();">
+        <option value="recent"${dexSort==='recent'?' selected':''}>🕒 Récents</option>
+        <option value="power"${dexSort==='power'?' selected':''}>💪 Puissance</option>
+        <option value="rarity"${dexSort==='rarity'?' selected':''}>💎 Rareté</option>
+        <option value="name"${dexSort==='name'?' selected':''}>🔤 Nom</option>
+      </select>
+      <button class="dex-fav-toggle${dexFavOnly?' on':''}" onclick="dexFavOnly=!dexFavOnly; this.classList.toggle('on'); updateDexResults();">⭐ Favoris${favN?' ('+favN+')':''}</button>
+    </div>
+  </div>`;
+}
+function dexTypeMenuHtml(){
   const byType={};
   dex.forEach(r=>{ const k=r.rockType||'neutre'; (byType[k]=byType[k]||[]).push(r); });
-
-  // NIVEAU 2 — cartes d'un type choisi, par deux
-  if(dexType){
-    const t=ROCK_TYPES.find(x=>x.key===dexType)||{label:'❔ AUTRES',color:'#9E9E9E'};
-    const rocks=(byType[dexType]||[]).slice().reverse();
-    return `<div>
-      <div class="dex-back" data-action="dexBack">← Tous les types</div>
-      <div class="dex-type-head" style="color:${typeTextCol(t.color)};border-color:${t.color}55;"><span>${t.label}</span><span class="dex-type-count">${rocks.length}</span></div>
-      <div class="dexgrid2">${rocks.map(dexCard).join('')}</div>
-    </div>`;
-  }
-
-  // NIVEAU 1 — menu des types (carrés)
   const tiles=ROCK_TYPES.map(t=>{
     const n=(byType[t.key]||[]).length;
     const nm=t.label.replace(/^\S+\s/,'');
@@ -4244,9 +4295,38 @@ function dexScreen(){
       <div class="dextype-count">${n} caillou${n>1?'x':''}</div>
     </div>`;
   }).join('');
+  return `<div style="font-family:'Baloo 2',sans-serif;font-weight:700;font-size:11px;color:rgba(44,42,46,.46);text-align:center;margin:2px 0 14px;letter-spacing:.06em;">${dex.length} CAILLOU${dex.length>1?'X':''} · CHOISIS UN TYPE</div>
+    <div class="dextype-grid">${tiles}</div>`;
+}
+function dexResultsHtml(){
+  const q=(dexQuery||'').trim().toLowerCase();
+  if(q||dexFavOnly){
+    let list=dex.filter(r=> (!dexFavOnly||isFav(r.id)) && (!q || (r.name||'').toLowerCase().includes(q) || (r.typeLabel||'').toLowerCase().includes(q) || (r.rarityLabel||'').toLowerCase().includes(q)));
+    list=sortDex(list);
+    if(!list.length) return `<p style="text-align:center;font-family:'Nunito',sans-serif;font-size:13px;color:rgba(44,42,46,.5);margin-top:26px;">${dexFavOnly&&!q?'Aucun favori — touche l\'étoile ☆ d\'un caillou pour l\'ajouter !':'Aucun caillou ne correspond à ta recherche.'}</p>`;
+    return `<div style="font-family:'Baloo 2',sans-serif;font-weight:700;font-size:11px;color:rgba(44,42,46,.46);text-align:center;margin:2px 0 10px;">${list.length} résultat${list.length>1?'s':''}</div><div class="dexgrid2">${list.map(dexCard).join('')}</div>`;
+  }
+  return dexTypeMenuHtml();
+}
+function updateDexResults(){ const el=document.getElementById('dexResults'); if(el) el.innerHTML=dexResultsHtml(); }
+function dexScreen(){
+  if(dex.length===0) return `<div class="empty">${mascotSvg('happy')}<p>Ton Dex est vide.<br>Va scanner ton premier caillou ! 🪨<br><span style="font-size:11px;opacity:.6;">${hasApiKey()?'IA active — chaque capture est unique !':'Active l\'IA pour des noms personnalisés'}</span></p></div>`;
+
+  // NIVEAU 2 — cartes d'un type choisi
+  if(dexType){
+    const t=ROCK_TYPES.find(x=>x.key===dexType)||{label:'❔ AUTRES',color:'#9E9E9E'};
+    const rocks=dex.filter(r=>(r.rockType||'neutre')===dexType).slice().reverse();
+    return `<div>
+      <div class="dex-back" data-action="dexBack">← Tous les types</div>
+      <div class="dex-type-head" style="color:${typeTextCol(t.color)};border-color:${t.color}55;"><span>${t.label}</span><span class="dex-type-count">${rocks.length}</span></div>
+      <div class="dexgrid2">${rocks.map(dexCard).join('')}</div>
+    </div>`;
+  }
+
+  // NIVEAU 1 — recherche/tri + (résultats OU menu des types)
   return `<div>
-    <div style="font-family:'Baloo 2',sans-serif;font-weight:700;font-size:11px;color:rgba(44,42,46,.46);text-align:center;margin-bottom:16px;letter-spacing:.06em;">${dex.length} CAILLOU${dex.length>1?'X':''} · CHOISIS UN TYPE</div>
-    <div class="dextype-grid">${tiles}</div>
+    ${dexControlsHtml()}
+    <div id="dexResults">${dexResultsHtml()}</div>
   </div>`;
 }
 
@@ -5551,7 +5631,7 @@ function weekSeedNum(){ const d=new Date(); const y=d.getUTCFullYear(); const on
 function currentWeekKey(){ return 'W'+weekSeedNum(); }
 function getWeeklyBoss(){ return BOSS_POOL[weekSeedNum()%BOSS_POOL.length]; }
 function bossBeatenThisWeek(){ try{ return localStorage.getItem('cdx_boss_week')===currentWeekKey(); }catch(e){ return false; } }
-function markBossBeaten(){ try{ localStorage.setItem('cdx_boss_week',currentWeekKey()); }catch(e){} }
+function markBossBeaten(){ try{ localStorage.setItem('cdx_boss_week',currentWeekKey()); localStorage.setItem('cdx_boss_ever','1'); }catch(e){} }
 let bossRun=false;      // combat de boss en cours
 let bossPicking=false;  // on choisit son champion pour le boss
 function makeBossRock(){
@@ -7629,7 +7709,7 @@ document.addEventListener('click',(e)=>{
     // Quitter la navigation normale annule une éventuelle partie d'arène/boss en cours
     if(t.dataset.screen!=='combat-pick'){ arenaRun=null; arenaPicking=false; bossRun=false; bossPicking=false; tournoyRun=null; tournoyPicking=false; }
     screen=t.dataset.screen; detailRock=null;
-    if(screen==='dex') dexType=null; // on entre par le menu des types
+    if(screen==='dex'){ dexType=null; dexQuery=''; dexFavOnly=false; } // on entre par le menu des types
     render();
     if(screen==='friends'){ Promise.all([loadFriendsList(),loadGifts(),checkPendingChallenge()]).then(()=>{ if(screen==='friends') render(); }); }
     // Accueil : on ne reconstruit la page QUE si un défi est réellement arrivé/parti
@@ -7645,6 +7725,7 @@ document.addEventListener('click',(e)=>{
   else if(action==='closeMap'){ closeMap(); }
   else if(action==='dexType'){ dexType=t.dataset.type; render(); }
   else if(action==='dexBack'){ dexType=null; render(); }
+  else if(action==='toggleFav'){ toggleFav(t.dataset.id); if(document.getElementById('dexResults')) updateDexResults(); else render(); }
   else if(action==='addFriendBtn'){
     const v=(document.getElementById('addFriendInput')||{}).value||'';
     addFriend(v);
