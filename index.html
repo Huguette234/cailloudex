@@ -2268,6 +2268,22 @@ function startUpgrade(rockId){
   upgradeAlloc={rockId, add:{atk:0,def:0,vit:0}, pool:POINTS_PER_LEVEL, cost, level:level+1};
   render();
 }
+function updateAllocUI(){
+  if(!upgradeAlloc) return;
+  const rock=dex.find(r=>r.id===upgradeAlloc.rockId); if(!rock) return;
+  const poolEl=document.querySelector('.alloc-pool b'); if(poolEl) poolEl.textContent=upgradeAlloc.pool;
+  ['atk','def','vit'].forEach(key=>{
+    const add=upgradeAlloc.add[key], cur=rock[key];
+    const minus=document.querySelector(`.alloc-btn[data-action="allocMinus"][data-stat="${key}"]`);
+    const plus=document.querySelector(`.alloc-btn[data-action="allocPlus"][data-stat="${key}"]`);
+    const val=document.querySelector(`.alloc-val[data-stat="${key}"]`);
+    if(minus) minus.disabled=add<=0;
+    if(plus) plus.disabled=(upgradeAlloc.pool<=0||cur+add>=STAT_CAP);
+    if(val) val.innerHTML=`${cur}${add?`<b>+${add}</b>`:''}`;
+  });
+  const conf=document.querySelector('.btn-gem[data-action="confirmUpgrade"]');
+  if(conf){ const lock=upgradeAlloc.pool>0; conf.disabled=lock; conf.style.opacity=lock?'.45':''; }
+}
 function allocPoint(stat,delta){
   if(!upgradeAlloc) return;
   const rock=dex.find(r=>r.id===upgradeAlloc.rockId); if(!rock) return;
@@ -2279,7 +2295,7 @@ function allocPoint(stat,delta){
     if(upgradeAlloc.add[stat]<=0) return;
     upgradeAlloc.add[stat]--; upgradeAlloc.pool++;
   }
-  render();
+  updateAllocUI(); // mise à jour en place (pas de render -> l'image ne se recharge plus)
 }
 function cancelUpgrade(){ upgradeAlloc=null; render(); }
 async function confirmUpgrade(){
@@ -3378,7 +3394,7 @@ function ensureRegions(){ if(!regionState) regionState=loadRegions(); return reg
 function activeRegion(){ const st=ensureRegions(); return st.active?REGIONS.find(r=>r.key===st.active)||null:null; }
 function regionProgress(key){ const st=ensureRegions(); return st.prog[key]||0; }
 function regionDone(key){ const st=ensureRegions(); return !!st.done[key]; }
-function setActiveRegion(key){ const st=ensureRegions(); st.active=(st.active===key?null:key); saveRegions(st); render(); }
+function setActiveRegion(key){ const st=ensureRegions(); st.active=(st.active===key?null:key); saveRegions(st); }
 function regionOnCapture(capturedType){
   const st=ensureRegions(); const reg=activeRegion(); if(!reg||st.done[reg.key]) return;
   // Seuls les cailloux qui ressortent VRAIMENT du type de la région comptent.
@@ -5674,7 +5690,13 @@ function missionEvent(e){
 }
 function claimMission(id){
   const st=ensureMissions(); const d=MISSION_POOL.find(x=>x.id===id); if(!d) return;
-  if((st.prog[id]||0)>=d.target && !st.claimed[id]){ st.claimed[id]=true; saveMissions(st); addGems(d.gems); showToast(`🎯 +${d.gems} 💎 récompense de mission !`); render(); }
+  if((st.prog[id]||0)>=d.target && !st.claimed[id]){
+    st.claimed[id]=true; saveMissions(st); addGems(d.gems); showToast(`🎯 +${d.gems} 💎 récompense de mission !`);
+    // Mise à jour en place du bouton (pas de render global qui recharge l'écran derrière l'overlay)
+    const btn=document.querySelector(`.mission-claim[data-id="${id}"]`);
+    if(btn){ const span=document.createElement('span'); span.className='mission-claimed'; span.textContent='✅ Reçu'; const row=btn.closest('.mission-row'); btn.replaceWith(span); if(row) row.classList.add('done'); }
+    else render();
+  }
 }
 
 const BOT_PORTRAIT_LS='cdx_botimg_';
@@ -7108,7 +7130,7 @@ function render(){
             return `<div class="alloc-row">
               <span class="alloc-lbl">${icon} ${label}</span>
               <button class="alloc-btn" data-action="allocMinus" data-stat="${key}" ${add<=0?'disabled':''}>−</button>
-              <span class="alloc-val">${cur}${add?`<b>+${add}</b>`:''}</span>
+              <span class="alloc-val" data-stat="${key}">${cur}${add?`<b>+${add}</b>`:''}</span>
               <button class="alloc-btn" data-action="allocPlus" data-stat="${key}" ${(upgradeAlloc.pool<=0||cur+add>=STAT_CAP)?'disabled':''}>+</button>
             </div>`;
           };
@@ -7690,8 +7712,8 @@ document.addEventListener('click',(e)=>{
   playSfx('tap');
   if(action==='capture'){ showCaptureChoice(); }
   else if(action==='capCancel'){ closeCaptureChoice(); }
-  else if(action==='toggleSound'){ setSoundOn(!soundOn); render(); }
-  else if(action==='toggleMusic'){ setMusicOn(!musicOn); render(); }
+  else if(action==='toggleSound'){ setSoundOn(!soundOn); const sw=t.querySelector('.sound-sw'); if(sw) sw.classList.toggle('on',soundOn); }
+  else if(action==='toggleMusic'){ setMusicOn(!musicOn); const sw=t.querySelector('.sound-sw'); if(sw) sw.classList.toggle('on',musicOn); }
   else if(action==='onlineSetBet'){
     if(onlineState && !onlineState.myRock){
       const v=parseInt(t.dataset.bet,10)||0;
@@ -7725,7 +7747,18 @@ document.addEventListener('click',(e)=>{
   else if(action==='closeMap'){ closeMap(); }
   else if(action==='dexType'){ dexType=t.dataset.type; render(); }
   else if(action==='dexBack'){ dexType=null; render(); }
-  else if(action==='toggleFav'){ toggleFav(t.dataset.id); if(document.getElementById('dexResults')) updateDexResults(); else render(); }
+  else if(action==='toggleFav'){
+    const fid=t.dataset.id;
+    toggleFav(fid);
+    const nowFav=isFav(fid);
+    // Mise à jour EN PLACE (pas de reconstruction de la grille -> plus de rechargement d'images / saccade)
+    t.classList.toggle('on', nowFav);
+    t.textContent = nowFav?'⭐':'☆';
+    const favBtn=document.querySelector('.dex-fav-toggle');
+    if(favBtn){ const n=dex.filter(r=>isFav(r.id)).length; favBtn.textContent='⭐ Favoris'+(n?' ('+n+')':''); }
+    // En filtre "Favoris uniquement", retirer un favori enlève juste sa carte
+    if(dexFavOnly && !nowFav){ const card=t.closest('.dexc'); if(card) card.remove(); }
+  }
   else if(action==='addFriendBtn'){
     const v=(document.getElementById('addFriendInput')||{}).value||'';
     addFriend(v);
@@ -7754,7 +7787,17 @@ document.addEventListener('click',(e)=>{
   else if(action==='tutoSkip'){ markTutorialDone(); closeTutorial(); }
   else if(action==='tutoDone'){ markTutorialDone(); closeTutorial(); }
   else if(action==='replayTutorial'){ startTutorial(); }
-  else if(action==='selectRegion'){ setActiveRegion(t.dataset.key); }
+  else if(action==='selectRegion'){
+    setActiveRegion(t.dataset.key);
+    // Mise à jour en place des cartes (pas de render() -> pas de saccade)
+    const st=ensureRegions();
+    document.querySelectorAll('.region-card').forEach(card=>{
+      const k=card.dataset.key; if(!k) return;
+      const active=st.active===k, done=!!st.done[k];
+      card.classList.toggle('active', active);
+      const cta=card.querySelector('.region-cta'); if(cta) cta.textContent=active?'⏹ Active':done?'↻ Relancer':'▶ Explorer';
+    });
+  }
   else if(action==='capNoop'){ /* clic dans la carte du menu capture : ne rien faire */ }
   else if(action==='acceptChallengeBtn'){ acceptChallenge(); }
   else if(action==='dismissChallengeBtn'){ dismissChallenge(); }
