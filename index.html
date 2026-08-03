@@ -7303,7 +7303,17 @@ function buildCharacterPrompt(rock){
   const type=rock.rockType||'neutre';
   const personality=(rock.personality||'').slice(0,60);
   const sizeCm=Number(rock.sizeCm)||0;
-  const sizeDesc=sizeCm>15?'giant massive body':sizeCm>8?'large sturdy body':sizeCm>3?'medium body':sizeCm>0?'tiny miniature body':'medium body';
+  const _atk=rock.atk||10, _def=rock.def||10;
+  // Stature = mélange de la taille réelle du caillou ET de sa puissance :
+  // petit + faible -> minuscule, gros + costaud -> colossal. On donne à l'IA des
+  // repères d'échelle + un angle de caméra pour que la taille se VOIE vraiment.
+  const statureScore=(sizeCm>0?sizeCm*3:0)+(_atk+_def)/2;
+  const sizeDesc=
+    statureScore<35 ? 'a TINY palm-sized miniature creature, absolutely small and adorable, dainty little proportions, shown SMALL within the frame with empty space around it and a couple of tiny pebbles beside it for scale, humble low stance'
+    : statureScore<60 ? 'a SMALL compact little creature, modest cute size, small rounded proportions, clearly a little guy, a few small stones nearby for scale'
+    : statureScore<100 ? 'a MEDIUM average-sized creature, balanced normal proportions, standing at a regular everyday height'
+    : statureScore<160 ? 'a LARGE big and imposing creature, tall bulky and broad, heavy powerful proportions towering over the ground, dramatic low camera angle looking up to emphasize its size, small rocks and dust at its feet for scale'
+    : 'a COLOSSAL gigantic towering titan, an enormous kaiju-sized behemoth, massively wide and tall, dwarfing its surroundings, dramatic low-angle shot from below emphasizing its overwhelming scale, tiny boulders scattered at its feet for scale';
   const rarityDesc=rock.rarity==='legendaire'?'legendary ornate crown, majestic':rock.rarity==='epique'?'epic glowing aura':rock.rarity==='rare'?'rare shimmer':'';
   const atk=rock.atk||10;
   const atkDesc=atk>=75?'hyper-muscular giant arms, colossal fists':atk>=50?'muscular arms, large fists':atk>=25?'average arms':'tiny twig arms';
@@ -7446,7 +7456,7 @@ function buildCharacterPrompt(rock){
     :'sharp determined eyes and a fierce expression';
   const mood=VILLAINS.includes(type)?'a menacing villainous':HEROES.includes(type)?'a heroic':'a fierce brave';
   const base=`${mood} one-of-a-kind rock-type creature monster named ${name}, with ${shape}, ${face} on its carved stone face, ${feature}, with expressive stubby stone limbs, brimming with personality`;
-  return `${base}, ${pose}, ${sizeDesc}, ${rarityDesc}, the stone body is ${typeStyle}, ${atkDesc}, ${defDesc}, ${vitDesc}, ${personality}, it is unmistakably a solid living creature made entirely of stone with rough grainy mineral texture and cracks, an expressive rock-type creature-collector monster in the style of an official Pokemon-style creature, each one with a distinct silhouette and unique design, captured mid-action in a dynamic energetic pose (absolutely NOT standing still, NOT facing the camera straight, NOT a stiff symmetrical portrait), dynamic camera angle and dynamic composition, full body in the foreground, set against a ${bg} background, epic cinematic dramatic lighting, glowing energy effects and motion, highly detailed vibrant creature illustration, official monster-taming trading card game artwork style, it is NOT a human, NOT wearing a costume or armor suit, NOT an animal — it is a living rock creature`;
+  return `${base}, ${pose}, ${sizeDesc}, ${rarityDesc}, the stone body is ${typeStyle}, ${atkDesc}, ${defDesc}, ${vitDesc}, ${personality}, it is unmistakably a solid living creature made entirely of stone with rough grainy mineral texture and cracks, an expressive rock-type creature-collector monster in the style of an official Pokemon-style creature, each one with a distinct silhouette and unique design, captured mid-action in a dynamic energetic pose (absolutely NOT standing still, NOT facing the camera straight, NOT a stiff symmetrical portrait), dynamic composition with the creature's full body fully visible and its size clearly readable (respect the described scale — small creatures look genuinely small, large creatures look genuinely huge), set against a ${bg} background, epic cinematic dramatic lighting, glowing energy effects and motion, highly detailed vibrant creature illustration, official monster-taming trading card game artwork style, it is NOT a human, NOT wearing a costume or armor suit, NOT an animal — it is a living rock creature`;
 }
 
 function stopCharGenTimer(){
