@@ -6816,13 +6816,15 @@ function maybeShowConsent(){
 
 /* ===== TUTORIEL D'ACCUEIL (carrousel de bienvenue, au 1er lancement) ===== */
 const TUTORIAL_STEPS=[
-  {emoji:'👋', title:'Bienvenue sur CaillouDEX !', text:'Transforme de vrais cailloux en créatures de collection à faire combattre. Voici l\'essentiel en 30 secondes.'},
+  {emoji:'👋', title:'Bienvenue sur CaillouDEX !', text:'Transforme de vrais cailloux en créatures de collection à faire combattre. Voici l\'essentiel en une minute.'},
   {emoji:'📸', title:'1 · Capture un caillou', text:'Touche « Capturer », puis prends un caillou en photo ou choisis-en un dans ta galerie. N\'importe quel caillou fait l\'affaire !'},
-  {emoji:'✨', title:'2 · L\'IA fait le reste', text:'Ton caillou devient une créature unique : un nom, un type, une illustration et des stats — ⚔️ Attaque, 🛡️ Défense, 💨 Vitesse.'},
+  {emoji:'✨', title:'2 · L\'IA fait le reste', text:'Ton caillou devient une créature unique : un nom, un type, une illustration et des stats — ⚔️ Attaque, 🛡️ Défense, 💨 Vitesse. Sa taille reflète le vrai caillou !'},
   {emoji:'📖', title:'3 · Ta collection', text:'Retrouve tous tes cailloux dans le Dex. Chacun a une rareté, de Commun à ✨ Secret. Attrape-les tous !'},
-  {emoji:'⚔️', title:'4 · Au combat !', text:'Affronte des bots, l\'Arène, le Boss de la semaine, des Tournois… et tes amis en ligne, avec paris de gemmes et mini-tournois.'},
-  {emoji:'💎', title:'5 · Progresse', text:'Gagne des 💎 Gemmes et des 🪙 Gravillons en jouant pour améliorer tes cailloux à la Boutique. Pense aux 🎯 missions du jour !'},
-  {emoji:'🚀', title:'C\'est parti !', text:'Astuce : règle les 🔊 sons et la 🎵 musique dans ton Compte. Amuse-toi bien, dresseur de cailloux !'},
+  {emoji:'⚔️', title:'4 · Au combat !', text:'Affronte des bots, l\'Arène sans fin, le Boss de la semaine et le Tournoi des cailloux… ou tes amis en ligne (avec paris de gemmes 🎰 et mini-tournois 🥊).'},
+  {emoji:'🌍', title:'5 · Explore', text:'Pars en Expédition dans les Régions : capture de vrais cailloux du bon type pour conquérir une zone et décrocher son légendaire. Un Événement met un type à l\'honneur chaque semaine !'},
+  {emoji:'🤝', title:'6 · Entre amis', text:'Ajoute des amis pour les défier, leur offrir des Gravillons 🎁, échanger des cailloux 🔄, et rejoindre un Clan 🏰 pour grimper au classement des équipes.'},
+  {emoji:'💎', title:'7 · Progresse', text:'Gagne des 💎 Gemmes et des 🪙 Gravillons en jouant pour améliorer et faire évoluer tes cailloux à la Boutique. Pense aux 🎯 missions du jour !'},
+  {emoji:'🚀', title:'C\'est parti !', text:'Astuce : règle les 🔊 sons et la 🎵 musique dans ton Compte (et retrouve ce tuto avec « Revoir le tutoriel »). Amuse-toi bien, dresseur de cailloux !'},
 ];
 let _tutoIdx=0, _tutoShown=false;
 function tutorialDone(){ try{ return localStorage.getItem('cdx_tutorial_done')==='1'; }catch(e){ return false; } }
