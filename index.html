@@ -2904,16 +2904,17 @@ async function renderShareCard(rock){
   ctx.fillText('LES CAILLOUX DES',W/2,80);
   ctx.save(); ctx.translate(W/2,178); ctx.rotate(-3*Math.PI/180);
   ctx.font="700 82px 'Playfair Display',Georgia,serif"; ctx.fillStyle='#FFD700'; ctx.fillText("Z'HOMMES",0,0); ctx.restore();
-  const px=80,py=260,pw=W-160,ph=1340;
+  const px=80,py=250,pw=W-160,ph=1360;
   ctx.fillStyle='#1E3A5A'; roundedRect(ctx,px,py,pw,ph,48); ctx.fill();
   ctx.strokeStyle=rock.hex; ctx.lineWidth=8; roundedRect(ctx,px,py,pw,ph,48); ctx.stroke();
   ctx.fillStyle='rgba(255,255,255,0.45)'; ctx.font="700 26px 'Baloo 2'"; ctx.textAlign='left';
   ctx.fillText('N°'+String(rock.catalogNumber).padStart(4,'0'),px+40,py+62);
+  ctx.font="800 24px 'Baloo 2'";
   const tw=ctx.measureText(rock.rarityLabel).width+50;
   ctx.fillStyle=rock.hex; roundedRect(ctx,px+pw-40-tw,py+30,tw,50,25); ctx.fill();
   ctx.fillStyle='#fff'; ctx.textAlign='center'; ctx.font="800 24px 'Baloo 2'";
   ctx.fillText(rock.rarityLabel,px+pw-40-tw/2,py+62);
-  const ps=pw-160,pi=px+80,piY=py+110;
+  const ps=700,pi=px+(pw-ps)/2,piY=py+96;
   const photoSrc = (rock.characterPhoto||rock.animePhoto||rock.photo);
   await new Promise(r=>{
     const im=new Image();
@@ -2925,33 +2926,52 @@ async function renderShareCard(rock){
     };
     im.onerror=r; im.src=photoSrc;
   });
+  const base=piY+ps;
   ctx.fillStyle='#fff'; ctx.textAlign='center';
-  let nameSize=60; const nameMaxW=pw-80;
+  let nameSize=58; const nameMaxW=pw-80;
   do{ ctx.font="700 "+nameSize+"px 'Playfair Display',Georgia,serif"; if(ctx.measureText(rock.name).width<=nameMaxW) break; nameSize-=3; }while(nameSize>26);
-  ctx.fillText(rock.name,W/2,piY+ps+76);
+  ctx.fillText(rock.name,W/2,base+70);
   if(rock.typeLabel){
     ctx.fillStyle=rock.typeColor||'#fff'; ctx.font="700 28px 'Baloo 2'";
-    ctx.fillText(rock.typeLabel,W/2,piY+ps+120);
+    ctx.fillText(rock.typeLabel,W/2,base+112);
   }
+  const loc=locName(rock.location);
+  if(loc){ ctx.fillStyle='rgba(255,255,255,0.4)'; ctx.font="600 24px 'Baloo 2'"; ctx.fillText('📍 '+loc,W/2,base+150); }
   if(rock.personality){
-    ctx.fillStyle='rgba(255,255,255,0.55)'; ctx.font="italic 600 27px 'Baloo 2'";
-    wrapText(ctx,'"'+rock.personality+'"',W/2,piY+ps+170,pw-100,36);
+    ctx.fillStyle='rgba(255,255,255,0.55)'; ctx.font="italic 600 26px 'Baloo 2'";
+    wrapText(ctx,'"'+rock.personality+'"',W/2,base+(loc?196:172),pw-110,34,3);
   }
-  const stY=piY+ps+280;
+  const stY=base+330;
   [['ATK',rock.atk],['DEF',rock.def],['VIT',rock.vit]].forEach((s,i)=>{
     const cx=pi+ps/6+i*ps/3;
     ctx.fillStyle='rgba(255,255,255,0.4)'; ctx.font="700 24px 'Baloo 2'";
     ctx.fillText(s[0],cx,stY);
     ctx.fillStyle='#fff'; ctx.font="700 48px 'Playfair Display',Georgia,serif";
-    ctx.fillText(String(s[1]),cx,stY+58);
+    ctx.fillText(String(s[1]),cx,stY+56);
   });
   if(rock.specialMove){
     ctx.fillStyle='#FFD700'; ctx.font="600 22px 'Baloo 2'";
-    wrapText(ctx,'⚡ '+rock.specialMove,W/2,piY+ps+400,pw-80,30);
+    wrapText(ctx,'⚡ '+rock.specialMove,W/2,stY+130,pw-90,29,3);
   }
-  if(locName(rock.location)){ ctx.fillStyle='rgba(255,255,255,0.4)'; ctx.font="600 26px 'Baloo 2'"; ctx.fillText('📍 '+locName(rock.location),W/2,py+ph-42); }
-  ctx.fillStyle='rgba(255,255,255,0.5)'; ctx.font="700 28px 'Baloo 2'";
-  ctx.fillText("CaillouDEX — scanne le tien",W/2,H-80);
+  // ===== QR code sous la carte : ramène vers l'app =====
+  const appUrl=(location.origin+location.pathname).replace(/\/index\.html?$/i,'/');
+  const Q=214, qx=(W-Q)/2, qy=py+ph+26;
+  await new Promise(res=>{
+    const q=new Image(); q.crossOrigin='anonymous';
+    q.onload=()=>{
+      ctx.fillStyle='#fff'; roundedRect(ctx,qx,qy,Q,Q,22); ctx.fill();
+      const pad=16; ctx.drawImage(q,qx+pad,qy+pad,Q-pad*2,Q-pad*2);
+      ctx.fillStyle='#FFD700'; ctx.textAlign='center'; ctx.font="800 30px 'Baloo 2'";
+      ctx.fillText('📱 Scanne pour jouer à CaillouDEX !',W/2,qy+Q+48);
+      res();
+    };
+    q.onerror=()=>{ // hors-ligne / bloqué : pas de QR orphelin, on remet un pied de page simple
+      ctx.fillStyle='rgba(255,255,255,0.55)'; ctx.textAlign='center'; ctx.font="700 32px 'Baloo 2'";
+      ctx.fillText('CaillouDEX — scanne le tien !',W/2,qy+Q/2+30);
+      res();
+    };
+    q.src='https://api.qrserver.com/v1/create-qr-code/?size=320x320&margin=0&data='+encodeURIComponent(appUrl);
+  });
   return new Promise(r=>canvas.toBlob(r,'image/png'));
 }
 function roundedRect(ctx,x,y,w,h,r){
@@ -2959,15 +2979,22 @@ function roundedRect(ctx,x,y,w,h,r){
   ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r);
   ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath();
 }
-function wrapText(ctx,text,x,y,maxW,lh){
+function wrapText(ctx,text,x,y,maxW,lh,maxLines){
   const words=text.split(' '); let line='', lines=[];
   for(const w of words){
     const t=line+w+' ';
     if(ctx.measureText(t).width>maxW && line){ lines.push(line); line=w+' '; } else line=t;
   }
   lines.push(line);
+  if(maxLines && lines.length>maxLines){
+    lines=lines.slice(0,maxLines);
+    let last=lines[maxLines-1].trim();
+    while(last.length>1 && ctx.measureText(last+'…').width>maxW) last=last.slice(0,-1);
+    lines[maxLines-1]=last+'…';
+  }
   ctx.textAlign='center';
   lines.forEach((l,i)=>ctx.fillText(l.trim(),x,y+i*lh));
+  return lines.length;
 }
 async function shareRock(rock){
   showToast('Génération du visuel…');
