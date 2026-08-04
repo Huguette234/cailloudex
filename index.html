@@ -192,6 +192,22 @@ main{flex:1;padding:6px 16px 10px;position:relative;animation:screenFadeIn .32s 
 .scan-wrap{display:flex;flex-direction:column;align-items:center;padding:30px 0;}
 .bounce{animation:bounce 1s ease-in-out infinite;}
 @keyframes bounce{0%,100%{transform:translateY(0);}50%{transform:translateY(-16px);}}
+/* Écran de chargement animé */
+.load-wrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:24px;position:relative;overflow:hidden;}
+.load-glow{position:absolute;width:300px;height:300px;border-radius:50%;background:radial-gradient(circle,rgba(239,198,78,.24),transparent 70%);filter:blur(10px);animation:loadGlow 3s ease-in-out infinite;pointer-events:none;}
+@keyframes loadGlow{0%,100%{transform:scale(.9);opacity:.55;}50%{transform:scale(1.18);opacity:1;}}
+.load-rock-wrap{position:relative;margin:30px 0 4px;display:flex;flex-direction:column;align-items:center;z-index:1;}
+.load-rock{animation:loadBounce 1s cubic-bezier(.5,.05,.5,.95) infinite;transform-origin:center bottom;}
+.load-rock .mascot{width:98px;height:auto;filter:drop-shadow(0 6px 10px rgba(120,90,40,.25));}
+@keyframes loadBounce{0%{transform:translateY(0) scale(1.12,.88);}20%{transform:translateY(-14px) scale(.96,1.06);}48%{transform:translateY(-48px) scale(.94,1.08) rotate(9deg);}56%{transform:translateY(-48px) scale(.94,1.08) rotate(-9deg);}82%{transform:translateY(0) scale(1.12,.88);}100%{transform:translateY(0) scale(1.12,.88);}}
+.load-shadow{width:74px;height:13px;border-radius:50%;background:rgba(120,90,40,.3);filter:blur(3px);margin-top:8px;animation:loadShadow 1s cubic-bezier(.5,.05,.5,.95) infinite;}
+@keyframes loadShadow{0%,100%{transform:scale(1);opacity:.5;}52%{transform:scale(.48);opacity:.18;}}
+.load-msg{font-family:'Baloo 2',sans-serif;font-weight:800;font-size:15px;color:rgba(44,42,46,.6);margin-top:22px;transition:opacity .2s ease;min-height:20px;text-align:center;z-index:1;}
+.load-dots{display:flex;gap:7px;margin-top:14px;z-index:1;}
+.load-dots span{width:9px;height:9px;border-radius:50%;background:#C99A22;animation:loadDot 1.2s ease-in-out infinite;}
+.load-dots span:nth-child(2){animation-delay:.18s;}
+.load-dots span:nth-child(3){animation-delay:.36s;}
+@keyframes loadDot{0%,100%{transform:translateY(0);opacity:.35;}50%{transform:translateY(-8px);opacity:1;}}
 .scan-text{font-family:'Baloo 2',sans-serif;font-weight:800;color:var(--txt);margin-top:16px;font-size:16px;}
 .scan-sub{font-family:'Nunito',sans-serif;font-size:12px;color:rgba(44,42,46,.55);margin-top:6px;text-align:center;min-height:20px;}
 
@@ -1629,6 +1645,25 @@ const CHALLENGE_TYPES = [
   { id:'any',    icon:'🪨', label:'Chasse Libre',     desc:'Scan n\'importe quel caillou',    bonus:'+25 XP · +20 🪙' },
 ];
 
+const LOAD_MSGS = [
+  'Réveil des cailloux…',
+  'Polissage des pépites…',
+  'Réunion secrète des cailloux…',
+  'Comptage des gravillons…',
+  'Dépoussiérage du Dex…',
+  'Échauffement de la mascotte…',
+  'Chargement de la géologie…',
+];
+let _loadMsgTimer=null, _loadMsgIdx=0;
+function startLoadMsgRotation(){
+  if(_loadMsgTimer) return;
+  _loadMsgTimer=setInterval(()=>{
+    if(typeof screen==='undefined'||screen!=='loading'){ clearInterval(_loadMsgTimer); _loadMsgTimer=null; return; }
+    _loadMsgIdx=(_loadMsgIdx+1)%LOAD_MSGS.length;
+    const el=document.getElementById('loadMsg');
+    if(el){ el.style.opacity='0'; setTimeout(()=>{ el.textContent=LOAD_MSGS[_loadMsgIdx]; el.style.opacity='1'; },200); }
+  },1600);
+}
 const SCAN_MESSAGES = [
   'Interrogatoire du caillou en cours…',
   'Analyse spectrale minérale…',
@@ -6977,7 +7012,18 @@ function render(){
   let showNav=false;
 
   if(screen==='loading'){
-    app.innerHTML=`<main style="flex:1;display:flex;align-items:center;justify-content:center;min-height:100vh;"><div style="font-family:'Baloo 2',sans-serif;font-weight:700;color:rgba(44,42,46,.45);">Chargement...</div></main>`;
+    app.innerHTML=`<main class="load-wrap">
+      <div class="load-glow"></div>
+      <div class="hero-top" style="font-size:12px;">LES CAILLOUX DES</div>
+      <div class="hero-main" style="font-size:34px;">Z'HOMMES</div>
+      <div class="load-rock-wrap">
+        <div class="load-rock">${mascotSvg('happy')}</div>
+        <div class="load-shadow"></div>
+      </div>
+      <div class="load-msg" id="loadMsg">${LOAD_MSGS[_loadMsgIdx]||LOAD_MSGS[0]}</div>
+      <div class="load-dots"><span></span><span></span><span></span></div>
+    </main>`;
+    startLoadMsgRotation();
     return;
   }
   if(screen==='login'){
