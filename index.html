@@ -203,6 +203,9 @@ main{flex:1;padding:6px 16px 10px;position:relative;animation:screenFadeIn .32s 
 .load-shadow{width:74px;height:13px;border-radius:50%;background:rgba(120,90,40,.3);filter:blur(3px);margin-top:8px;animation:loadShadow 1s cubic-bezier(.5,.05,.5,.95) infinite;}
 @keyframes loadShadow{0%,100%{transform:scale(1);opacity:.5;}52%{transform:scale(.48);opacity:.18;}}
 .load-msg{font-family:'Baloo 2',sans-serif;font-weight:800;font-size:15px;color:rgba(44,42,46,.6);margin-top:22px;transition:opacity .2s ease;min-height:20px;text-align:center;z-index:1;}
+.load-bar{width:190px;max-width:62%;height:8px;border-radius:999px;background:rgba(120,90,40,.16);overflow:hidden;margin-top:18px;z-index:1;box-shadow:inset 0 1px 2px rgba(0,0,0,.1);}
+.load-bar-fill{height:100%;width:6%;border-radius:999px;background:linear-gradient(90deg,#EFC64E,#C99A22);box-shadow:0 0 8px rgba(200,150,30,.55);animation:loadBar 3.4s cubic-bezier(.25,.8,.35,1) forwards;}
+@keyframes loadBar{0%{width:6%;}25%{width:42%;}55%{width:70%;}80%{width:86%;}100%{width:94%;}}
 .load-dots{display:flex;gap:7px;margin-top:14px;z-index:1;}
 .load-dots span{width:9px;height:9px;border-radius:50%;background:#C99A22;animation:loadDot 1.2s ease-in-out infinite;}
 .load-dots span:nth-child(2){animation-delay:.18s;}
@@ -7012,18 +7015,22 @@ function render(){
   let showNav=false;
 
   if(screen==='loading'){
-    app.innerHTML=`<main class="load-wrap">
-      <div class="load-glow"></div>
-      <div class="hero-top" style="font-size:12px;">LES CAILLOUX DES</div>
-      <div class="hero-main" style="font-size:34px;">Z'HOMMES</div>
-      <div class="load-rock-wrap">
-        <div class="load-rock">${mascotSvg('happy')}</div>
-        <div class="load-shadow"></div>
-      </div>
-      <div class="load-msg" id="loadMsg">${LOAD_MSGS[_loadMsgIdx]||LOAD_MSGS[0]}</div>
-      <div class="load-dots"><span></span><span></span><span></span></div>
-    </main>`;
-    startLoadMsgRotation();
+    // On ne reconstruit PAS l'écran s'il est déjà là (sinon la barre/anim repartent de zéro)
+    if(!document.querySelector('.load-wrap')){
+      app.innerHTML=`<main class="load-wrap">
+        <div class="load-glow"></div>
+        <div class="hero-top" style="font-size:12px;">LES CAILLOUX DES</div>
+        <div class="hero-main" style="font-size:34px;">Z'HOMMES</div>
+        <div class="load-rock-wrap">
+          <div class="load-rock">${mascotSvg('happy')}</div>
+          <div class="load-shadow"></div>
+        </div>
+        <div class="load-msg" id="loadMsg">${LOAD_MSGS[_loadMsgIdx]||LOAD_MSGS[0]}</div>
+        <div class="load-bar"><div class="load-bar-fill"></div></div>
+        <div class="load-dots"><span></span><span></span><span></span></div>
+      </main>`;
+      startLoadMsgRotation();
+    }
     return;
   }
   if(screen==='login'){
