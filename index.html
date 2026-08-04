@@ -1455,6 +1455,7 @@ nav{display:flex;gap:8px;padding:10px 14px max(14px,env(safe-area-inset-bottom))
 .map-pop{display:flex;gap:9px;align-items:center;font-family:'Nunito',sans-serif;font-size:12px;color:#2C2A2E;min-width:150px;}
 .map-pop img{width:48px;height:48px;border-radius:10px;object-fit:cover;flex-shrink:0;}
 .map-pop b{font-family:'Baloo 2',sans-serif;font-size:13px;}
+.map-pop-cta{display:inline-block;margin-top:3px;font-family:'Baloo 2',sans-serif;font-weight:800;font-size:11px;color:#8020C0;}
 </style>
 </head>
 <body>
@@ -3392,7 +3393,7 @@ async function openMap(){
     const inner=head?`<img src="${head}" alt="">`:`<span>${r.emoji||'🪨'}</span>`;
     const icon=L.divIcon({className:'map-pin-wrap',html:`<div class="map-pin" style="--rc:${hex}">${inner}</div><b class="map-pin-rar" style="background:${hex}">${r.rarityLabel||''}</b>`,iconSize:[56,66],iconAnchor:[28,60],popupAnchor:[0,-56]});
     const m=L.marker([lat,lng],{icon}).addTo(map);
-    m.bindPopup(`<div class="map-pop">${head?`<img src="${head}">`:''}<div><b>${r.name||'Caillou'}</b><br><span style="color:${hex};font-weight:800">${r.rarityLabel||''}</span>${r.typeLabel?' · '+r.typeLabel:''}<br><small>📍 ${locName(r.location)}${approx?' (approx.)':''}</small></div></div>`);
+    m.bindPopup(`<div class="map-pop" onclick="mapOpenRock('${r.id}')" style="cursor:pointer;">${head?`<img src="${head}">`:''}<div><b>${r.name||'Caillou'}</b><br><span style="color:${hex};font-weight:800">${r.rarityLabel||''}</span>${r.typeLabel?' · '+r.typeLabel:''}<br><small>📍 ${locName(r.location)}${approx?' (approx.)':''}</small><br><span class="map-pop-cta">👆 Voir la fiche</span></div></div>`);
     bounds.push([lat,lng]);
   });
   try{ map.fitBounds(bounds,{padding:[44,44],maxZoom:13}); }catch(e){ map.setView(bounds[0],12); }
@@ -3401,6 +3402,14 @@ async function openMap(){
   foot.textContent=`${pts.length} caillou${pts.length>1?'x':''} sur la carte`+(nApprox?` · ${nApprox} placé${nApprox>1?'s':''} par ville`:'');
 }
 function closeMap(){ if(_mapInstance){ try{_mapInstance.remove();}catch(e){} _mapInstance=null; } const o=document.getElementById('mapOverlay'); if(o) o.remove(); }
+// Depuis la carte : touche la pop-up d'un caillou -> ferme la carte et ouvre sa fiche
+function mapOpenRock(id){
+  const rock=dex.find(r=>String(r.id)===String(id));
+  if(!rock){ showToast('❌ Caillou introuvable'); return; }
+  closeMap();
+  detailRock=rock; upgradeAlloc=null;
+  render();
+}
 
 /* ===== RÉGIONS / EXPÉDITIONS (couche d'exploration) =====
    Une région active rend son type plus fréquent à la capture. La conquérir
