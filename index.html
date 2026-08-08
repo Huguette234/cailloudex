@@ -4509,44 +4509,51 @@ function adminSubmitPw(){
   else { showToast('❌ Mot de passe incorrect.'); return; }
   render(); setAdminTab(adminTabId);
 }
-function setAdminTab(id){ adminTabId=id; render();
+// Met à jour UNIQUEMENT le contenu de l'onglet admin (pas de render global -> plus de saccade)
+function updateAdminBody(){
+  const body=document.querySelector('.admin-body');
+  if(!body){ render(); return; }
+  body.innerHTML=adminTabContent();
+  document.querySelectorAll('.admin-tab').forEach(b=>b.classList.toggle('active', b.dataset.tab===adminTabId));
+}
+function setAdminTab(id){ adminTabId=id; updateAdminBody();
   if(id==='stats'&&!adminStats) adminLoadStats();
   else if(id==='mod'&&!adminReports) adminLoadReports();
   else if(id==='logs'&&!adminErrors) adminLoadErrors();
 }
 async function adminLoadStats(){
-  adminStats={loading:true}; render(); const out={};
+  adminStats={loading:true}; updateAdminBody(); const out={};
   try{ const r=await sb.from('player_meta').select('user_id',{count:'exact',head:true}); out.players=(r.error?'?':r.count)||0; }catch(e){ out.players='?'; }
   try{ const r=await sb.from('rocks').select('id',{count:'exact',head:true}); out.rocks=(r.error?'?':r.count)||0; }catch(e){ out.rocks='?'; }
   try{ const {data}=await sb.from('scan_log').select('count').eq('scan_date',todayStr()); out.scans=(data||[]).reduce((s,x)=>s+(x.count||0),0); }catch(e){ out.scans='?'; }
   try{ const {data}=await sb.from('player_meta').select('username,wins,losses,xp').order('wins',{ascending:false}).limit(10); out.top=data||[]; }catch(e){ out.top=[]; }
-  adminStats=out; render();
+  adminStats=out; updateAdminBody();
 }
-async function adminLoadReports(){ adminReports={loading:true}; render();
+async function adminLoadReports(){ adminReports={loading:true}; updateAdminBody();
   try{ const {data,error}=await sb.from('reports').select('*').order('created_at',{ascending:false}).limit(100); if(error) throw error; adminReports={list:data||[]}; }
-  catch(e){ adminReports={error:String(e?.message||e)}; } render();
+  catch(e){ adminReports={error:String(e?.message||e)}; } updateAdminBody();
 }
-async function adminLoadErrors(){ adminErrors={loading:true}; render();
+async function adminLoadErrors(){ adminErrors={loading:true}; updateAdminBody();
   try{ const {data,error}=await sb.from('app_errors').select('*').order('created_at',{ascending:false}).limit(50); if(error) throw error; adminErrors={list:data||[]}; }
-  catch(e){ adminErrors={error:String(e?.message||e)}; } render();
+  catch(e){ adminErrors={error:String(e?.message||e)}; } updateAdminBody();
 }
 async function adminSearchPlayer(q){
   q=(q!==undefined?q:((document.getElementById('adminSearchInput')||{}).value||'')).trim();
-  if(!q) return; adminLastQuery=q; adminSearchResult={loading:true}; render();
+  if(!q) return; adminLastQuery=q; adminSearchResult={loading:true}; updateAdminBody();
   try{
     const {data:profs}=await sb.from('profiles').select('user_id,username').ilike('username',q).limit(1);
-    const prof=profs&&profs[0]; if(!prof){ adminSearchResult={notfound:q}; render(); return; }
+    const prof=profs&&profs[0]; if(!prof){ adminSearchResult={notfound:q}; updateAdminBody(); return; }
     const {data:m}=await sb.from('player_meta').select('*').eq('user_id',prof.user_id).maybeSingle();
     const rc=await sb.from('rocks').select('id',{count:'exact',head:true}).eq('user_id',prof.user_id);
     adminSearchResult={uid:prof.user_id, username:prof.username, meta:m||{}, rockCount:rc.count||0};
   }catch(e){ adminSearchResult={error:String(e?.message||e)}; }
-  render();
+  updateAdminBody();
 }
 async function adminGive(field,amt){
   const r=adminSearchResult; if(!r||!r.uid) return;
   const cur=(r.meta&&r.meta[field])||0;
   try{ const {error}=await sb.from('player_meta').update({[field]:cur+amt}).eq('user_id',r.uid); if(error) throw error;
-    showToast(`✅ +${amt} ${field} → @${r.username}`); adminSearchResult.meta[field]=cur+amt; render();
+    showToast(`✅ +${amt} ${field} → @${r.username}`); adminSearchResult.meta[field]=cur+amt; updateAdminBody();
   }catch(e){ showToast('❌ '+(e?.message||e)+' — SQL admin activé ?'); }
 }
 async function adminResetPlayer(uid,username){
@@ -4567,7 +4574,7 @@ async function adminDeletePlayer(uid,username,then){
     try{ await sb.from('profiles').delete().eq('user_id',uid); }catch(e){}
     const {error}=await sb.from('player_meta').delete().eq('user_id',uid); if(error) throw error;
     showToast('🗑️ Données de @'+username+' supprimées.');
-    adminSearchResult=null;
+    adminSearchResult=null; updateAdminBody();
     if(typeof then==='function') then();
   }catch(e){ showToast('❌ '+(e?.message||e)+' — SQL admin activé ?'); }
 }
