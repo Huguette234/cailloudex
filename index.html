@@ -731,9 +731,13 @@ nav{display:flex;gap:8px;padding:10px 14px max(14px,env(safe-area-inset-bottom))
 .regions-title{font-family:'Playfair Display',Georgia,serif;font-size:24px;color:var(--accent);text-align:center;margin-bottom:6px;}
 .regions-sub{font-family:'Nunito',sans-serif;font-size:12.5px;color:rgba(44,42,46,.6);text-align:center;line-height:1.5;margin:0 auto 16px;max-width:440px;}
 .regions-grid{display:flex;flex-direction:column;gap:11px;margin-bottom:14px;}
-.region-card{display:flex;align-items:center;gap:12px;padding:12px 13px;border-radius:16px;cursor:pointer;
+.region-card{display:block;padding:12px 13px;border-radius:16px;cursor:pointer;
   background:linear-gradient(160deg,rgba(255,255,255,.85),rgba(255,255,255,.66));border:1.5px solid rgba(44,42,46,.12);
   box-shadow:0 4px 12px rgba(0,0,0,.1);transition:transform .12s,border-color .15s,box-shadow .15s;}
+.region-main{display:flex;align-items:center;gap:12px;}
+.region-find{display:none;margin-top:11px;padding-top:10px;border-top:1px dashed rgba(44,42,46,.18);
+  font-family:'Nunito',sans-serif;font-size:12.5px;line-height:1.4;color:rgba(44,42,46,.72);}
+.region-card.active .region-find{display:block;animation:fadeup .25s ease;}
 .region-card:active{transform:scale(.99);}
 .region-card.active{border-color:var(--rc);box-shadow:0 6px 18px color-mix(in srgb,var(--rc) 35%,transparent);background:linear-gradient(160deg,color-mix(in srgb,var(--rc) 14%,#fff),color-mix(in srgb,var(--rc) 6%,#fff));}
 .region-card.done{border-color:rgba(200,150,30,.5);}
@@ -3443,12 +3447,12 @@ function mapOpenRock(id){
    (REGION_TARGET captures) récompense gemmes + un Caillou Sacré (= le légendaire
    de la zone, prochaine capture légendaire garantie). Progression en local. */
 const REGIONS=[
-  { key:'volcan',  name:'Volcan Ardent',     emoji:'🌋', type:'feu',     desc:'Une terre de lave où naissent les cailloux de Feu.' },
-  { key:'toundra', name:'Toundra Gelée',     emoji:'❄️', type:'glace',   desc:'Un désert de glace balayé par le blizzard éternel.' },
-  { key:'foret',   name:'Forêt Ancestrale',  emoji:'🌲', type:'nature',  desc:'Une jungle luxuriante grouillante de vie minérale.' },
-  { key:'mine',    name:'Mine Abandonnée',   emoji:'⛏️', type:'metal',   desc:'Des galeries profondes gorgées de minerais précieux.' },
-  { key:'caverne', name:'Caverne Obscure',   emoji:'🕳️', type:'ombre',   desc:'Des ténèbres d\'où surgissent les cailloux d\'Ombre.' },
-  { key:'oasis',   name:'Oasis de Lumière',  emoji:'🏝️', type:'lumiere', desc:'Un havre éclatant baigné d\'une lumière dorée.' },
+  { key:'volcan',  name:'Volcan Ardent',     emoji:'🌋', type:'feu',     desc:'Une terre de lave où naissent les cailloux de Feu.',     find:'des cailloux rougeâtres, orangés, rouille ou aux reflets chauds.' },
+  { key:'toundra', name:'Toundra Gelée',     emoji:'❄️', type:'glace',   desc:'Un désert de glace balayé par le blizzard éternel.',     find:'des cailloux clairs, blancs, gris pâle, translucides ou cristallins.' },
+  { key:'foret',   name:'Forêt Ancestrale',  emoji:'🌲', type:'nature',  desc:'Une jungle luxuriante grouillante de vie minérale.',      find:'des cailloux verts, mousseux, terreux ou brun-vert.' },
+  { key:'mine',    name:'Mine Abandonnée',   emoji:'⛏️', type:'metal',   desc:'Des galeries profondes gorgées de minerais précieux.',    find:'des cailloux gris foncé, brillants, ou à l\'aspect métallique.' },
+  { key:'caverne', name:'Caverne Obscure',   emoji:'🕳️', type:'ombre',   desc:'Des ténèbres d\'où surgissent les cailloux d\'Ombre.',     find:'des cailloux noirs ou très sombres.' },
+  { key:'oasis',   name:'Oasis de Lumière',  emoji:'🏝️', type:'lumiere', desc:'Un havre éclatant baigné d\'une lumière dorée.',          find:'des cailloux clairs et brillants, dorés, beiges ou lumineux.' },
 ];
 const REGION_TARGET=8;
 let regionState=null;
@@ -3502,14 +3506,17 @@ function regionsScreen(){
         const active=st.active===r.key;
         const pct=Math.round(prog/REGION_TARGET*100);
         return `<div class="region-card${active?' active':''}${done?' done':''}" data-action="selectRegion" data-key="${r.key}" style="--rc:${t.color||'#9E9E9E'};">
-          <div class="region-emoji">${r.emoji}</div>
-          <div class="region-body">
-            <div class="region-name">${r.name} ${done?'<span class="region-medal">👑</span>':''}</div>
-            <div class="region-type" style="color:${t.color||'#777'};">Objectif : ${REGION_TARGET} × ${t.label||''}</div>
-            <div class="region-bar"><div class="region-bar-fill" style="width:${pct}%;background:${t.color||'#9E9E9E'};"></div></div>
-            <div class="region-prog">${done?'✅ Conquise':`${prog}/${REGION_TARGET} du bon type`}</div>
+          <div class="region-main">
+            <div class="region-emoji">${r.emoji}</div>
+            <div class="region-body">
+              <div class="region-name">${r.name} ${done?'<span class="region-medal">👑</span>':''}</div>
+              <div class="region-type" style="color:${t.color||'#777'};">Objectif : ${REGION_TARGET} × ${t.label||''}</div>
+              <div class="region-bar"><div class="region-bar-fill" style="width:${pct}%;background:${t.color||'#9E9E9E'};"></div></div>
+              <div class="region-prog">${done?'✅ Conquise':`${prog}/${REGION_TARGET} du bon type`}</div>
+            </div>
+            <div class="region-cta">${active?'⏹ Active':done?'↻ Relancer':'▶ Explorer'}</div>
           </div>
-          <div class="region-cta">${active?'⏹ Active':done?'↻ Relancer':'▶ Explorer'}</div>
+          <div class="region-find">🔎 À chercher : ${r.find||'des cailloux de ce type.'}</div>
         </div>`;
       }).join('')}
     </div>
