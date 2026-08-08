@@ -7096,7 +7096,7 @@ function render(){
     app.innerHTML=`<main style="flex:1;overflow-y:auto;padding:16px;">${usernameScreen()}</main>`;
   } else if(screen==='admin'){
     showHeader=false;
-    app.innerHTML=`<main style="flex:1;overflow-y:auto;padding:14px;">${adminScreen()}</main>`;
+    app.innerHTML=`<main style="flex:1;overflow-y:auto;padding:14px;min-height:100vh;background:linear-gradient(180deg,#0D1B2A,#132840);">${adminScreen()}</main>`;
   } else {
     if(screen==='scanner'){ mainHtml=scannerScreen(); showNav=true; }
     else if(screen==='scanning'){ mainHtml=scanningScreen(); }
