@@ -4357,7 +4357,8 @@ function typeTextCol(hex){
 }
 /* ===== FAVORIS + RECHERCHE/TRI DU DEX ===== */
 let favSet=null;
-let dexQuery='', dexSort='recent', dexFavOnly=false;
+let dexQuery='', dexSort='recent', dexFavOnly=false, dexSortActive=false;
+const DEX_SORT_LABELS={recent:'🕒 Récents',power:'💪 Puissance',rarity:'💎 Rareté',name:'🔤 Nom'};
 function loadFavs(){ if(favSet) return favSet; try{ favSet=new Set(JSON.parse(localStorage.getItem('cdx_favs')||'[]')); }catch(e){ favSet=new Set(); } return favSet; }
 function isFav(id){ return loadFavs().has(String(id)); }
 function toggleFav(id){ const s=loadFavs(); id=String(id); if(s.has(id)) s.delete(id); else s.add(id); try{ localStorage.setItem('cdx_favs',JSON.stringify([...s])); }catch(e){} }
@@ -4376,7 +4377,7 @@ function dexControlsHtml(){
   return `<div class="dex-controls">
     <input class="dex-search" id="dexSearch" type="text" placeholder="🔎 Rechercher un caillou..." value="${(dexQuery||'').replace(/"/g,'&quot;')}" oninput="dexQuery=this.value; updateDexResults();" autocomplete="off">
     <div class="dex-ctrl-row">
-      <select class="dex-sort" onchange="dexSort=this.value; updateDexResults();">
+      <select class="dex-sort" onchange="dexSort=this.value; dexSortActive=true; updateDexResults();">
         <option value="recent"${dexSort==='recent'?' selected':''}>🕒 Récents</option>
         <option value="power"${dexSort==='power'?' selected':''}>💪 Puissance</option>
         <option value="rarity"${dexSort==='rarity'?' selected':''}>💎 Rareté</option>
@@ -4403,11 +4404,13 @@ function dexTypeMenuHtml(){
 }
 function dexResultsHtml(){
   const q=(dexQuery||'').trim().toLowerCase();
-  if(q||dexFavOnly){
+  if(q||dexFavOnly||dexSortActive){
     let list=dex.filter(r=> (!dexFavOnly||isFav(r.id)) && (!q || (r.name||'').toLowerCase().includes(q) || (r.typeLabel||'').toLowerCase().includes(q) || (r.rarityLabel||'').toLowerCase().includes(q)));
     list=sortDex(list);
-    if(!list.length) return `<p style="text-align:center;font-family:'Nunito',sans-serif;font-size:13px;color:rgba(44,42,46,.5);margin-top:26px;">${dexFavOnly&&!q?'Aucun favori — touche l\'étoile ☆ d\'un caillou pour l\'ajouter !':'Aucun caillou ne correspond à ta recherche.'}</p>`;
-    return `<div style="font-family:'Baloo 2',sans-serif;font-weight:700;font-size:11px;color:rgba(44,42,46,.46);text-align:center;margin:2px 0 10px;">${list.length} résultat${list.length>1?'s':''}</div><div class="dexgrid2">${list.map(dexCard).join('')}</div>`;
+    const back=`<div class="dex-back" data-action="dexTypes">← Voir par type</div>`;
+    if(!list.length) return back+`<p style="text-align:center;font-family:'Nunito',sans-serif;font-size:13px;color:rgba(44,42,46,.5);margin-top:26px;">${dexFavOnly&&!q?'Aucun favori — touche l\'étoile ☆ d\'un caillou pour l\'ajouter !':'Aucun caillou ne correspond à ta recherche.'}</p>`;
+    const label=(dexFavOnly?'⭐ Favoris':'Tri')+' · '+(DEX_SORT_LABELS[dexSort]||'');
+    return back+`<div style="font-family:'Baloo 2',sans-serif;font-weight:700;font-size:11px;color:rgba(44,42,46,.46);text-align:center;margin:2px 0 10px;">${list.length} caillou${list.length>1?'x':''} · ${label}</div><div class="dexgrid2">${list.map(dexCard).join('')}</div>`;
   }
   return dexTypeMenuHtml();
 }
@@ -4418,7 +4421,7 @@ function dexScreen(){
   // NIVEAU 2 — cartes d'un type choisi
   if(dexType){
     const t=ROCK_TYPES.find(x=>x.key===dexType)||{label:'❔ AUTRES',color:'#9E9E9E'};
-    const rocks=dex.filter(r=>(r.rockType||'neutre')===dexType).slice().reverse();
+    const rocks=sortDex(dex.filter(r=>(r.rockType||'neutre')===dexType));
     return `<div>
       <div class="dex-back" data-action="dexBack">← Tous les types</div>
       <div class="dex-type-head" style="color:${typeTextCol(t.color)};border-color:${t.color}55;"><span>${t.label}</span><span class="dex-type-count">${rocks.length}</span></div>
@@ -7845,7 +7848,7 @@ document.addEventListener('click',(e)=>{
     // Quitter la navigation normale annule une éventuelle partie d'arène/boss en cours
     if(t.dataset.screen!=='combat-pick'){ arenaRun=null; arenaPicking=false; bossRun=false; bossPicking=false; tournoyRun=null; tournoyPicking=false; }
     screen=t.dataset.screen; detailRock=null;
-    if(screen==='dex'){ dexType=null; dexQuery=''; dexFavOnly=false; } // on entre par le menu des types
+    if(screen==='dex'){ dexType=null; dexQuery=''; dexFavOnly=false; dexSortActive=false; } // on entre par le menu des types
     render();
     if(screen==='friends'){ Promise.all([loadFriendsList(),loadGifts(),checkPendingChallenge()]).then(()=>{ if(screen==='friends') render(); }); }
     // Accueil : on ne reconstruit la page QUE si un défi est réellement arrivé/parti
@@ -7861,6 +7864,7 @@ document.addEventListener('click',(e)=>{
   else if(action==='closeMap'){ closeMap(); }
   else if(action==='dexType'){ dexType=t.dataset.type; render(); }
   else if(action==='dexBack'){ dexType=null; render(); }
+  else if(action==='dexTypes'){ dexSortActive=false; dexQuery=''; dexFavOnly=false; render(); }
   else if(action==='toggleFav'){
     const fid=t.dataset.id;
     toggleFav(fid);
