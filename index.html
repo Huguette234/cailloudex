@@ -7710,14 +7710,30 @@ function buildCharacterPrompt(rock){
     'a single glowing gem embedded in its forehead','a stony beard of hanging pebbles','asymmetrical mismatched arms',
     'thick armored stone plates like a shell','glowing eyes of different sizes','little cracks leaking wisps of energy',
   ];
-  const shape=pick(BODY_SHAPES);
-  const feature=pick(FEATURES);
+  // Les types GENTILS (héros) piochent dans des formes rondes et des détails mignons
+  const HERO_SHAPES=[
+    'a round smooth friendly river-pebble body','a soft rounded plump boulder body','a cute chubby little pebble body',
+    'a smooth polished rounded gemstone body','a wide cuddly round boulder body','a small round pebble body with a big cute head',
+    'a rounded mossy boulder body','a gently rounded smooth stone body',
+  ];
+  const HERO_FEATURES=[
+    'a little sprout of fresh green leaves on its head','a small friendly flower blooming on top of its head',
+    'soft glowing sparkles floating gently around it','a small round glowing gem on its chest like a friendly badge',
+    'tiny cute stubby little wings','a fluffy patch of soft green moss like cozy hair',
+    'big round rosy cheeks','a couple of tiny twinkling star sparkles hovering above it','little smooth rounded pebble ears',
+    'a tiny songbird or ladybug resting happily on its shoulder',
+  ];
+  const heroType=HEROES.includes(type);
+  const shape=heroType?pick(HERO_SHAPES):pick(BODY_SHAPES);
+  const feature=heroType?pick(HERO_FEATURES):pick(FEATURES);
   const face=VILLAINS.includes(type)?'a sinister menacing grin and glowing evil eyes'
-    :HEROES.includes(type)?'big expressive eyes and a bold confident smile'
+    :heroType?'big warm sparkling friendly eyes and a gentle happy smile, a soft kind wholesome expression'
     :'sharp determined eyes and a fierce expression';
-  const mood=VILLAINS.includes(type)?'a menacing villainous':HEROES.includes(type)?'a heroic':'a fierce brave';
-  const base=`${mood} one-of-a-kind rock-type creature monster named ${name}, with ${shape}, ${face} on its carved stone face, ${feature}, with expressive stubby stone limbs, brimming with personality`;
-  return `${base}, ${pose}, ${sizeDesc}, ${rarityDesc}, the stone body is ${typeStyle}, ${atkDesc}, ${defDesc}, ${vitDesc}, ${personality}, it is unmistakably a solid living creature made entirely of stone with rough grainy mineral texture and cracks, an expressive rock-type creature-collector monster in the style of an official Pokemon-style creature, each one with a distinct silhouette and unique design, captured mid-action in a dynamic energetic pose (absolutely NOT standing still, NOT facing the camera straight, NOT a stiff symmetrical portrait), dynamic composition with the creature's full body fully visible and its size clearly readable (respect the described scale — small creatures look genuinely small, large creatures look genuinely huge), set against a ${bg} background, epic cinematic dramatic lighting, glowing energy effects and motion, highly detailed vibrant creature illustration, official monster-taming trading card game artwork style, it is NOT a human, NOT wearing a costume or armor suit, NOT an animal — it is a living rock creature`;
+  const mood=VILLAINS.includes(type)?'a menacing villainous':heroType?'an adorable friendly good-hearted gentle':'a fierce brave';
+  const kind=heroType?', radiating warmth and kindness, wholesome cute lovable and approachable, absolutely NOT scary, NOT menacing, NOT aggressive, NOT evil':'';
+  const base=`${mood} one-of-a-kind rock-type creature monster named ${name}, with ${shape}, ${face} on its carved stone face, ${feature}, with expressive stubby stone limbs, brimming with personality${kind}`;
+  const lighting=heroType?'warm soft cheerful bright and inviting lighting':'epic cinematic dramatic lighting';
+  return `${base}, ${pose}, ${sizeDesc}, ${rarityDesc}, the stone body is ${typeStyle}, ${atkDesc}, ${defDesc}, ${vitDesc}, ${personality}, it is unmistakably a solid living creature made entirely of stone with rough grainy mineral texture and cracks, an expressive rock-type creature-collector monster in the style of an official Pokemon-style creature, each one with a distinct silhouette and unique design, captured mid-action in a dynamic energetic pose (absolutely NOT standing still, NOT facing the camera straight, NOT a stiff symmetrical portrait), dynamic composition with the creature's full body fully visible and its size clearly readable (respect the described scale — small creatures look genuinely small, large creatures look genuinely huge), set against a ${bg} background, ${lighting}, glowing energy effects and motion, highly detailed vibrant creature illustration, official monster-taming trading card game artwork style, it is NOT a human, NOT wearing a costume or armor suit, NOT an animal — it is a living rock creature`;
 }
 
 function stopCharGenTimer(){
