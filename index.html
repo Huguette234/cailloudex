@@ -946,18 +946,28 @@ nav{display:flex;gap:8px;padding:10px 14px max(14px,env(safe-area-inset-bottom))
 .combatant-visual{width:104px;height:104px;object-fit:contain;filter:drop-shadow(0 8px 10px rgba(0,0,0,.4));}
 .combatant-visual.char-photo{filter:drop-shadow(0 6px 14px rgba(0,0,0,.7));}
 .arena2-emoji-badge{width:92px;height:92px;border-radius:50%;background:radial-gradient(circle at 35% 30%,rgba(255,255,255,.14),transparent 60%),linear-gradient(135deg,#1E3A5A,#2D0A4E);display:flex;align-items:center;justify-content:center;font-size:46px;box-shadow:0 8px 14px rgba(0,0,0,.4);}
-@keyframes spriteIdleBot{0%,100%{transform:translateY(0) rotate(-2deg);}50%{transform:translateY(6px) rotate(2deg);}}
-@keyframes spriteIdlePlayer{0%,100%{transform:translateY(0) rotate(2deg);}50%{transform:translateY(-6px) rotate(-2deg);}}
-.bot-zone .combatant-visual.sprite-idle,.bot-zone .arena2-emoji-badge.sprite-idle{animation:spriteIdleBot 2.6s ease-in-out infinite;}
-.player-zone .combatant-visual.sprite-idle,.player-zone .arena2-emoji-badge.sprite-idle{animation:spriteIdlePlayer 2.6s ease-in-out infinite;}
+@keyframes spriteIdleBot{
+  0%,100%{transform:translate(0,0) rotate(-2deg) scale(1,1);}
+  25%{transform:translate(-4px,2px) rotate(1deg) scale(1.015,.985);}
+  50%{transform:translate(0,6px) rotate(2deg) scale(.985,1.015);}
+  75%{transform:translate(4px,2px) rotate(-1deg) scale(1.015,.985);}
+}
+@keyframes spriteIdlePlayer{
+  0%,100%{transform:translate(0,0) rotate(2deg) scale(1,1);}
+  25%{transform:translate(4px,-2px) rotate(-1deg) scale(1.015,.985);}
+  50%{transform:translate(0,-6px) rotate(-2deg) scale(.985,1.015);}
+  75%{transform:translate(-4px,-2px) rotate(1deg) scale(1.015,.985);}
+}
+.bot-zone .combatant-visual.sprite-idle,.bot-zone .arena2-emoji-badge.sprite-idle{animation:spriteIdleBot 2.6s ease-in-out infinite;transform-origin:center bottom;}
+.player-zone .combatant-visual.sprite-idle,.player-zone .arena2-emoji-badge.sprite-idle{animation:spriteIdlePlayer 2.95s ease-in-out infinite;transform-origin:center bottom;}
 @keyframes spriteEnterBot{0%{transform:translateY(-70px) scale(.3);opacity:0;}60%{transform:translateY(8px) scale(1.1);opacity:1;}100%{transform:translateY(0) scale(1);opacity:1;}}
 @keyframes spriteEnterPlayer{0%{transform:translateY(70px) scale(.3);opacity:0;}60%{transform:translateY(-8px) scale(1.1);opacity:1;}100%{transform:translateY(0) scale(1);opacity:1;}}
 .bot-zone .sprite-enter{animation:spriteEnterBot .6s cubic-bezier(.34,1.56,.64,1) both;}
 .player-zone .sprite-enter{animation:spriteEnterPlayer .6s cubic-bezier(.34,1.56,.64,1) both;}
-@keyframes lungeBot{0%{transform:translate(0,0) scale(1);}45%{transform:translate(-30px,20px) scale(1.1);}100%{transform:translate(0,0) scale(1);}}
-@keyframes lungePlayer{0%{transform:translate(0,0) scale(1);}45%{transform:translate(30px,-20px) scale(1.1);}100%{transform:translate(0,0) scale(1);}}
-.bot-zone .lunge{animation:lungeBot .55s ease-in-out;}
-.player-zone .lunge{animation:lungePlayer .55s ease-in-out;}
+@keyframes lungeBot{0%{transform:translate(0,0) scale(1) rotate(0);}14%{transform:translate(11px,-6px) scale(.95) rotate(3deg);}45%{transform:translate(-32px,20px) scale(1.14) rotate(-5deg);}60%{transform:translate(-30px,19px) scale(1.13) rotate(-5deg);}100%{transform:translate(0,0) scale(1) rotate(0);}}
+@keyframes lungePlayer{0%{transform:translate(0,0) scale(1) rotate(0);}14%{transform:translate(-11px,6px) scale(.95) rotate(-3deg);}45%{transform:translate(32px,-20px) scale(1.14) rotate(5deg);}60%{transform:translate(30px,-19px) scale(1.13) rotate(5deg);}100%{transform:translate(0,0) scale(1) rotate(0);}}
+.bot-zone .lunge{animation:lungeBot .55s cubic-bezier(.5,.05,.4,1);transform-origin:center bottom;}
+.player-zone .lunge{animation:lungePlayer .55s cubic-bezier(.5,.05,.4,1);transform-origin:center bottom;}
 @keyframes hitShake{0%,100%{transform:translateX(0);filter:brightness(1) drop-shadow(0 8px 10px rgba(0,0,0,.4));}20%{transform:translateX(-9px);filter:brightness(1.7) drop-shadow(0 0 14px #ff4444);}40%{transform:translateX(9px);}60%{transform:translateX(-6px);}80%{transform:translateX(6px);}}
 .hit-shake{animation:hitShake .42s ease-in-out;}
 @keyframes faintAnim{0%{transform:translateY(0) scale(1) rotate(0);opacity:1;filter:none;}22%{transform:translateY(-10px) scale(1.06) rotate(-3deg);}100%{transform:translateY(38px) scale(.62) rotate(14deg);opacity:0;filter:grayscale(1) brightness(.55);}}
