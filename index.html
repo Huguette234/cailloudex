@@ -199,11 +199,11 @@ main{flex:1;padding:6px 16px 10px;position:relative;animation:screenFadeIn .32s 
 .load-wrap .hero-main{font-size:56px;filter:drop-shadow(0 4px 0 rgba(120,80,10,.6)) drop-shadow(0 5px 9px rgba(0,0,0,.35));}
 .load-glow{position:absolute;top:44%;width:280px;height:280px;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.28),transparent 68%);filter:blur(14px);animation:loadGlow 3s ease-in-out infinite;pointer-events:none;}
 @keyframes loadGlow{0%,100%{transform:scale(.9);opacity:.55;}50%{transform:scale(1.18);opacity:1;}}
-.load-rock-wrap{position:relative;margin:30px 0 4px;display:flex;flex-direction:column;align-items:center;z-index:1;}
+.load-rock-wrap{position:relative;margin:19vh 0 4px;display:flex;flex-direction:column;align-items:center;z-index:1;}
 .load-rock{animation:loadBounce 1s cubic-bezier(.5,.05,.5,.95) infinite;transform-origin:center bottom;}
-.load-rock .mascot{width:98px;height:auto;filter:drop-shadow(0 6px 10px rgba(120,90,40,.25));}
+.load-rock .mascot{width:150px;height:auto;filter:drop-shadow(0 8px 12px rgba(0,0,0,.3));}
 @keyframes loadBounce{0%{transform:translateY(0) scale(1.12,.88);}20%{transform:translateY(-14px) scale(.96,1.06);}48%{transform:translateY(-48px) scale(.94,1.08) rotate(9deg);}56%{transform:translateY(-48px) scale(.94,1.08) rotate(-9deg);}82%{transform:translateY(0) scale(1.12,.88);}100%{transform:translateY(0) scale(1.12,.88);}}
-.load-shadow{width:74px;height:13px;border-radius:50%;background:rgba(120,90,40,.3);filter:blur(3px);margin-top:8px;animation:loadShadow 1s cubic-bezier(.5,.05,.5,.95) infinite;}
+.load-shadow{width:108px;height:17px;border-radius:50%;background:rgba(20,40,10,.32);filter:blur(3px);margin-top:8px;animation:loadShadow 1s cubic-bezier(.5,.05,.5,.95) infinite;}
 @keyframes loadShadow{0%,100%{transform:scale(1);opacity:.5;}52%{transform:scale(.48);opacity:.18;}}
 .load-msg{font-family:'Baloo 2',sans-serif;font-weight:800;font-size:14px;color:#fff;margin-top:22px;transition:opacity .2s ease;min-height:20px;text-align:center;z-index:1;background:rgba(30,50,20,.5);padding:7px 16px;border-radius:999px;box-shadow:0 3px 8px rgba(0,0,0,.25);backdrop-filter:blur(2px);}
 .load-bar{width:190px;max-width:62%;height:9px;border-radius:999px;background:rgba(0,0,0,.32);overflow:hidden;margin-top:14px;z-index:1;box-shadow:inset 0 1px 2px rgba(0,0,0,.3),0 0 0 2px rgba(255,255,255,.35);}
@@ -3596,12 +3596,17 @@ let _mid=0;
 function mascotSvg(mood='neutral',extraClass=''){
   const id='m'+(++_mid);
   const happy=mood==='happy';
+  const mean=mood==='mean';
   // Silhouette de galet organique — réutilisée pour le corps, le clip texture et le liseré
   const body='M18,17 C30,4 56,2 73,12 C90,21 95,41 86,57 C80,71 60,79 40,75 C20,72 5,60 6,41 C7,27 8,29 18,17 Z';
-  const brows=happy
+  const brows=mean
+    ?{l:'M26,29 Q35,32 45,36',r:'M55,36 Q65,32 74,29'}
+    :happy
     ?{l:'M27,32 Q34,25 43,29',r:'M57,29 Q66,25 73,32'}
     :{l:'M28,33 Q35,30 43,32',r:'M57,32 Q65,30 72,33'};
-  const mouth=happy
+  const mouth=mean
+    ?`<path d="M40,62 Q50,55 60,62" stroke="#26231D" stroke-width="2.8" fill="none" stroke-linecap="round" opacity="0.85"/>`
+    :happy
     ?`<path d="M40,57 Q50,67 60,57 Q50,62 40,57 Z" fill="#26231D" opacity="0.82"/>`
     :`<path d="M42,58 Q50,63 58,58" stroke="#26231D" stroke-width="2.4" fill="none" stroke-linecap="round" opacity="0.75"/>`;
   const eye=(cx)=>`
@@ -3621,7 +3626,9 @@ function mascotSvg(mood='neutral',extraClass=''){
         <stop offset="0%" stop-color="#EFEDE6" stop-opacity="0.9"/><stop offset="100%" stop-color="#EFEDE6" stop-opacity="0"/>
       </radialGradient>
       <radialGradient id="${id}i" cx="40%" cy="35%" r="70%">
-        <stop offset="0%" stop-color="#4A443A"/><stop offset="60%" stop-color="#2B2721"/><stop offset="100%" stop-color="#1A1712"/>
+        ${mean
+          ?'<stop offset="0%" stop-color="#E24B4B"/><stop offset="55%" stop-color="#A02020"/><stop offset="100%" stop-color="#3A0E0E"/>'
+          :'<stop offset="0%" stop-color="#4A443A"/><stop offset="60%" stop-color="#2B2721"/><stop offset="100%" stop-color="#1A1712"/>'}
       </radialGradient>
       <radialGradient id="${id}s" cx="50%" cy="50%" r="50%">
         <stop offset="0%" stop-color="#000" stop-opacity="0.30"/><stop offset="72%" stop-color="#000" stop-opacity="0.10"/><stop offset="100%" stop-color="#000" stop-opacity="0"/>
@@ -7131,7 +7138,7 @@ function render(){
         </div>
         <div class="load-glow"></div>
         <div class="load-rock-wrap">
-          <div class="load-rock">${mascotSvg('happy')}</div>
+          <div class="load-rock">${mascotSvg('mean')}</div>
           <div class="load-shadow"></div>
         </div>
         <div class="load-msg" id="loadMsg">${LOAD_MSGS[_loadMsgIdx]||LOAD_MSGS[0]}</div>
