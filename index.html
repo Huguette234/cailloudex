@@ -3593,7 +3593,7 @@ function moderateImage(dataUrl){
 
 /* ===== MASCOT SVG ===== */
 let _mid=0;
-function mascotSvg(mood='neutral',extraClass=''){
+function mascotSvg(mood='neutral',extraClass='',hideShadow=false){
   const id='m'+(++_mid);
   const happy=mood==='happy';
   const mean=mood==='mean';
@@ -3640,7 +3640,7 @@ function mascotSvg(mood='neutral',extraClass=''){
       </filter>
       <clipPath id="${id}c"><path d="${body}"/></clipPath>
     </defs>
-    <ellipse cx="50" cy="83" rx="31" ry="6.5" fill="url(#${id}s)"/>
+    ${hideShadow?'':`<ellipse cx="50" cy="83" rx="31" ry="6.5" fill="url(#${id}s)"/>`}
     <path d="${body}" fill="url(#${id}b)"/>
     <g clip-path="url(#${id}c)">
       <rect x="0" y="0" width="100" height="90" filter="url(#${id}g)" opacity="0.13"/>
@@ -7138,7 +7138,7 @@ function render(){
         </div>
         <div class="load-glow"></div>
         <div class="load-rock-wrap">
-          <div class="load-rock">${mascotSvg('mean')}</div>
+          <div class="load-rock">${mascotSvg('mean','',true)}</div>
           <div class="load-shadow"></div>
         </div>
         <div class="load-msg" id="loadMsg">${LOAD_MSGS[_loadMsgIdx]||LOAD_MSGS[0]}</div>
@@ -8290,6 +8290,14 @@ try{ history.replaceState({cdx:'root'},''); history.pushState({cdx:'trap'},''); 
 (async function init(){
   applyTimeTheme();
   screen='loading'; render();
+  // Filet de sécurité : ne JAMAIS rester bloqué sur l'écran de chargement
+  // (si une requête réseau se fige sans jamais répondre au démarrage).
+  setTimeout(()=>{
+    if(screen==='loading'){
+      try{ getDailyChallenge(); }catch(e){}
+      screen=session?'home':'login'; render();
+    }
+  }, 9000);
   try{
     await loadSupabaseLib();
     sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);

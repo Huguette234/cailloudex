@@ -1,9 +1,10 @@
-const CACHE = 'cailloudex-v177';
+const CACHE = 'cailloudex-v178';
 const ASSETS = ['./', './index.html', './loading-bg.jpg',
   './secrets/roch.jpg', './secrets/galactor.jpg', './secrets/meme.jpg', './secrets/dore.jpg', './secrets/diamant.jpg'];
 
 self.addEventListener('install', e => {
-  e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)));
+  // Mise en cache tolérante : un asset lent/absent ne fait pas échouer toute l'installation.
+  e.waitUntil(caches.open(CACHE).then(c => Promise.allSettled(ASSETS.map(a => c.add(a)))));
   self.skipWaiting();
 });
 
