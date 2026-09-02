@@ -194,8 +194,9 @@ main{flex:1;padding:6px 16px 10px;position:relative;animation:screenFadeIn .32s 
 @keyframes bounce{0%,100%{transform:translateY(0);}50%{transform:translateY(-16px);}}
 /* Écran de chargement animé */
 .load-wrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:24px;position:relative;overflow:hidden;background:#8FD14F url('./loading-bg.jpg') center/cover no-repeat;}
-.load-wrap .hero-top{color:#fff;text-shadow:0 2px 4px rgba(0,60,120,.5),0 0 2px rgba(0,60,120,.5);}
-.load-wrap .hero-main{filter:drop-shadow(0 3px 0 rgba(120,80,10,.6)) drop-shadow(0 4px 8px rgba(0,0,0,.35));}
+.load-title{position:absolute;top:5%;left:0;right:0;text-align:center;z-index:2;}
+.load-wrap .hero-top{font-size:19px;color:#fff;letter-spacing:.16em;text-shadow:0 2px 4px rgba(0,60,120,.55),0 0 2px rgba(0,60,120,.55);}
+.load-wrap .hero-main{font-size:56px;filter:drop-shadow(0 4px 0 rgba(120,80,10,.6)) drop-shadow(0 5px 9px rgba(0,0,0,.35));}
 .load-glow{position:absolute;top:44%;width:280px;height:280px;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.28),transparent 68%);filter:blur(14px);animation:loadGlow 3s ease-in-out infinite;pointer-events:none;}
 @keyframes loadGlow{0%,100%{transform:scale(.9);opacity:.55;}50%{transform:scale(1.18);opacity:1;}}
 .load-rock-wrap{position:relative;margin:30px 0 4px;display:flex;flex-direction:column;align-items:center;z-index:1;}
@@ -7124,9 +7125,11 @@ function render(){
     // On ne reconstruit PAS l'écran s'il est déjà là (sinon la barre/anim repartent de zéro)
     if(!document.querySelector('.load-wrap')){
       app.innerHTML=`<main class="load-wrap">
+        <div class="load-title">
+          <div class="hero-top">LES CAILLOUX DES</div>
+          <div class="hero-main">Z'HOMMES</div>
+        </div>
         <div class="load-glow"></div>
-        <div class="hero-top" style="font-size:12px;">LES CAILLOUX DES</div>
-        <div class="hero-main" style="font-size:34px;">Z'HOMMES</div>
         <div class="load-rock-wrap">
           <div class="load-rock">${mascotSvg('happy')}</div>
           <div class="load-shadow"></div>
