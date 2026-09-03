@@ -2693,6 +2693,10 @@ async function maybeResetCharGen(){
 // défaites et pseudo. Marqueur stocké dans inventory.__reset1 → une seule fois par
 // COMPTE (synchronisé entre appareils, ne re-vide pas une progression reconstruite).
 async function maybeResetLaunch(){
+  // ⛔ DÉSACTIVÉ : cette remise à zéro unique de lancement supprimait le Dex.
+  // On la neutralise définitivement pour ne plus jamais vider les données d'un joueur.
+  return;
+  /* eslint-disable no-unreachable */
   if(!session||!sb) return;
   if(meta.inventory && meta.inventory.__reset1) return;
   const hadData=(dex&&dex.length>0)||(meta.gravillons||0)>0||(meta.gems||0)>0||(meta.xp||0)>0;
