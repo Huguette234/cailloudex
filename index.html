@@ -3122,85 +3122,94 @@ function haptic(p){ try{ if(navigator.vibrate) navigator.vibrate(p); }catch(e){}
 /* ===== MUSIQUE DE FOND (nappes ambient synthétisées, en boucle) ===== */
 let musicOn=(()=>{ try{ return localStorage.getItem('cdx_music')!=='off'; }catch(e){ return true; } })();
 let _music={playing:false, timer:null, nextTime:0, step:0, gain:null};
-const _MUSIC_CHORD_DUR=2.2;
-// Progression majeure enjouée (8 mesures ~17,6 s), esprit aventure cartoon
+const _MUSIC_CHORD_DUR=4.0;
+// Progression douce et chaleureuse (accords enrichis), 8 mesures ~32 s
 const _MUSIC_PROG=[
-  { notes:[261.63,329.63,392.00], bass:130.81 }, // C
-  { notes:[196.00,246.94,293.66], bass:98.00  }, // G
-  { notes:[220.00,261.63,329.63], bass:110.00 }, // Am
-  { notes:[174.61,220.00,261.63], bass:87.31  }, // F
-  { notes:[261.63,329.63,392.00], bass:130.81 }, // C
-  { notes:[196.00,246.94,293.66], bass:98.00  }, // G
-  { notes:[174.61,220.00,261.63], bass:87.31  }, // F
-  { notes:[196.00,246.94,293.66], bass:98.00  }, // G (turnaround)
+  { notes:[261.63,329.63,392.00,587.33], bass:130.81 }, // Cadd9
+  { notes:[196.00,246.94,293.66,440.00], bass:98.00  }, // Gadd9
+  { notes:[220.00,261.63,329.63,392.00], bass:110.00 }, // Am7
+  { notes:[174.61,220.00,261.63,329.63], bass:87.31  }, // Fmaj7
+  { notes:[261.63,329.63,392.00,587.33], bass:130.81 }, // Cadd9
+  { notes:[196.00,246.94,293.66,440.00], bass:98.00  }, // Gadd9
+  { notes:[174.61,220.00,261.63,329.63], bass:87.31  }, // Fmaj7
+  { notes:[196.00,246.94,293.66,440.00], bass:98.00  }, // Gadd9 (turnaround)
 ];
-// Mélodie "marimba" pétillante (fraction de mesure o, fréquence f, durée d)
+// Mélodie lente et expressive (fraction de mesure o, fréquence f, durée d)
 const _MUSIC_MELODY=[
-  [{o:0.00,f:523.25,d:.5},{o:0.25,f:659.25,d:.5},{o:0.50,f:783.99,d:.7}], // C
-  [{o:0.00,f:587.33,d:.5},{o:0.25,f:493.88,d:.5},{o:0.50,f:392.00,d:.7}], // G
-  [{o:0.00,f:523.25,d:.5},{o:0.25,f:440.00,d:.5},{o:0.50,f:659.25,d:.7}], // Am
-  [{o:0.00,f:440.00,d:.5},{o:0.25,f:523.25,d:.5},{o:0.55,f:349.23,d:.7}], // F
-  [{o:0.00,f:659.25,d:.5},{o:0.25,f:783.99,d:.5},{o:0.50,f:880.00,d:.8}], // C
-  [{o:0.00,f:783.99,d:.5},{o:0.30,f:659.25,d:.5},{o:0.55,f:587.33,d:.6}], // G
-  [{o:0.00,f:523.25,d:.5},{o:0.25,f:440.00,d:.5},{o:0.50,f:349.23,d:.7}], // F
-  [{o:0.00,f:392.00,d:.4},{o:0.25,f:493.88,d:.4},{o:0.50,f:587.33,d:.9}], // G
+  [{o:0.10,f:392.00,d:1.6},{o:0.55,f:523.25,d:1.9}],
+  [{o:0.10,f:493.88,d:1.6},{o:0.55,f:587.33,d:2.0}],
+  [{o:0.10,f:523.25,d:1.4},{o:0.50,f:440.00,d:2.2}],
+  [{o:0.10,f:349.23,d:1.4},{o:0.55,f:440.00,d:2.0}],
+  [{o:0.05,f:659.25,d:2.0},{o:0.60,f:587.33,d:1.6}],
+  [{o:0.10,f:493.88,d:1.8},{o:0.55,f:392.00,d:2.0}],
+  [{o:0.10,f:440.00,d:1.6},{o:0.50,f:523.25,d:2.0}],
+  [{o:0.10,f:587.33,d:1.0},{o:0.40,f:493.88,d:1.0},{o:0.68,f:440.00,d:1.8}],
 ];
 function setMusicOn(on){
   musicOn=!!on; try{ localStorage.setItem('cdx_music', on?'on':'off'); }catch(e){}
   if(on) startMusic(); else stopMusic();
 }
 function _scheduleChord(idx, t){
-  const ctx=_audioCtx; if(!ctx||!_music.gain) return;
+  const ctx=_audioCtx; const master=_music.gain, rev=_music.reverb; if(!ctx||!master) return;
   const chord=_MUSIC_PROG[idx]; const dur=_MUSIC_CHORD_DUR;
-  // Nappe douce en fond (volume bas, laisse la place à la mélodie)
+  // Nappe riche : 2 oscillateurs légèrement désaccordés par note, filtre qui s'ouvre doucement
   chord.notes.forEach(freq=>{
-    const osc=ctx.createOscillator(); osc.type='triangle'; osc.frequency.value=freq;
-    const g=ctx.createGain();
-    g.gain.setValueAtTime(0.0001, t);
-    g.gain.exponentialRampToValueAtTime(0.045, t+0.5);
-    g.gain.setValueAtTime(0.045, t+dur-0.3);
-    g.gain.exponentialRampToValueAtTime(0.0001, t+dur+0.3);
-    const lp=ctx.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=1300;
-    osc.connect(lp); lp.connect(g); g.connect(_music.gain);
-    osc.start(t); osc.stop(t+dur+0.4);
+    [['sawtooth',-7],['triangle',7]].forEach(([type,det])=>{
+      const osc=ctx.createOscillator(); osc.type=type; osc.frequency.value=freq; osc.detune.value=det;
+      const g=ctx.createGain();
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(0.026, t+1.1);
+      g.gain.setValueAtTime(0.026, t+dur-0.7);
+      g.gain.exponentialRampToValueAtTime(0.0001, t+dur+0.7);
+      const lp=ctx.createBiquadFilter(); lp.type='lowpass';
+      lp.frequency.setValueAtTime(750, t); lp.frequency.linearRampToValueAtTime(1700, t+dur*0.6);
+      osc.connect(lp); lp.connect(g); g.connect(master); if(rev) g.connect(rev);
+      osc.start(t); osc.stop(t+dur+0.8);
+    });
   });
-  // Basse rebondissante "oom-pah" (fondamentale puis quinte)
-  [[0,chord.bass,0.12],[0.5,chord.bass*1.5,0.09]].forEach(([bo,bf,bv])=>{
-    const bt=t+bo*dur;
-    const b=ctx.createOscillator(); b.type='sine'; b.frequency.value=bf;
-    const bg=ctx.createGain();
-    bg.gain.setValueAtTime(0.0001, bt);
-    bg.gain.exponentialRampToValueAtTime(bv, bt+0.03);
-    bg.gain.exponentialRampToValueAtTime(0.0001, bt+dur*0.42);
-    b.connect(bg); bg.connect(_music.gain); b.start(bt); b.stop(bt+dur*0.45);
-  });
-  // Petite pulsation (shaker) sur les contretemps pour le rebond
-  [0.25,0.5,0.75].forEach(so=>_shaker(t+so*dur, so===0.5?0.05:0.03));
-  // Mélodie marimba (légèrement humanisée)
+  // Basse ronde et longue
+  const b=ctx.createOscillator(); b.type='sine'; b.frequency.value=chord.bass;
+  const bg=ctx.createGain();
+  bg.gain.setValueAtTime(0.0001,t); bg.gain.exponentialRampToValueAtTime(0.13,t+0.3);
+  bg.gain.setValueAtTime(0.13,t+dur-0.5); bg.gain.exponentialRampToValueAtTime(0.0001,t+dur+0.2);
+  b.connect(bg); bg.connect(master); b.start(t); b.stop(t+dur+0.3);
+  // Arpège cristallin discret (montée sur la mesure) — surtout dans la réverb
+  chord.notes.forEach((freq,i)=>{ const at=t+(0.10+i*0.16)*dur; if(at<t+dur-0.2) _arpNote(at, freq*2); });
+  // Mélodie principale (vibrato + écho + réverb)
   const mel=_MUSIC_MELODY[idx]||[];
-  mel.forEach(n=>{ _mNote(t + n.o*dur + (Math.random()*0.03-0.015), n.f, n.d); });
+  mel.forEach(n=>_mNote(t + n.o*dur, n.f, n.d));
+}
+function _arpNote(t, f){
+  const ctx=_audioCtx; const master=_music.gain, rev=_music.reverb; if(!ctx||!master) return;
+  const osc=ctx.createOscillator(); osc.type='triangle'; osc.frequency.value=f;
+  const g=ctx.createGain();
+  g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(0.026,t+0.02); g.gain.exponentialRampToValueAtTime(0.0001,t+0.9);
+  const lp=ctx.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=4200;
+  osc.connect(lp); lp.connect(g); g.connect(master); if(rev) g.connect(rev);
+  osc.start(t); osc.stop(t+0.95);
 }
 function _mNote(t, f, d){
-  const ctx=_audioCtx; if(!ctx||!_music.gain) return;
-  let freq=f; if(Math.random()<0.1) freq*=2; // rare scintillement à l'octave
-  const osc=ctx.createOscillator(); osc.type='triangle'; osc.frequency.value=freq;
-  const sub=ctx.createOscillator(); sub.type='sine'; sub.frequency.value=freq;
-  const g=ctx.createGain(); const vol=0.10*(0.9+Math.random()*0.2);
+  const ctx=_audioCtx; const master=_music.gain, rev=_music.reverb, del=_music.delay; if(!ctx||!master) return;
+  const osc=ctx.createOscillator(); osc.type='sine'; osc.frequency.value=f;
+  const osc2=ctx.createOscillator(); osc2.type='triangle'; osc2.frequency.value=f; osc2.detune.value=5;
+  // Vibrato léger
+  const vib=ctx.createOscillator(); vib.type='sine'; vib.frequency.value=5.2;
+  const vibg=ctx.createGain(); vibg.gain.value=5; vib.connect(vibg); vibg.connect(osc.detune); vibg.connect(osc2.detune);
+  const g=ctx.createGain(); const vol=0.085;
   g.gain.setValueAtTime(0.0001, t);
-  g.gain.exponentialRampToValueAtTime(vol, t+0.014);      // attaque vive
-  g.gain.exponentialRampToValueAtTime(0.0001, t+Math.max(0.28,d)); // décroissance type marimba
-  const lp=ctx.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=3200;
-  osc.connect(lp); sub.connect(lp); lp.connect(g); g.connect(_music.gain);
-  osc.start(t); sub.start(t); osc.stop(t+d+0.06); sub.stop(t+d+0.06);
+  g.gain.exponentialRampToValueAtTime(vol, t+0.07);       // attaque douce
+  g.gain.setValueAtTime(vol, t+Math.max(0.12,d*0.6));
+  g.gain.exponentialRampToValueAtTime(0.0001, t+d+0.4);   // longue traîne
+  const lp=ctx.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=2500;
+  osc.connect(lp); osc2.connect(lp); lp.connect(g);
+  g.connect(master); if(rev) g.connect(rev); if(del) g.connect(del);
+  const end=t+d+0.45; vib.start(t); osc.start(t); osc2.start(t); vib.stop(end); osc.stop(end); osc2.stop(end);
 }
-function _shaker(t, vol){
-  const ctx=_audioCtx; if(!ctx||!_music.gain) return;
-  const n=Math.floor(ctx.sampleRate*0.06); const buf=ctx.createBuffer(1,n,ctx.sampleRate); const d=buf.getChannelData(0);
-  for(let i=0;i<n;i++) d[i]=(Math.random()*2-1)*(1-i/n);
-  const src=ctx.createBufferSource(); src.buffer=buf;
-  const hp=ctx.createBiquadFilter(); hp.type='highpass'; hp.frequency.value=6500;
-  const g=ctx.createGain(); g.gain.setValueAtTime(vol,t); g.gain.exponentialRampToValueAtTime(0.0001,t+0.06);
-  src.connect(hp); hp.connect(g); g.connect(_music.gain); src.start(t); src.stop(t+0.08);
+function _makeIR(ctx, dur, decay){
+  const rate=ctx.sampleRate, len=Math.max(1,Math.floor(rate*dur));
+  const buf=ctx.createBuffer(2,len,rate);
+  for(let ch=0;ch<2;ch++){ const dd=buf.getChannelData(ch); for(let i=0;i<len;i++){ dd[i]=(Math.random()*2-1)*Math.pow(1-i/len,decay); } }
+  return buf;
 }
 function _musicTick(){
   if(!_music.playing||!_audioCtx) return;
@@ -3215,26 +3224,35 @@ function _musicTick(){
 function startMusic(){
   if(_music.playing||!musicOn) return;
   sfxUnlock(); if(!_audioCtx) return;
-  _music.playing=true;
-  _music.gain=_audioCtx.createGain();
-  _music.gain.gain.setValueAtTime(0.0001, _audioCtx.currentTime);
-  _music.gain.gain.exponentialRampToValueAtTime(0.16, _audioCtx.currentTime+2.5); // fondu d'entrée
-  _music.gain.connect(_audioCtx.destination);
-  _music.nextTime=_audioCtx.currentTime+0.15;
+  const ctx=_audioCtx; _music.playing=true;
+  // Bus principal
+  const master=ctx.createGain();
+  master.gain.setValueAtTime(0.0001, ctx.currentTime);
+  master.gain.exponentialRampToValueAtTime(0.22, ctx.currentTime+3); // fondu d'entrée
+  master.connect(ctx.destination);
+  // Réverbération (convolution) — donne l'espace/la profondeur
+  const conv=ctx.createConvolver(); try{ conv.buffer=_makeIR(ctx,2.8,2.4); }catch(e){}
+  const revGain=ctx.createGain(); revGain.gain.value=0.85; conv.connect(revGain); revGain.connect(master);
+  // Écho (delay) réinjecté — surtout pour la mélodie
+  const delay=ctx.createDelay(1.2); delay.delayTime.value=0.38;
+  const fb=ctx.createGain(); fb.gain.value=0.33; delay.connect(fb); fb.connect(delay);
+  const delGain=ctx.createGain(); delGain.gain.value=0.42; delay.connect(delGain); delGain.connect(master); delay.connect(conv);
+  _music.gain=master; _music.reverb=conv; _music.delay=delay;
+  _music.nextTime=ctx.currentTime+0.2;
   _musicTick();
 }
 function stopMusic(){
   _music.playing=false; clearTimeout(_music.timer);
-  if(_music.gain&&_audioCtx){
+  const ctx=_audioCtx, m=_music.gain, c=_music.reverb, dl=_music.delay;
+  if(m&&ctx){
     try{
-      const g=_music.gain;
-      g.gain.cancelScheduledValues(_audioCtx.currentTime);
-      g.gain.setValueAtTime(Math.max(0.0002,g.gain.value), _audioCtx.currentTime);
-      g.gain.exponentialRampToValueAtTime(0.0001, _audioCtx.currentTime+0.7);
-      setTimeout(()=>{ try{ g.disconnect(); }catch(e){} }, 900);
+      m.gain.cancelScheduledValues(ctx.currentTime);
+      m.gain.setValueAtTime(Math.max(0.0002,m.gain.value), ctx.currentTime);
+      m.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime+0.9);
+      setTimeout(()=>{ try{m.disconnect();}catch(e){} try{c&&c.disconnect();}catch(e){} try{dl&&dl.disconnect();}catch(e){} }, 1100);
     }catch(e){}
   }
-  _music.gain=null;
+  _music.gain=null; _music.reverb=null; _music.delay=null;
 }
 // Économie de batterie : coupe la musique quand l'app passe en arrière-plan
 document.addEventListener('visibilitychange',()=>{
