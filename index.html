@@ -147,8 +147,8 @@ header{
 .friends-pill.active{background:linear-gradient(180deg,#B06CE8,var(--epique-d));border-color:rgba(255,255,255,.9);box-shadow:0 4px 14px rgba(120,40,190,.5),inset 0 1px 0 rgba(255,255,255,.3);}
 
 /* --- MAIN --- */
-main{flex:1;padding:6px 16px 10px;position:relative;animation:screenFadeIn .32s cubic-bezier(.2,.7,.3,1) both;overflow-y:auto;min-height:0;-webkit-overflow-scrolling:touch;}
-@keyframes screenFadeIn{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:none;}}
+main{flex:1;padding:6px 16px 10px;position:relative;animation:screenFadeIn .24s cubic-bezier(.2,.7,.3,1) both;overflow-y:auto;min-height:0;-webkit-overflow-scrolling:touch;}
+@keyframes screenFadeIn{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:none;}}
 
 /* --- PANEL --- */
 .panel{background:rgba(255,255,255,.72);border:3px solid rgba(255,255,255,.9);border-radius:20px;box-shadow:0 8px 0 rgba(0,0,0,.4),0 0 0 1px rgba(255,255,255,.05);padding:18px;color:var(--txt);}
@@ -256,6 +256,7 @@ main{flex:1;padding:6px 16px 10px;position:relative;animation:screenFadeIn .32s 
 nav{display:flex;gap:8px;padding:10px 14px max(14px,env(safe-area-inset-bottom));flex-shrink:0;background:linear-gradient(0deg,rgba(255,252,245,.85),rgba(255,252,245,.4));backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-top:1px solid rgba(150,120,60,.16);}
 .tab{flex:1;font-family:'Baloo 2',sans-serif;font-weight:800;font-size:9.5px;border:1px solid rgba(255,255,255,.9);border-radius:15px;padding:10px 0;text-align:center;cursor:pointer;background:rgba(255,255,255,.62);color:rgba(44,42,46,.68);box-shadow:0 4px 12px rgba(0,0,0,.25),inset 0 1px 0 rgba(255,255,255,.12);white-space:nowrap;transition:transform .14s,box-shadow .16s,color .16s;}
 .tab.active{background:linear-gradient(180deg,#FFE79A,var(--legendaire) 60%,#EBBE2E);color:var(--ink);border-color:rgba(255,240,190,.6);box-shadow:0 4px 16px rgba(184,142,20,.5),inset 0 1px 0 rgba(255,255,255,.6);transform:translateY(-1px);}
+.tab:active{transform:scale(.93);}
 
 /* --- DEX GRID --- */
 .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
@@ -7135,6 +7136,12 @@ function screenBgStyle(sc){
   const b=SCREEN_BG[sc]; if(!b) return '';
   return `background:linear-gradient(rgba(248,242,229,${b.scrim}),rgba(248,242,229,${b.scrim})),url('./${b.img}') center top/cover no-repeat;`;
 }
+// Précharge les fonds pour que le changement d'onglet soit instantané (pas de flash le temps du chargement)
+let _bgsPreloaded=false;
+function preloadBackgrounds(){
+  if(_bgsPreloaded) return; _bgsPreloaded=true;
+  try{ ['loading-bg.jpg',...Object.values(SCREEN_BG).map(b=>b.img)].forEach(src=>{ const im=new Image(); im.src='./'+src; }); }catch(e){}
+}
 function render(){
   const app=document.getElementById('app');
   // Combat en cours : mise à jour en place (pas de reconstruction -> plus de clignotement)
@@ -8310,6 +8317,7 @@ try{ history.replaceState({cdx:'root'},''); history.pushState({cdx:'trap'},''); 
 (async function init(){
   applyTimeTheme();
   screen='loading'; render();
+  preloadBackgrounds();
   // Filet de sécurité : ne JAMAIS rester bloqué sur l'écran de chargement
   // (si une requête réseau se fige sans jamais répondre au démarrage).
   setTimeout(()=>{
