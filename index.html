@@ -7115,6 +7115,20 @@ function renderTutorial(){
   </div>`;
 }
 function closeTutorial(){ const ov=document.getElementById('tutoOverlay'); if(ov){ ov.classList.remove('show'); setTimeout(()=>ov.remove(),250); } }
+// Fonds cartoon par écran (voile clair par-dessus pour garder le contenu lisible)
+const SCREEN_BG={
+  home:{img:'bg-accueil.jpg',scrim:0.28},
+  scanner:{img:'bg-scanner.jpg',scrim:0.20},
+  'combat-pick':{img:'bg-combat.jpg',scrim:0.40},
+  regions:{img:'bg-regions.jpg',scrim:0.42},
+  shop:{img:'bg-shop.jpg',scrim:0.50},
+  friends:{img:'bg-amis.jpg',scrim:0.46},
+  splash:{img:'bg-plouf.jpg',scrim:0.20},
+};
+function screenBgStyle(sc){
+  const b=SCREEN_BG[sc]; if(!b) return '';
+  return `min-height:100vh;background:linear-gradient(rgba(248,242,229,${b.scrim}),rgba(248,242,229,${b.scrim})),url('./${b.img}') center top/cover no-repeat;`;
+}
 function render(){
   const app=document.getElementById('app');
   // Combat en cours : mise à jour en place (pas de reconstruction -> plus de clignotement)
@@ -7157,7 +7171,7 @@ function render(){
 
   if(screen==='home'){
     showHeader=false;
-    app.innerHTML=`<main style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:safe center;padding:18px 16px 24px;overflow-y:auto;">${homeScreen()}</main>`;
+    app.innerHTML=`<main style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:safe center;padding:18px 16px 24px;overflow-y:auto;${screenBgStyle('home')}">${homeScreen()}</main>`;
   } else if(screen==='account'){
     showHeader=false;
     app.innerHTML=`<main style="flex:1;overflow-y:auto;padding:16px;">${accountScreen()}</main>`;
@@ -7193,7 +7207,7 @@ function render(){
     else if(screen==='trade-confirm'){ mainHtml=tradeConfirmScreen(); showNav=false; showHeader=false; }
     else if(screen==='trade-done'){ mainHtml=tradeDoneScreen(); showNav=false; showHeader=false; }
     else if(screen==='clan'){ mainHtml=clanScreen(); showNav=false; }
-    app.innerHTML=`${showHeader?header():''}<main style="overflow-y:auto;">${mainHtml}</main>${showNav?nav():''}`;
+    app.innerHTML=`${showHeader?header():''}<main style="overflow-y:auto;${screenBgStyle(screen)}">${mainHtml}</main>${showNav?nav():''}`;
   }
 
   document.querySelectorAll('.overlay').forEach(o=>o.remove());
