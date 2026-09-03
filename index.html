@@ -7127,7 +7127,7 @@ const SCREEN_BG={
 };
 function screenBgStyle(sc){
   const b=SCREEN_BG[sc]; if(!b) return '';
-  return `min-height:100vh;background:linear-gradient(rgba(248,242,229,${b.scrim}),rgba(248,242,229,${b.scrim})),url('./${b.img}') center top/cover no-repeat;`;
+  return `background:linear-gradient(rgba(248,242,229,${b.scrim}),rgba(248,242,229,${b.scrim})),url('./${b.img}') center top/cover no-repeat;`;
 }
 function render(){
   const app=document.getElementById('app');
