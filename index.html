@@ -8346,8 +8346,10 @@ window.addEventListener('popstate',function(){
 // Amorce le piège d'historique dès le chargement
 try{ history.replaceState({cdx:'root'},''); history.pushState({cdx:'trap'},''); }catch(_){}
 
+const MIN_LOADING_MS=5000; // durée minimale d'affichage de l'écran de chargement
 (async function init(){
   applyTimeTheme();
+  const _loadStart=Date.now();
   screen='loading'; render();
   preloadBackgrounds();
   // Filet de sécurité : ne JAMAIS rester bloqué sur l'écran de chargement
@@ -8374,8 +8376,10 @@ try{ history.replaceState({cdx:'root'},''); history.pushState({cdx:'trap'},''); 
     try{ await loadAnnouncement(); }catch(e){}
   }catch(e){ showToast('❌ Connexion au serveur impossible. Réessaie.'); }
   getDailyChallenge();
-  screen=session?'home':'login';
-  render();
+  // Laisse l'écran de chargement s'afficher au moins MIN_LOADING_MS (sauf si le filet de sécurité a déjà basculé).
+  const _elapsed=Date.now()-_loadStart;
+  if(_elapsed<MIN_LOADING_MS) await new Promise(r=>setTimeout(r, MIN_LOADING_MS-_elapsed));
+  if(screen==='loading'){ screen=session?'home':'login'; render(); }
 })();
 </script>
 </body>

@@ -1,4 +1,4 @@
-const CACHE = 'cailloudex-v185';
+const CACHE = 'cailloudex-v186';
 const ASSETS = ['./', './index.html', './loading-bg.jpg',
   './bg-accueil.jpg', './bg-scanner.jpg', './bg-combat.jpg', './bg-regions.jpg', './bg-shop.jpg', './bg-amis.jpg', './bg-plouf.jpg', './bg-dex.jpg', './bg-badges.jpg',
   './secrets/roch.jpg', './secrets/galactor.jpg', './secrets/meme.jpg', './secrets/dore.jpg', './secrets/diamant.jpg'];
