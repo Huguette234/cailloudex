@@ -4900,6 +4900,7 @@ function cancelOnline(){
     clearTimeout(onlineState.botTimer);
     clearInterval(onlineState.cdTimer);
     clearTimeout(onlineState.connTimeout);
+    clearTimeout(onlineState.chanTimeout);
     try{ if(onlineState.conn) onlineState.conn.close(); }catch(e){}
     try{ if(onlineState.peer) onlineState.peer.destroy(); }catch(e){}
     onlineState=null;
@@ -4914,10 +4915,27 @@ function onlineConnReady(){
 
 function setupOnlineConn(conn){
   onlineState.conn=conn;
+  onlineState.chanOpen=false;
   if(onlineState){ onlineState.diag='③ Négociation réseau (WebRTC)…'; if(screen==='online-wait') render(); }
   attachIceDiag(conn);
-  if(conn.open){ onlineConnReady(); }
-  else { conn.on('open',()=>{ if(onlineState){ onlineState.diag='④ Canal ouvert ✅'; } onlineConnReady(); }); }
+  if(conn.open){ onlineState.chanOpen=true; clearTimeout(onlineState.chanTimeout); onlineConnReady(); }
+  else { conn.on('open',()=>{ if(onlineState){ onlineState.chanOpen=true; onlineState.diag='④ Canal ouvert ✅'; clearTimeout(onlineState.chanTimeout); } onlineConnReady(); }); }
+  // Chien de garde : le pair s'est connecté (signalisation) mais si le canal
+  // WebRTC ne s'ouvre pas (NAT/5G bloquant, TURN indisponible), on ne reste
+  // pas bloqué indéfiniment sur l'écran d'attente.
+  clearTimeout(onlineState.chanTimeout);
+  onlineState.chanTimeout=setTimeout(()=>{
+    if(!onlineState||onlineState.chanOpen||battleState||screen!=='online-wait') return;
+    try{ conn.close(); }catch(e){}
+    if(onlineState.isHost && !onlineState.isChallenge && onlineState.mode!=='trade'){
+      showToast('📶 Connexion réseau impossible — un bot prend la relève !');
+      try{ if(onlineState.peer) onlineState.peer.destroy(); }catch(e){}
+      onlineState=null; screen='combat-pick'; render();
+    } else {
+      showToast('❌ Connexion impossible (réseau/5G). Réessaie, ou passe en Wi-Fi.');
+      cancelOnline();
+    }
+  },18000);
   conn.on('data',handleOnlineMsg);
   conn.on('close',()=>{
     if(onlineState&&onlineState.mode==='trade'){
@@ -4937,6 +4955,7 @@ function handleOnlineMsg(msg){
     clearTimeout(onlineState.botTimer);
     clearInterval(onlineState.cdTimer);
     clearTimeout(onlineState.connTimeout);
+    clearTimeout(onlineState.chanTimeout);
     if(onlineState.mode==='trade'){
       showToast('🔄 Ami connecté ! Choisis ton caillou à échanger.');
       screen='trade-pick'; render();
