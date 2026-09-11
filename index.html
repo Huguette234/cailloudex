@@ -1316,8 +1316,10 @@ nav{display:flex;gap:8px;padding:10px 14px max(14px,env(safe-area-inset-bottom))
 .pk-orbit.rev{width:172px;height:172px;animation-direction:reverse;animation-duration:9s;}
 .pk-orbdot{position:absolute;top:-3px;left:50%;width:6px;height:6px;border-radius:50%;background:#fff;box-shadow:0 0 10px var(--pk),0 0 6px #fff;transform:translateX(-50%);}
 .pk-gem{position:relative;z-index:3;width:134px;height:152px;animation:pkFloat 3.2s ease-in-out infinite;}
-.pk-gem.pk-gem-pack{width:168px;height:206px;}
-.pk-pack-img{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 12px 22px rgba(0,0,0,.5)) drop-shadow(0 0 20px var(--pk));}
+.pk-gem.pk-gem-pack{width:210px;height:258px;}
+.pk-pack-img{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 14px 26px rgba(0,0,0,.5)) drop-shadow(0 0 24px var(--pk));}
+.card-popup{animation:cardPopUp .55s cubic-bezier(.2,1.5,.45,1) both;}
+@keyframes cardPopUp{0%{opacity:0;transform:scale(.4) translateY(24px);}55%{opacity:1;transform:scale(1.06) translateY(0);}100%{transform:scale(1) translateY(0);}}
 .pk-gem-face{position:absolute;inset:0;border-radius:26px;overflow:hidden;display:flex;align-items:center;justify-content:center;
   background:linear-gradient(155deg,#37547e 0%,#1b2e49 44%,#0b1626 100%);border:2.5px solid var(--pk);
   box-shadow:0 0 0 1px rgba(255,255,255,.08) inset,0 12px 32px rgba(0,0,0,.55),0 0 34px -4px var(--pk),0 0 70px -22px var(--pk);}
@@ -4303,7 +4305,6 @@ function openPack(){
     if(navigator.vibrate) navigator.vibrate(revealRock.confettiCount>40?[30,50,40,50,120]:[40,60]);
     playSfx((revealRock._special||revealRock.confettiCount>40)?'rare':'capture');
     spawnConfetti(revealRock.confettiCount,revealRock.hex);
-    showRarityBanner(revealRock);
     if(revealRock._special) setTimeout(()=>showToast('✨✨ CAILLOU SECRET DÉCOUVERT ! ✨✨'),600);
     setTimeout(()=>{ screen='anime'; render(); },520);
   },900);
@@ -4318,7 +4319,7 @@ function animeRevealScreen(){
     const y=50+Math.sin(angle*Math.PI/180)*d/4+'%';
     return `<div class="sparkle" style="left:${x};top:${y};animation-duration:${1.2+Math.random()*1.5}s;animation-delay:${Math.random()*.8}s;color:${rock.hex};">✦</div>`;
   }).join('');
-  return `<div class="fadeup" style="display:flex;flex-direction:column;align-items:center;padding:10px 0;">
+  return `<div class="card-popup" style="display:flex;flex-direction:column;align-items:center;padding:10px 0;">
     <div style="font-family:'Playfair Display',Georgia,serif;font-size:11px;letter-spacing:.2em;color:${rock.hex};margin-bottom:10px;text-transform:uppercase;">⚡ Transformation Anime ⚡</div>
     <div style="position:relative;width:100%;max-width:300px;">
       <div class="sparkle-container">${sparkles}</div>

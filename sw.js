@@ -1,4 +1,4 @@
-const CACHE = 'cailloudex-v192';
+const CACHE = 'cailloudex-v193';
 const ASSETS = ['./', './index.html', './loading-bg.jpg',
   './bg-accueil.jpg', './bg-scanner.jpg', './bg-combat.jpg', './bg-regions.jpg', './bg-shop.jpg', './bg-amis.jpg', './bg-plouf.jpg', './bg-dex.jpg', './bg-badges.jpg', './bg-analyse.jpg', './bg-revelation.jpg',
   './pack-commun.png', './pack-rare.png', './pack-epique.png', './pack-legendaire.png', './pack-mythique.png', './pack-cosmique.png', './pack-galaxie.png', './pack-secret.png',
