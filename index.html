@@ -4256,9 +4256,8 @@ function specimenCard(rock,pop){
 }
 
 let packOpening=false;
-// Pack (sachet) affiché selon la rareté du caillou tiré. Galaxie utilise
-// temporairement le pack cosmique en attendant son visuel dédié.
-const PACK_IMG={ commun:'pack-commun.png', rare:'pack-rare.png', epique:'pack-epique.png', legendaire:'pack-legendaire.png', mythique:'pack-mythique.png', cosmique:'pack-cosmique.png', galaxie:'pack-cosmique.png', secret:'pack-secret.png' };
+// Pack (sachet) affiché selon la rareté du caillou tiré.
+const PACK_IMG={ commun:'pack-commun.png', rare:'pack-rare.png', epique:'pack-epique.png', legendaire:'pack-legendaire.png', mythique:'pack-mythique.png', cosmique:'pack-cosmique.png', galaxie:'pack-galaxie.png', secret:'pack-secret.png' };
 function packRevealScreen(){
   const r=revealRock;
   const teaseHigh=['legendaire','mythique','cosmique','galaxie','secret'].includes(r.rarity);
