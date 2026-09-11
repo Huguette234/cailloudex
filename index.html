@@ -1316,6 +1316,8 @@ nav{display:flex;gap:8px;padding:10px 14px max(14px,env(safe-area-inset-bottom))
 .pk-orbit.rev{width:172px;height:172px;animation-direction:reverse;animation-duration:9s;}
 .pk-orbdot{position:absolute;top:-3px;left:50%;width:6px;height:6px;border-radius:50%;background:#fff;box-shadow:0 0 10px var(--pk),0 0 6px #fff;transform:translateX(-50%);}
 .pk-gem{position:relative;z-index:3;width:134px;height:152px;animation:pkFloat 3.2s ease-in-out infinite;}
+.pk-gem.pk-gem-pack{width:168px;height:206px;}
+.pk-pack-img{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 12px 22px rgba(0,0,0,.5)) drop-shadow(0 0 20px var(--pk));}
 .pk-gem-face{position:absolute;inset:0;border-radius:26px;overflow:hidden;display:flex;align-items:center;justify-content:center;
   background:linear-gradient(155deg,#37547e 0%,#1b2e49 44%,#0b1626 100%);border:2.5px solid var(--pk);
   box-shadow:0 0 0 1px rgba(255,255,255,.08) inset,0 12px 32px rgba(0,0,0,.55),0 0 34px -4px var(--pk),0 0 70px -22px var(--pk);}
@@ -4254,9 +4256,13 @@ function specimenCard(rock,pop){
 }
 
 let packOpening=false;
+// Pack (sachet) affiché selon la rareté du caillou tiré. Galaxie utilise
+// temporairement le pack cosmique en attendant son visuel dédié.
+const PACK_IMG={ commun:'pack-commun.png', rare:'pack-rare.png', epique:'pack-epique.png', legendaire:'pack-legendaire.png', mythique:'pack-mythique.png', cosmique:'pack-cosmique.png', galaxie:'pack-cosmique.png', secret:'pack-secret.png' };
 function packRevealScreen(){
   const r=revealRock;
   const teaseHigh=['legendaire','mythique','cosmique','galaxie','secret'].includes(r.rarity);
+  const packImg=PACK_IMG[r.rarity]||(r._special?PACK_IMG.secret:'');
   return `<div class="pack-wrap">
     <div class="pack-vignette"></div>
     <div class="pack-sub">✨ Analyse terminée</div>
@@ -4266,11 +4272,10 @@ function packRevealScreen(){
       <div class="pk-shimmer"></div>
       <div class="pk-orbit"><span class="pk-orbdot"></span></div>
       <div class="pk-orbit rev"><span class="pk-orbdot"></span></div>
-      <div class="pk-gem">
-        <div class="pk-gem-face">
-          <div class="pk-gem-shine"></div>
-          <span class="pk-q">?</span>
-        </div>
+      <div class="pk-gem${packImg?' pk-gem-pack':''}">
+        ${packImg
+          ? `<img class="pk-pack-img" src="./${packImg}" alt="pack ${r.rarityLabel||''}">`
+          : `<div class="pk-gem-face"><div class="pk-gem-shine"></div><span class="pk-q">?</span></div>`}
       </div>
     </div>
     <button class="pack-open-btn" data-action="openPack">👆 Toucher pour révéler</button>
@@ -7205,7 +7210,7 @@ function screenBgStyle(sc){
 let _bgsPreloaded=false;
 function preloadBackgrounds(){
   if(_bgsPreloaded) return; _bgsPreloaded=true;
-  try{ ['loading-bg.jpg',...Object.values(SCREEN_BG).map(b=>b.img)].forEach(src=>{ const im=new Image(); im.src='./'+src; }); }catch(e){}
+  try{ ['loading-bg.jpg',...Object.values(SCREEN_BG).map(b=>b.img),...Object.values(PACK_IMG)].forEach(src=>{ const im=new Image(); im.src='./'+src; }); }catch(e){}
 }
 function render(){
   const app=document.getElementById('app');

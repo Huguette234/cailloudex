@@ -1,6 +1,7 @@
-const CACHE = 'cailloudex-v190';
+const CACHE = 'cailloudex-v191';
 const ASSETS = ['./', './index.html', './loading-bg.jpg',
   './bg-accueil.jpg', './bg-scanner.jpg', './bg-combat.jpg', './bg-regions.jpg', './bg-shop.jpg', './bg-amis.jpg', './bg-plouf.jpg', './bg-dex.jpg', './bg-badges.jpg', './bg-analyse.jpg', './bg-revelation.jpg',
+  './pack-commun.png', './pack-rare.png', './pack-epique.png', './pack-legendaire.png', './pack-mythique.png', './pack-cosmique.png', './pack-secret.png',
   './secrets/roch.jpg', './secrets/galactor.jpg', './secrets/meme.jpg', './secrets/dore.jpg', './secrets/diamant.jpg'];
 
 self.addEventListener('install', e => {
