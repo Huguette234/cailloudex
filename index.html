@@ -4260,8 +4260,10 @@ function pcStat(label,val,color){
 function specimenCard(rock,pop){
   const flashy=['epique','legendaire','mythique','cosmique','galaxie','secret'].includes(rock.rarity)?'pc-shine':'';
   const typeInfo=ROCK_TYPES.find(t=>t.key===rock.rockType)||null;
-  const photoSrc=rock.characterPhoto||rock.animePhoto||rock.photo;
-  const hasAlt=!!(rock.characterPhoto||rock.animePhoto);
+  // On affiche l'illustration IA si elle existe, sinon la photo d'origine
+  // (on n'utilise plus animePhoto qui ajoutait un halo coloré peu esthétique).
+  const photoSrc=rock.characterPhoto||rock.photo;
+  const hasAlt=!!rock.characterPhoto;
   const holo=meta.equippedFrame==='holo';
   const hex=rock.hex;
   const pv=combatMaxHP(rock.def||10);
@@ -4419,7 +4421,7 @@ function rockAttacks(r){
 function dexCard(r){
   const typeInfo=ROCK_TYPES.find(t=>t.key===r.rockType);
   const pv=combatMaxHP(r.def||10);
-  const img=r.characterPhoto||r.animePhoto||r.photo;
+  const img=r.characterPhoto||r.photo;
   const atts=rockAttacks(r);
   return `<div class="dexc${(r.rarity==='galaxie'||r.rarity==='secret')?' galaxie-holo':''}" style="border-color:${r.hex}77;" data-action="detail" data-id="${r.id}">
     <div class="dexc-imgwrap">
@@ -8297,7 +8299,7 @@ document.addEventListener('click',(e)=>{
   else if(action==='togglePhoto'){
     const id=t.dataset.id;
     const rock=findRockById(id);
-    const altPhoto=rock?.characterPhoto||rock?.animePhoto;
+    const altPhoto=rock?.characterPhoto;
     if(!rock||!altPhoto) return;
     photoToggleState[id]=!photoToggleState[id];
     const img=document.getElementById('rockImg_'+id);
