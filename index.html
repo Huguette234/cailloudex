@@ -560,6 +560,41 @@ nav{display:flex;gap:8px;padding:10px 14px max(14px,env(safe-area-inset-bottom))
 .tcard-stat-bar{height:4px;border-radius:999px;background:rgba(255,255,255,.08);overflow:hidden;}
 .tcard-stat-fill{height:100%;border-radius:999px;transition:width .7s cubic-bezier(.4,0,.2,1);}
 
+/* ===== CARTE STYLE POKÉMON (révélation + détail) ===== */
+.pcard{border-radius:20px;padding:8px;position:relative;overflow:hidden;
+  box-shadow:0 2px 0 rgba(255,255,255,.25) inset,0 10px 30px rgba(0,0,0,.45),0 20px 52px rgba(0,0,0,.32);}
+.pcard::before{content:"";position:absolute;inset:0;border-radius:20px;pointer-events:none;
+  background:linear-gradient(135deg,rgba(255,255,255,.4),transparent 42%);}
+.pcard-inner{position:relative;border-radius:13px;padding:9px 10px 10px;
+  background:linear-gradient(168deg,#FDFAF2 0%,#F3ECDA 70%,#EBE1C9 100%);
+  border:1px solid rgba(0,0,0,.18);box-shadow:inset 0 1px 3px rgba(255,255,255,.7);}
+.pc-head{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin:1px 2px 7px;}
+.pc-name{font-family:'Baloo 2',sans-serif;font-weight:800;font-size:18px;color:#2A2118;line-height:1.02;text-shadow:0 1px 0 rgba(255,255,255,.6);}
+.pc-hp{font-family:'Baloo 2',sans-serif;font-weight:800;font-size:19px;color:#D0342C;white-space:nowrap;line-height:1;}
+.pc-hp small{font-size:10px;color:#9a2b26;vertical-align:.25em;margin-right:1px;}
+.pc-artwrap{position:relative;border-radius:8px;overflow:hidden;aspect-ratio:1;border:4px solid;
+  box-shadow:0 0 0 2px rgba(0,0,0,.35),inset 0 0 12px rgba(0,0,0,.25);background:#111;}
+.pc-art{width:100%;height:100%;object-fit:cover;display:block;}
+.pc-art-gloss{position:absolute;inset:0;pointer-events:none;background:linear-gradient(125deg,rgba(255,255,255,.22) 0%,transparent 32%);}
+.pc-type{position:absolute;top:6px;left:6px;font-family:'Baloo 2',sans-serif;font-weight:800;font-size:9.5px;letter-spacing:.04em;color:#fff;padding:3px 9px;border-radius:999px;box-shadow:0 2px 5px rgba(0,0,0,.4);text-shadow:0 1px 2px rgba(0,0,0,.5);}
+.pc-toggle{position:absolute;bottom:6px;right:6px;font-family:'Baloo 2',sans-serif;font-size:9px;font-weight:700;background:rgba(0,0,0,.55);color:rgba(255,255,255,.85);border-radius:999px;padding:3px 8px;backdrop-filter:blur(4px);cursor:pointer;}
+.pc-sub{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:7px 2px 0;font-family:'Baloo 2',sans-serif;font-weight:700;font-size:10px;color:#6b5d3e;}
+.pc-atks{margin-top:8px;display:flex;flex-direction:column;gap:6px;}
+.pc-atk{background:rgba(0,0,0,.045);border:1px solid rgba(0,0,0,.10);border-radius:9px;padding:6px 9px;}
+.pc-atk-top{display:flex;align-items:center;justify-content:space-between;gap:8px;}
+.pc-atk-name{font-family:'Baloo 2',sans-serif;font-weight:800;font-size:12px;color:#2A2118;}
+.pc-atk-pow{font-family:'Baloo 2',sans-serif;font-weight:800;font-size:15px;color:#2A2118;}
+.pc-atk-desc{font-family:'Nunito',sans-serif;font-size:10px;color:#6b5d3e;line-height:1.35;margin-top:2px;}
+.pc-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:8px;}
+.pc-stat{background:rgba(0,0,0,.05);border:1px solid rgba(0,0,0,.10);border-radius:10px;padding:5px 3px 6px;text-align:center;}
+.pc-stat-lbl{font-family:'Baloo 2',sans-serif;font-size:8.5px;font-weight:800;color:#8a7c56;letter-spacing:.1em;}
+.pcard .tcard-stat-val{font-family:'Baloo 2',sans-serif;font-weight:800;font-size:18px;color:#2A2118;margin:1px 0 4px;line-height:1;}
+.pc-stat-bar{height:5px;border-radius:999px;background:rgba(0,0,0,.12);overflow:hidden;}
+.pc-flavor{font-family:'Nunito',sans-serif;font-size:10.5px;color:#6b5d3e;line-height:1.4;text-align:center;margin:8px 3px 0;}
+.pc-flavor i{color:#8a7c56;}
+.pc-foot{display:flex;justify-content:space-between;align-items:center;margin:8px 2px 1px;font-family:'Baloo 2',sans-serif;font-weight:800;font-size:9.5px;color:#8a7c56;letter-spacing:.04em;}
+.pcard.pc-shine::after{content:"";position:absolute;top:0;left:-150%;width:55%;height:100%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.4),transparent);animation:shineSweep 2.8s ease-in-out infinite;pointer-events:none;border-radius:20px;}
+
 /* Location footer */
 .tcard-loc{
   text-align:center;margin-top:8px;
@@ -4218,43 +4253,51 @@ function tcardStat(label,val,color){
     <div class="tcard-stat-bar"><div class="tcard-stat-fill" style="width:${pct}%;background:${color};"></div></div>
   </div>`;
 }
+function pcStat(label,val,color){
+  const pct=Math.max(0,Math.min(100,Math.round((val||0)/STAT_CAP*100)));
+  return `<div class="pc-stat"><div class="pc-stat-lbl">${label}</div><div class="tcard-stat-val">${val||0}</div><div class="pc-stat-bar"><div class="tcard-stat-fill" style="width:${pct}%;background:${color};"></div></div></div>`;
+}
 function specimenCard(rock,pop){
-  const flashy=['epique','legendaire','mythique','cosmique','galaxie','secret'].includes(rock.rarity)?'shine':'';
+  const flashy=['epique','legendaire','mythique','cosmique','galaxie','secret'].includes(rock.rarity)?'pc-shine':'';
   const typeInfo=ROCK_TYPES.find(t=>t.key===rock.rockType)||null;
   const photoSrc=rock.characterPhoto||rock.animePhoto||rock.photo;
   const hasAlt=!!(rock.characterPhoto||rock.animePhoto);
   const holo=meta.equippedFrame==='holo';
-  const card=`<div class="tcard ${pop?'card-pop':''} ${flashy}" style="--rarity-glow:${rock.hex}40;">
-    <div class="tcard-band" style="background:linear-gradient(90deg,${rock.hex},${rock.hex}CC);">
-      <span class="tcard-band-num">N°${String(rock.catalogNumber).padStart(4,'0')}</span>
-      <span class="tcard-band-rar">${rock.rarityLabel}</span>
-    </div>
-    <div class="tcard-body">
-      <div class="tcard-photo" style="border:2.5px solid ${rock.hex}99;box-shadow:0 0 0 1px rgba(255,255,255,.08) inset,0 4px 16px ${rock.hex}30,0 0 22px ${rock.hex}25;" ${hasAlt?`data-action="togglePhoto" data-id="${rock.id}"`:''}>
-        <img id="rockImg_${rock.id}" src="${photoSrc}" alt="${rock.name}">
-        <div class="tcard-photo-overlay"></div>
-        ${hasAlt?`<div class="tcard-photo-toggle" data-action="togglePhoto" data-id="${rock.id}">⇄ original</div>`:''}
+  const hex=rock.hex;
+  const pv=combatMaxHP(rock.def||10);
+  const atts=rockAttacks(rock);
+  const attHtml=atts.map(a=>`<div class="pc-atk">
+      <div class="pc-atk-top"><span class="pc-atk-name">${a.name}</span><span class="pc-atk-pow">${a.pow}</span></div>
+      ${a.desc?`<div class="pc-atk-desc">${a.desc}</div>`:''}
+    </div>`).join('');
+  const subBits=[];
+  if(rock.sizeCm) subBits.push(`📏 ~${rock.sizeCm} cm`);
+  if(locName(rock.location)) subBits.push(`📍 ${locName(rock.location)}`);
+  const card=`<div class="pcard ${pop?'card-pop':''} ${flashy}" style="--rarity-glow:${hex}40;background:linear-gradient(150deg,${hex},${hex}B0 55%,${hex}85);">
+    <div class="pcard-inner">
+      <div class="pc-head">
+        <span class="pc-name">${rock.name}</span>
+        <span class="pc-hp"><small>PV</small> ${pv}</span>
       </div>
-      <div class="tcard-content">
-        <div class="tcard-type-row">
-          ${typeInfo?`<span class="tcard-type-badge" style="color:${typeInfo.color};border-color:${typeInfo.color}55;background:${typeInfo.color}18;">${typeInfo.label}</span>`:''}
-          ${rock.sizeCm?`<span style="font-size:10px;font-family:'Baloo 2',sans-serif;font-weight:700;color:rgba(255,255,255,.3);">📏 ~${rock.sizeCm}cm</span>`:''}
-          ${locName(rock.location)?`<span style="font-size:10px;font-family:'Baloo 2',sans-serif;font-weight:700;color:rgba(255,255,255,.3);">📍 ${locName(rock.location)}</span>`:''}
-        </div>
-        <div class="tcard-name">${rock.name}</div>
-        ${rock.personality?`<div class="tcard-personality">${rock.personality}</div>`:''}
-        ${rock.quip?`<div class="tcard-quip">"${rock.quip}"</div>`:''}
-        ${rock.specialMove?`<div class="tcard-move">⚡ ${rock.specialMove}</div>`:''}
-        <div class="tcard-stats">
-          ${tcardStat('ATK',rock.atk,rock.hex)}
-          ${tcardStat('DEF',rock.def,rock.hex)}
-          ${tcardStat('VIT',rock.vit,rock.hex)}
-        </div>
+      <div class="pc-artwrap" style="border-color:${hex};" ${hasAlt?`data-action="togglePhoto" data-id="${rock.id}"`:''}>
+        <img id="rockImg_${rock.id}" class="pc-art" src="${photoSrc}" alt="${rock.name}">
+        <div class="pc-art-gloss"></div>
+        ${typeInfo?`<span class="pc-type" style="background:${typeInfo.color};">${typeInfo.label}</span>`:''}
+        ${hasAlt?`<div class="pc-toggle" data-action="togglePhoto" data-id="${rock.id}">⇄ photo</div>`:''}
       </div>
+      ${subBits.length?`<div class="pc-sub">${subBits.map(b=>`<span>${b}</span>`).join('')}</div>`:''}
+      <div class="pc-atks">${attHtml}</div>
+      <div class="pc-stats">
+        ${pcStat('ATK',rock.atk,hex)}
+        ${pcStat('DEF',rock.def,hex)}
+        ${pcStat('VIT',rock.vit,hex)}
+      </div>
+      ${(rock.personality||rock.quip)?`<div class="pc-flavor">${rock.personality?rock.personality:''}${rock.quip?` <i>« ${rock.quip} »</i>`:''}</div>`:''}
+      <div class="pc-foot"><span>${rock.rarityLabel}</span><span>N°${String(rock.catalogNumber).padStart(4,'0')}</span></div>
     </div>
   </div>`;
-  let wrapped=holo?`<div class="frame-holo" style="border-radius:22px;">${card}</div>`:card;
-  if(rock.evolved) wrapped=`<div class="evolved-glow" style="border-radius:22px;">${wrapped}</div>`;
+  let wrapped=holo?`<div class="frame-holo" style="border-radius:20px;">${card}</div>`:card;
+  if(rock.evolved) wrapped=`<div class="evolved-glow" style="border-radius:20px;">${wrapped}</div>`;
   return wrapped;
 }
 
@@ -4307,7 +4350,7 @@ function openPack(){
     playSfx((revealRock._special||revealRock.confettiCount>40)?'rare':'capture');
     spawnConfetti(revealRock.confettiCount,revealRock.hex);
     if(revealRock._special) setTimeout(()=>showToast('✨✨ CAILLOU SECRET DÉCOUVERT ! ✨✨'),600);
-    setTimeout(()=>{ screen='anime'; render(); },520);
+    setTimeout(()=>{ screen='reveal'; render(); setTimeout(()=>animateStats(revealRock),350); },520);
   },900);
 }
 function animeRevealScreen(){
@@ -4348,9 +4391,9 @@ function revealScreen(){
       : hasChar
         ? `<button class="btn btn-ghost" style="color:#8020C0;border-color:rgba(128,32,192,.4);" data-action="generateCharacter">🔄 Regénérer (${genLeft} restante${genLeft>1?'s':''})</button>`
         : `<button class="btn btn-ghost" style="color:#8020C0;border-color:rgba(128,32,192,.4);" data-action="generateCharacter">🎨 Personnage IA (${genLeft}/${CHAR_GEN_MAX})</button>`;
-  return `<div class="fadeup">
-    ${specimenCard(revealRock,true)}
-    <div class="btn-row">
+  return `<div class="card-popup" style="padding:12px 14px 22px;">
+    ${specimenCard(revealRock,false)}
+    <div class="btn-row" style="margin-top:14px;">
       <button class="btn btn-ghost" data-action="share" data-id="${revealRock.id}">📤 PARTAGER</button>
       <button class="btn btn-gold" data-action="confirmAdd">✅ AJOUTER AU DEX</button>
     </div>
