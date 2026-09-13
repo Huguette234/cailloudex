@@ -7945,6 +7945,20 @@ function buildCharacterPrompt(rock){
     glace:['frozen ice cavern, blue crystals, falling snow, aurora glow','snowy mountain peak, icy wind, pale blue sky','glittering glacier under the northern lights','frozen lake at twilight with soft snowfall','crystal ice palace with shimmering blue halls'],
     neutre:['rocky canyon at golden hour, dramatic sky, distant mountains','pebble riverbank, soft daylight, smooth stones and water','grassy hilltop under a big blue sky','quarry of tumbled stones at sunset','cozy zen rock garden with raked sand'],
   };
+  // Signature élémentaire TOUJOURS présente et bien visible : même avec une
+  // silhouette/des yeux variés, un feu doit rester clairement un type feu.
+  const TYPE_SIG={
+    feu:'this creature is UNMISTAKABLY a FIRE type: glowing orange-and-red lava cracks across its stone, small flickering flames and rising embers, shimmering heat haze and a warm fiery orange glow radiating from its body',
+    glace:'this creature is UNMISTAKABLY an ICE type: coated in frost and sparkling ice crystals, small icicles and drifting snowflakes, a cold pale-blue frozen glow radiating from its body',
+    nature:'this creature is UNMISTAKABLY a NATURE/GRASS type: growing green moss, fresh leaves, little flowers and curling vines, a lively fresh-green glow radiating from its body',
+    metal:'this creature is UNMISTAKABLY a METAL/STEEL type: riveted metal plating and chrome ore embedded in the stone, a brushed metallic sheen and thin electric-blue tech seams glowing on its body',
+    ombre:'this creature is UNMISTAKABLY a DARK/SHADOW type: wrapped in drifting purple shadow mist, glowing violet cracks and a cold dark aura radiating from its body',
+    chaos:'this creature is UNMISTAKABLY a CHAOS type: crackling neon-pink energy, glitching magenta sparks and unstable pink glowing veins radiating from its body',
+    lumiere:'this creature is UNMISTAKABLY a LIGHT type: bathed in a warm radiant golden glow, soft light rays and floating golden sparkles emanating from its body',
+    neutre:'this creature is a plain NORMAL rock type: natural earthy grey-and-brown stone with no strong elemental effects, just honest solid rock',
+  };
+  const typeSig=TYPE_SIG[type]||TYPE_SIG['neutre'];
+  const typeWord={feu:'FIRE',glace:'ICE',nature:'NATURE/GRASS',metal:'METAL/STEEL',ombre:'DARK/SHADOW',chaos:'CHAOS',lumiere:'LIGHT',neutre:'plain NORMAL rock'}[type]||'rock';
   const pick=arr=>arr[Math.floor(Math.random()*arr.length)];
   const typeStyle=pick(TYPE_STYLES[type]||TYPE_STYLES['neutre']);
   const bg=pick(TYPE_BG[type]||TYPE_BG['neutre']);
@@ -8061,12 +8075,12 @@ function buildCharacterPrompt(rock){
   const eyeShape=pick(EYE_SHAPES);
   const eyeColor=pick(EYE_COLORS);
   const mouth=villain?pick(MOUTHS_FIERCE):heroType?pick(MOUTHS_KIND):pick(MOUTHS_NEUTRAL);
-  const face=`${eyeShape} of a distinctive ${eyeColor} colour (the eye colour does NOT have to match its element), and ${mouth}`;
+  const face=`${eyeShape} of a distinctive ${eyeColor} colour (any expressive colour is fine), and ${mouth}`;
   const mood=villain?'a menacing villainous':heroType?'an adorable friendly good-hearted gentle':'a fierce brave';
   const kind=heroType?', radiating warmth and kindness, wholesome cute lovable and approachable, absolutely NOT scary, NOT menacing, NOT aggressive, NOT evil':'';
   const base=`${mood} one-of-a-kind rock-type creature monster named ${name}, its overall body silhouette is ${shape}, with ${face} on its carved stone face, plus ${feature}, its stone has ${extra}, expressive stubby stone limbs, brimming with personality${kind}`;
   const lighting=heroType?'warm soft cheerful bright and inviting lighting':'epic cinematic dramatic lighting';
-  return `${base}, ${pose}, ${sizeDesc}, ${rarityDesc}, its surface material and colouring: ${typeStyle} (this describes ONLY the surface texture and colour — keep the distinct body silhouette, eyes and mouth described above, do NOT collapse it into a plain round ball), ${atkDesc}, ${defDesc}, ${vitDesc}, ${personality}, give this creature a COMPLETELY UNIQUE face and silhouette — vary the eye shape, size, number and colour and the mouth so it clearly does not look like other creatures of the same element, it is unmistakably a solid living creature made entirely of stone with rough grainy mineral texture and cracks, an expressive rock-type creature-collector monster in the style of an official Pokemon-style creature, each one with a distinct silhouette and unique design, captured mid-action in a dynamic energetic pose (absolutely NOT standing still, NOT facing the camera straight, NOT a stiff symmetrical portrait), dynamic composition with the creature's full body fully visible and its size clearly readable (respect the described scale — small creatures look genuinely small, large creatures look genuinely huge), set against a ${bg} background, ${lighting}, glowing energy effects and motion, highly detailed vibrant creature illustration, official monster-taming trading card game artwork style, it is NOT a human, NOT wearing a costume or armor suit, NOT an animal — it is a living rock creature`;
+  return `${base}, ${typeSig}, ${pose}, ${sizeDesc}, ${rarityDesc}, its surface material and colouring: ${typeStyle} (this describes ONLY the surface texture and colour — keep the distinct body silhouette, eyes and mouth described above, do NOT collapse it into a plain round ball), ${atkDesc}, ${defDesc}, ${vitDesc}, ${personality}, give this creature a COMPLETELY UNIQUE face and silhouette — vary the eye shape, size, number and colour and the mouth so it clearly does not look like other creatures — BUT it must remain instantly recognisable as a ${typeWord} type (keep its elemental effects, colours and glow prominent), it is unmistakably a solid living creature made entirely of stone with rough grainy mineral texture and cracks, an expressive rock-type creature-collector monster in the style of an official Pokemon-style creature, each one with a distinct silhouette and unique design, captured mid-action in a dynamic energetic pose (absolutely NOT standing still, NOT facing the camera straight, NOT a stiff symmetrical portrait), dynamic composition with the creature's full body fully visible and its size clearly readable (respect the described scale — small creatures look genuinely small, large creatures look genuinely huge), set against a ${bg} background, ${lighting}, glowing energy effects and motion, highly detailed vibrant creature illustration, official monster-taming trading card game artwork style, it is NOT a human, NOT wearing a costume or armor suit, NOT an animal — it is a living rock creature`;
 }
 
 function stopCharGenTimer(){
