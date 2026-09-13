@@ -7799,6 +7799,12 @@ function buildCharacterPrompt(rock){
       'stone pebble with jagged pink crystal growths on top and a faint magenta aura',
       'weathered rock with unstable glowing pink seams and a couple of floating stone shards',
       'granite pebble splashed with wild pink mineral streaks, glowing cracks',
+      'obsidian pebble veined with cracked neon-pink circuitry glow',
+      'rounded rock wrapped in glitching pink static and stray sparks',
+      'stone body with a swirling pink vortex where a chunk is missing',
+      'granite pebble dripping with luminous magenta ooze',
+      'rock studded with unstable pink crystal shards that flicker',
+      'grey stone marbled with black-and-hot-pink lightning patterns',
     ],
     ombre:[
       'dark grey stone pebble wrapped in a faint wisp of purple shadow mist',
@@ -7809,6 +7815,12 @@ function buildCharacterPrompt(rock){
       'weathered purple-grey rock with a small crescent stone shard on top and a misty aura',
       'rounded dark pebble with dim glowing violet eye-hollows in the stone',
       'matte black stone body flecked with faint violet mineral glimmer',
+      'smoky grey pebble trailing ribbons of dark violet shadow',
+      'stone body pocked with tiny black holes leaking violet mist',
+      'obsidian rock with a single glowing violet crack down the middle',
+      'dusky purple stone wrapped in a shroud of drifting shadow',
+      'charcoal pebble with faintly glowing violet constellations on its surface',
+      'dark stone with an inky liquid-shadow sheen',
     ],
     feu:[
       'grey stone pebble with glowing orange lava cracks and little flames flickering from the seams',
@@ -7819,6 +7831,12 @@ function buildCharacterPrompt(rock){
       'cracked stone body with bright magma veins running through the rock',
       'burnt meteor-like stone with glowing orange seams and a faint ember trail',
       'dark stone pebble with lava-glow cracks and a couple of small flame tufts',
+      'blackened coal pebble with pulsing orange glow between the cracks',
+      'red-hot stone body shedding tiny floating embers',
+      'obsidian rock split to reveal a churning molten orange core',
+      'ashen grey pebble with flickering blue-and-orange flame tufts',
+      'cracked lava-rock body oozing slow bright magma',
+      'sun-baked terracotta stone with glowing crack-lines',
     ],
     metal:[
       'grey stone pebble with a few riveted iron plates bolted onto the rock and glowing blue cracks',
@@ -7829,6 +7847,12 @@ function buildCharacterPrompt(rock){
       'stone body with a couple of steel scraps riveted on, glowing bolt-heads',
       'iron-ore speckled rock pebble with a brushed-metal sheen along the cracks',
       'stone with a small embedded glowing tech-crystal and thin blue seams',
+      'polished steel-grey pebble with visible bolt heads and seams',
+      'stone fused with copper plating gone green at the edges',
+      'rock body wrapped in thin glowing blue wiring',
+      'gunmetal pebble with a brushed reflective finish and rivets',
+      'stone embedded with gear-shaped metal chunks',
+      'silver-ore pebble with a faint humming blue energy field',
     ],
     nature:[
       'grey stone pebble covered in soft green moss and tiny sprouting leaves',
@@ -7839,6 +7863,12 @@ function buildCharacterPrompt(rock){
       'weathered stone with emerald moss patches and a curious little ladybug',
       'grey pebble with fresh grass, tiny daisies and a fluttering butterfly',
       'stone body dusted with autumn leaves and warm green mossy patches',
+      'stone pebble sprouting tiny colourful wildflowers and clover',
+      'rock carpeted in thick springy green moss like fur',
+      'pebble with little mushrooms and a curling fern frond',
+      'stone wrapped in flowering vines with tiny buds opening',
+      'mossy rock with a small sapling growing from its top',
+      'weathered stone dotted with dewy clover and a resting butterfly',
     ],
     lumiere:[
       'pale stone pebble glowing warm golden from its cracks, soft floating sparkles',
@@ -7849,6 +7879,12 @@ function buildCharacterPrompt(rock){
       'grey stone surrounded by a few glowing golden fireflies',
       'pale pebble with luminous golden facets and a faint rainbow-gold shimmer',
       'bright smooth stone with a gentle divine golden glow along its edges',
+      'pearlescent white pebble shining with a soft inner glow',
+      'stone body radiating gentle golden sunrise light from every crack',
+      'cream quartz pebble haloed by drifting golden motes',
+      'smooth luminous stone casting soft warm light rays',
+      'pale gold pebble with a faint shimmering rainbow aura',
+      'glowing alabaster rock with warm light pooling in its hollows',
     ],
     glace:[
       'pale blue stone pebble coated in frost and tiny sparkling ice crystals',
@@ -7859,6 +7895,12 @@ function buildCharacterPrompt(rock){
       'frost-covered rock with delicate snowflake patterns on the stone',
       'blue-tinged pebble with a soft flurry of snow drifting around it',
       'chilly grey stone with a shimmering pale-blue frosty sheen',
+      'glassy pale-blue pebble sheathed in clear crystalline ice',
+      'frost-white stone with delicate feathered ice crystals',
+      'rounded rock half-buried in a cap of soft powder snow',
+      'translucent blue ice-stone with a cold inner shimmer',
+      'grey pebble rimed with sparkling hoarfrost',
+      'icy stone trailing a soft mist of freezing vapor',
     ],
     neutre:[
       'plain smooth grey pebble, simple, round and cute',
@@ -7869,6 +7911,12 @@ function buildCharacterPrompt(rock){
       'rugged little boulder with faint green moss patches',
       'pale moonstone-grey pebble with a subtle silver sheen',
       'sandy-beige stone pebble with a soft matte texture',
+      'smooth grey-and-white banded river pebble',
+      'warm sandstone stone with soft rounded edges',
+      'dark basalt pebble with a fine even grain',
+      'pale limestone stone with tiny fossil imprints',
+      'mottled brown-and-grey field stone',
+      'rounded quartzite pebble with a soft glassy sheen',
     ],
   };
   const POSES=[
@@ -7879,16 +7927,23 @@ function buildCharacterPrompt(rock){
     'slamming the ground with a fist, shockwave and flying debris','triumphant battle cry with arms raised and sparks flying',
     'dramatic low-angle shot looking up at the heroic creature','glancing back over its shoulder mid-run, dynamic angle',
     'jumping high delivering a powerful uppercut','bracing in a defensive stance against an incoming blow, dust swirling',
+    'floating calmly in mid-air surrounded by swirling energy','flexing both arms proudly showing off its strength',
+    'sliding into a cool landing pose with dust kicking up','winding up a giant overhead smash','sprinting toward the camera with a fierce look',
+    'twirling gracefully with trailing sparkles','peeking out playfully from behind a rock, curious pose','sitting and giving a cheeky wink and a thumbs up',
+    'howling to the sky as energy erupts from its body','back-to-back heroic stance with wind blowing','mid-backflip dodge with motion streaks',
+    'planting its feet and raising a protective barrier','pointing forward confidently issuing a challenge','curled up then bursting outward with power',
+    'balancing on one foot in a playful martial-arts stance','tossing a glowing energy orb between its hands','stomping forward with heavy determined steps',
+    'leaning forward with a mischievous grin ready to strike','a heroic hero-landing crouch with one fist on the ground, cracks radiating out',
   ];
   const TYPE_BG={
-    chaos:['chaotic glitch dimension, swirling pink and black energy, cracked reality, neon sparks','vaporwave void, floating pink geometric shards, warping space'],
-    ombre:['haunted graveyard at night, purple mist, eerie moonlight, dead trees','dark gothic cathedral ruins, violet fog, floating shadows'],
-    feu:['erupting volcano, rivers of lava and flames, glowing embers, ash sky','burning battlefield at dusk, fire and smoke, orange glow'],
-    metal:['futuristic neon factory, blue machinery and pipes, flying sparks','sci-fi metal hangar, chrome walls, electric blue lights'],
-    nature:['lush enchanted forest, sunbeams through leaves, flowers and vines','peaceful mossy clearing, waterfalls, glowing fireflies'],
-    lumiere:['radiant heavenly sky, golden light rays, soft glowing clouds','sunrise over golden hills, warm divine light, sparkles'],
-    glace:['frozen ice cavern, blue crystals, falling snow, aurora glow','snowy mountain peak, icy wind, pale blue sky'],
-    neutre:['rocky canyon at golden hour, dramatic sky, distant mountains','pebble riverbank, soft daylight, smooth stones and water'],
+    chaos:['chaotic glitch dimension, swirling pink and black energy, cracked reality, neon sparks','vaporwave void, floating pink geometric shards, warping space','shattered mirror dimension, kaleidoscopic pink fractals','stormy magenta nebula with crackling lightning','carnival of broken realities, tilted neon platforms'],
+    ombre:['haunted graveyard at night, purple mist, eerie moonlight, dead trees','dark gothic cathedral ruins, violet fog, floating shadows','abyssal void with drifting purple wisps and distant eyes','moonlit swamp shrouded in violet haze','crumbling shadow temple lit by cold purple flames'],
+    feu:['erupting volcano, rivers of lava and flames, glowing embers, ash sky','burning battlefield at dusk, fire and smoke, orange glow','molten forge cavern with cascading sparks','scorched desert under a blood-red sun','magma lake with floating cinders and heat haze'],
+    metal:['futuristic neon factory, blue machinery and pipes, flying sparks','sci-fi metal hangar, chrome walls, electric blue lights','cyber server room with glowing circuits','industrial scrapyard with cranes and steam','sleek chrome laboratory with holographic panels'],
+    nature:['lush enchanted forest, sunbeams through leaves, flowers and vines','peaceful mossy clearing, waterfalls, glowing fireflies','blossoming spring meadow with drifting petals','giant mushroom grove with soft green light','tranquil bamboo garden with koi pond'],
+    lumiere:['radiant heavenly sky, golden light rays, soft glowing clouds','sunrise over golden hills, warm divine light, sparkles','crystal sanctuary glowing with warm light','field of glowing dandelions at golden hour','celestial temple floating among sunlit clouds'],
+    glace:['frozen ice cavern, blue crystals, falling snow, aurora glow','snowy mountain peak, icy wind, pale blue sky','glittering glacier under the northern lights','frozen lake at twilight with soft snowfall','crystal ice palace with shimmering blue halls'],
+    neutre:['rocky canyon at golden hour, dramatic sky, distant mountains','pebble riverbank, soft daylight, smooth stones and water','grassy hilltop under a big blue sky','quarry of tumbled stones at sunset','cozy zen rock garden with raked sand'],
   };
   const pick=arr=>arr[Math.floor(Math.random()*arr.length)];
   const typeStyle=pick(TYPE_STYLES[type]||TYPE_STYLES['neutre']);
@@ -7908,6 +7963,14 @@ function buildCharacterPrompt(rock){
     'a coiled serpentine stone body','a hunched gargoyle-like crouching stone body',
     'a spherical body with four stumpy legs','a teardrop-shaped smooth stone body',
     'a flat wide shield-shaped slab body','a spiky star-shaped mineral body',
+    'a hexagonal basalt-column body','a diamond-shaped faceted crystal body','a bulky quadruped stone-beast body',
+    'a floating body split into several drifting rock chunks','a tall thin obelisk body with a pointed top','a boxy little robot-like stone body',
+    'an arched bridge-shaped stone body','a mushroom-shaped body with a wide rocky cap','a crab-like body with wide side claws',
+    'a curled-up armadillo boulder body','a lanky long-limbed craggy body','a squat toad-like stone body',
+    'a top-shaped spinning-stone body','a body of nested concentric rock rings','a plump egg-shaped smooth stone body',
+    'a jagged shark-fin-profiled body','a stubby barrel-shaped stone body','a body like a small rocky mountain with a peak',
+    'a slender crescent-moon-curved stone body','a chunky fist-shaped boulder body','a body of interlocked cube blocks',
+    'a swirling spiral-shell stone body','a wide flat pancake-stack body',
   ];
   // Détail distinctif tiré au sort -> chaque créature est unique
   const FEATURES=[
@@ -7918,6 +7981,14 @@ function buildCharacterPrompt(rock){
     'a single glowing gem embedded in its forehead','a stony beard of hanging pebbles','asymmetrical mismatched arms',
     'thick armored stone plates like a shell','little cracks leaking wisps of energy','a spiral shell of layered rock on its back',
     'a jagged fin-crest running down its spine','chunky boxing-glove stone fists','tiny stubby legs and a huge round body',
+    'a single straight horn like a unicorn','a trio of small horns in a row','a wide flat frill collar of stone plates',
+    'huge round ears carved from rock','a stubby snout like a little muzzle','a cluster of floating orbiting pebbles like a halo',
+    'a heavy ball-and-chain tail of stone','oversized flat feet','a hunched armored back like a beetle shell',
+    'glowing veins pulsing beneath a translucent crystal skin','a mane of jagged mineral shards','a pair of tiny curled tusks',
+    'a lantern-like glowing crystal hanging from its head','one enormous arm dragging on the ground','a row of spikes down its back like a stegosaurus',
+    'a smooth polished belly-gem','a cracked mask-like face plate','tiny wings far too small for its body',
+    'a chunky underbite jaw','a swirl pattern carved into its chest','a topknot of balanced pebbles','a cape of hanging moss',
+    'stubby clawed digger hands','a glowing cracked halo hovering above its head',
   ];
   // Les types GENTILS (héros) : formes plutôt douces MAIS variées (plus que des boules)
   const HERO_SHAPES=[
@@ -7926,6 +7997,11 @@ function buildCharacterPrompt(rock){
     'a body of three round pebbles stacked like a happy snowman','a friendly crystalline body with soft rounded facets',
     'a rounded mossy boulder body','a pear-shaped stone body with a big head and small base',
     'a chunky but cuddly slightly-angular boulder body','a smooth teardrop pebble body','a wide cuddly round boulder body',
+    'a bean-shaped soft pebble body','a marshmallow-soft rounded stone body','a dumpling-shaped little stone body',
+    'a plump egg-shaped smooth body','a round body with tiny stubby legs and a big head','a soft rounded body like a sleepy loaf',
+    'a gently rounded body with a smooth heart-shaped outline','a cute mushroom-shaped body with a soft rounded cap',
+    'a little rounded body wrapped in soft moss like a blanket','a smooth rounded body with a friendly big-cheeked face',
+    'a rounded body of two stacked pebbles like a snug snowman-baby','a soft rounded crystal geode body with a cozy glow',
   ];
   const HERO_FEATURES=[
     'a little sprout of fresh green leaves on its head','a small friendly flower blooming on top of its head',
@@ -7933,6 +8009,10 @@ function buildCharacterPrompt(rock){
     'tiny cute stubby little wings','a fluffy patch of soft green moss like cozy hair',
     'big round rosy cheeks','a couple of tiny twinkling star sparkles hovering above it','little smooth rounded pebble ears',
     'a tiny songbird or ladybug resting happily on its shoulder','a cozy little scarf of moss','a curl of smooth pebbles like a topknot',
+    'a tiny mushroom growing on its shoulder','a soft dandelion puff sprouting from its head','a little pair of antenna-like sprouts with round tips',
+    'a gentle glowing heart-shaped crystal on its chest','a small friendly snail riding on its back','a wreath of tiny flowers around its head',
+    'a fluffy tuft of moss like a little beard','round dewdrop sparkles on its cheeks','a tiny leaf held like a little umbrella',
+    'soft rounded pebble mittens for hands','a cozy little acorn cap on its head','gentle firefly lights circling around it',
   ];
   // ----- Visage varié : yeux (forme + couleur) et bouche tirés indépendamment -----
   // -> deux créatures du même type n'ont plus les mêmes yeux ni le même sourire.
@@ -7941,27 +8021,50 @@ function buildCharacterPrompt(rock){
     'fierce slanted battle eyes','huge sparkly cartoon eyes','small beady dot eyes','gentle kind almond-shaped eyes',
     'two mismatched eyes of clearly different sizes','a single big central cyclops eye','three small eyes in a row',
     'glowing hollow eye-sockets with tiny bright pupils','deep-set eyes under a heavy stone brow','cool half-closed confident eyes',
-    'round googly wobbling eyes','four tiny eyes clustered together',
+    'round googly wobbling eyes','four tiny eyes clustered together','narrow fox-like cunning eyes','huge teary puppy eyes',
+    'square blocky pixel-like eyes','crescent-moon happy closed eyes','spiraling hypnotic swirl eyes','star-shaped glowing eyes',
+    'one eye open and one winking','wide-set eyes far apart on the sides of its head','a single glowing visor slit across its face',
+    'heavy-lidded bored eyes','sparkling excited wide eyes','tiny eyes behind a stony brow ridge','two eyes stacked vertically',
+    'glowing cat-slit pupils','round owlish enormous eyes','a cluster of many tiny gem-like eyes','half-moon glasses-shaped stony rims around its eyes',
+    'fierce angular eyes with thick brows','soft rounded gentle eyes with long lashes','glowing ringed target-like eyes',
+    'deep glowing pit eyes with no visible pupils','bright curious button eyes',
   ];
   const EYE_COLORS=['bright amber','deep crimson','electric blue','emerald green','golden yellow','glowing violet',
-    'icy pale blue','molten orange','soft rose pink','silver-white','turquoise','lime green','pure black','sunny yellow-green'];
+    'icy pale blue','molten orange','soft rose pink','silver-white','turquoise','lime green','pure black','sunny yellow-green',
+    'ruby red','sapphire blue','honey gold','minty green','lavender purple','copper orange','jet black with a bright glint',
+    'glowing white','deep ocean teal','peachy coral','steel grey','neon magenta','pale gold','forest green','sky blue','warm brown',
+    'iridescent rainbow-shifting','glowing ember red-orange','frosty cyan','soft cream','bright tangerine'];
   const MOUTHS_FIERCE=['a fierce fanged snarl','a wide toothy war-grin','a smug crooked smirk','a clenched determined jaw',
-    'a jagged rocky maw hanging slightly open','a bold confident grin showing chipped stone teeth'];
+    'a jagged rocky maw hanging slightly open','a bold confident grin showing chipped stone teeth','a savage roaring open mouth',
+    'a sly villainous half-smile','a gritted grimace of sharp stone teeth','a wicked wide grin','a snarling curled lip',
+    'a cocky fanged smirk','a menacing frown with jutting lower fangs','a battle-hungry open-mouthed shout','a toothy crocodile grin'];
   const MOUTHS_KIND=['a gentle happy smile','a tiny shy bashful smile','a big goofy cheerful grin','a soft content closed smile',
-    'a cute little open-mouthed laugh','a warm beaming friendly smile'];
+    'a cute little open-mouthed laugh','a warm beaming friendly smile','a sweet dreamy smile','a playful tongue-out grin',
+    'a bubbly excited open smile','a tender closed-eyes happy smile','a little rounded o of delight','a cozy sleepy smile',
+    'a wobbly cute nervous smile','a proud gap-toothed grin','a soft humming little smile'];
   const MOUTHS_NEUTRAL=['a calm neutral mouth','a slight curious half-smile','a focused straight mouth','a quirky lopsided grin',
-    'a small surprised o-shaped mouth','a stoic closed mouth with a chipped tooth'];
+    'a small surprised o-shaped mouth','a stoic closed mouth with a chipped tooth','a thoughtful pursed mouth','a smirking side grin',
+    'a flat unimpressed line','a whistling puckered mouth','a slight cheeky smile','a puzzled crooked mouth',
+    'a cool confident smirk','a wide surprised gasp','a tiny stoic dash of a mouth'];
   const heroType=HEROES.includes(type);
   const villain=VILLAINS.includes(type);
   const shape=heroType?pick(HERO_SHAPES):pick(BODY_SHAPES);
-  const feature=heroType?pick(HERO_FEATURES):pick(FEATURES);
+  // Deux détails distincts -> multiplie énormément les combinaisons possibles.
+  const pick2=arr=>{ if(arr.length<2) return pick(arr); const a=pick(arr); let bb=pick(arr),n=0; while(bb===a&&n<8){bb=pick(arr);n++;} return a+', and '+bb; };
+  const feature=heroType?pick2(HERO_FEATURES):pick2(FEATURES);
+  // Couche "texture/patine" supplémentaire, indépendante du type.
+  const EXTRAS=['a rough weathered matte texture','a glossy polished sheen','a sandy grainy surface','fine hairline cracks all over',
+    'patches of lichen and age spots','sparkling embedded mineral flecks','smooth sea-worn rounded edges','sharp freshly-broken facets',
+    'a marbled swirling grain','speckled granite spots','a dusty chalky finish','tiny holes like porous volcanic rock',
+    'layered sedimentary stripes','a faint iridescent oil-sheen','veins of a contrasting mineral running through it','a cracked dry desert-mud texture'];
+  const extra=pick(EXTRAS);
   const eyeShape=pick(EYE_SHAPES);
   const eyeColor=pick(EYE_COLORS);
   const mouth=villain?pick(MOUTHS_FIERCE):heroType?pick(MOUTHS_KIND):pick(MOUTHS_NEUTRAL);
   const face=`${eyeShape} of a distinctive ${eyeColor} colour (the eye colour does NOT have to match its element), and ${mouth}`;
   const mood=villain?'a menacing villainous':heroType?'an adorable friendly good-hearted gentle':'a fierce brave';
   const kind=heroType?', radiating warmth and kindness, wholesome cute lovable and approachable, absolutely NOT scary, NOT menacing, NOT aggressive, NOT evil':'';
-  const base=`${mood} one-of-a-kind rock-type creature monster named ${name}, its overall body silhouette is ${shape}, with ${face} on its carved stone face, plus ${feature}, expressive stubby stone limbs, brimming with personality${kind}`;
+  const base=`${mood} one-of-a-kind rock-type creature monster named ${name}, its overall body silhouette is ${shape}, with ${face} on its carved stone face, plus ${feature}, its stone has ${extra}, expressive stubby stone limbs, brimming with personality${kind}`;
   const lighting=heroType?'warm soft cheerful bright and inviting lighting':'epic cinematic dramatic lighting';
   return `${base}, ${pose}, ${sizeDesc}, ${rarityDesc}, its surface material and colouring: ${typeStyle} (this describes ONLY the surface texture and colour — keep the distinct body silhouette, eyes and mouth described above, do NOT collapse it into a plain round ball), ${atkDesc}, ${defDesc}, ${vitDesc}, ${personality}, give this creature a COMPLETELY UNIQUE face and silhouette — vary the eye shape, size, number and colour and the mouth so it clearly does not look like other creatures of the same element, it is unmistakably a solid living creature made entirely of stone with rough grainy mineral texture and cracks, an expressive rock-type creature-collector monster in the style of an official Pokemon-style creature, each one with a distinct silhouette and unique design, captured mid-action in a dynamic energetic pose (absolutely NOT standing still, NOT facing the camera straight, NOT a stiff symmetrical portrait), dynamic composition with the creature's full body fully visible and its size clearly readable (respect the described scale — small creatures look genuinely small, large creatures look genuinely huge), set against a ${bg} background, ${lighting}, glowing energy effects and motion, highly detailed vibrant creature illustration, official monster-taming trading card game artwork style, it is NOT a human, NOT wearing a costume or armor suit, NOT an animal — it is a living rock creature`;
 }
