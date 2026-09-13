@@ -603,15 +603,19 @@ nav{display:flex;gap:8px;padding:10px 14px max(14px,env(safe-area-inset-bottom))
   transform:perspective(680px) rotateX(var(--rx)) rotateY(var(--ry));
   transform-style:preserve-3d;transition:transform .1s ease-out;will-change:transform;}
 .holo-card>*{position:relative;z-index:1;}
-/* Reflet lumineux vif qui suit l'inclinaison — TOUTE la carte brille */
+/* Reflet lumineux doux qui suit l'inclinaison (n'écrase pas le texte) */
 .holo-glare{position:absolute;inset:0;border-radius:20px;pointer-events:none;z-index:6;mix-blend-mode:soft-light;
-  background:radial-gradient(circle at var(--mx) var(--my),rgba(255,255,255,1),rgba(255,255,255,.35) 30%,transparent 62%);}
-/* Bande holographique arc-en-ciel qui BALAIE toute la carte selon l'inclinaison */
-.holo-foil{position:absolute;inset:0;border-radius:20px;pointer-events:none;z-index:5;opacity:.7;mix-blend-mode:screen;
-  background:linear-gradient(110deg,transparent 26%,rgba(255,70,180,.85) 40%,rgba(255,225,90,.85) 47%,rgba(110,255,180,.85) 54%,rgba(110,180,255,.85) 61%,rgba(210,110,255,.85) 68%,transparent 82%);
-  background-size:260% 260%;background-position:var(--mx) var(--my);}
-.holo-card.holo-strong .holo-foil{opacity:.85;}
-.holo-card.holo-strong .holo-glare{background:radial-gradient(circle at var(--mx) var(--my),rgba(255,255,255,1),rgba(255,255,255,.4) 28%,transparent 60%);}
+  background:radial-gradient(circle at var(--mx) var(--my),rgba(255,255,255,.9),rgba(255,255,255,.25) 32%,transparent 62%);}
+/* Nappe holographique arc-en-ciel CONTINUE (pas de bord net) qui glisse selon l'inclinaison.
+   Blend "overlay" -> colore la carte mais garde le texte sombre bien lisible. */
+.holo-foil{position:absolute;inset:0;border-radius:20px;pointer-events:none;z-index:5;opacity:.5;mix-blend-mode:overlay;
+  background:linear-gradient(125deg,#ff50b4,#ffdc5a,#6effb4,#6eb4ff,#d26eff,#ff50b4);
+  background-size:220% 220%;background-position:var(--mx) var(--my);}
+.holo-card.holo-strong .holo-foil{opacity:.62;}
+.holo-card.holo-strong .holo-glare{background:radial-gradient(circle at var(--mx) var(--my),rgba(255,255,255,.95),rgba(255,255,255,.3) 30%,transparent 60%);}
+/* Dans la visionneuse : un peu plus intense mais toujours propre et lisible */
+.holo-stage .holo-foil{opacity:.6;}
+.holo-stage .holo-card.holo-strong .holo-foil{opacity:.72;}
 /* En ligne : la carte holo est cliquable (ouvre la visionneuse) */
 .holo-card[data-action="holoView"]{cursor:pointer;}
 .holo-tap{font-family:'Baloo 2',sans-serif;font-weight:800;font-size:11px;color:var(--goldd);text-align:center;margin-top:10px;letter-spacing:.02em;}
@@ -1385,12 +1389,13 @@ nav{display:flex;gap:8px;padding:10px 14px max(14px,env(safe-area-inset-bottom))
 
 /* ===== OUVERTURE DE PACK style TCG Pocket (on coupe le pack en glissant) ===== */
 .tcg-wrap{min-height:72vh;justify-content:flex-start;}
-.pk-tcg{position:relative;z-index:1;width:min(76vw,310px);height:min(76vw,310px);display:flex;align-items:center;justify-content:center;margin:5vh 0 0;--cut:30%;--cutrest:70%;}
+.pk-tcg{position:relative;z-index:1;width:min(76vw,310px);height:min(76vw,310px);display:flex;align-items:center;justify-content:center;margin:5vh 0 0;--cut:15%;}
 .pk-pack{position:relative;width:100%;height:100%;touch-action:none;cursor:grab;animation:pkFloat 3.2s ease-in-out infinite;}
 .pk-pack.opening{animation:none;}
 .pk-half{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 14px 26px rgba(0,0,0,.5)) drop-shadow(0 0 24px var(--pk));}
-.pk-top{clip-path:inset(0 0 var(--cutrest) 0);z-index:3;}
-.pk-bottom{clip-path:inset(var(--cut) 0 0 0);z-index:2;}
+/* Découpe ONDULÉE (bord déchiré) au niveau ~15% : les deux moitiés partagent la même frontière. */
+.pk-top{z-index:3;clip-path:polygon(0% 0%,100% 0%,100% 13.5%,92% 16.5%,84% 13.5%,76% 16.5%,68% 13.5%,60% 16.5%,52% 13.5%,44% 16.5%,36% 13.5%,28% 16.5%,20% 13.5%,12% 16.5%,4% 13.5%,0% 15%);}
+.pk-bottom{z-index:2;clip-path:polygon(0% 15%,4% 13.5%,12% 16.5%,20% 13.5%,28% 16.5%,36% 13.5%,44% 16.5%,52% 13.5%,60% 16.5%,68% 13.5%,76% 16.5%,84% 13.5%,92% 16.5%,100% 13.5%,100% 100%,0% 100%);}
 .pk-seam{position:absolute;left:0;top:var(--cut);height:5px;width:0;opacity:0;transform:translateY(-50%);border-radius:3px;z-index:6;pointer-events:none;
   background:linear-gradient(90deg,rgba(255,255,255,0),#fff 25%,#fff 75%,rgba(255,255,255,.6));
   box-shadow:0 0 10px 3px #fff,0 0 22px 7px var(--pk);}
