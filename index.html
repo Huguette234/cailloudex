@@ -598,6 +598,27 @@ nav{display:flex;gap:8px;padding:10px 14px max(14px,env(safe-area-inset-bottom))
 .pc-foot{display:flex;justify-content:space-between;align-items:center;margin:8px 2px 1px;font-family:'Baloo 2',sans-serif;font-weight:800;font-size:9.5px;color:#8a7c56;letter-spacing:.04em;}
 .pcard.pc-shine::after{content:"";position:absolute;top:0;left:-150%;width:55%;height:100%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.4),transparent);animation:shineSweep 2.8s ease-in-out infinite;pointer-events:none;border-radius:20px;}
 
+/* ===== CARTES HOLOGRAPHIQUES réactives (inclinaison du téléphone / doigt) ===== */
+.holo-card{--mx:50%;--my:50%;--rx:0deg;--ry:0deg;
+  transform:perspective(760px) rotateX(var(--rx)) rotateY(var(--ry));
+  transform-style:preserve-3d;transition:transform .12s ease-out;will-change:transform;}
+.holo-card>*{position:relative;z-index:1;}
+/* Reflet lumineux qui suit l'inclinaison */
+.holo-glare{position:absolute;inset:0;border-radius:20px;pointer-events:none;z-index:6;mix-blend-mode:soft-light;
+  background:radial-gradient(circle at var(--mx) var(--my),rgba(255,255,255,.75),rgba(255,255,255,.18) 26%,transparent 58%);}
+/* Feuille arc-en-ciel holographique */
+.holo-foil{position:absolute;inset:0;border-radius:20px;pointer-events:none;z-index:5;opacity:.4;mix-blend-mode:color-dodge;
+  background:linear-gradient(115deg,transparent 12%,rgba(255,0,140,.5),rgba(255,190,0,.5),rgba(0,255,170,.5),rgba(80,130,255,.5),rgba(200,0,255,.5),transparent 88%);
+  background-size:280% 280%;background-position:calc(var(--mx) + 0%) calc(var(--my) + 0%);
+  -webkit-mask:linear-gradient(180deg,#000 0%,#000 46%,rgba(0,0,0,.3) 62%,rgba(0,0,0,.28) 100%);mask:linear-gradient(180deg,#000 0%,#000 46%,rgba(0,0,0,.3) 62%,rgba(0,0,0,.28) 100%);}
+.holo-card.holo-strong .holo-foil{opacity:.55;}
+.holo-card.holo-strong .holo-glare{background:radial-gradient(circle at var(--mx) var(--my),rgba(255,255,255,.9),rgba(255,255,255,.22) 24%,transparent 56%);}
+/* Paillettes scintillantes (hautes raretés) */
+.holo-sparkle{position:absolute;inset:0;border-radius:20px;pointer-events:none;z-index:5;opacity:.5;mix-blend-mode:screen;
+  background-image:radial-gradient(rgba(255,255,255,.9) 1px,transparent 1.6px),radial-gradient(rgba(255,255,255,.7) 1px,transparent 1.6px);
+  background-size:34px 34px,52px 52px;background-position:var(--mx) var(--my),calc(var(--mx) + 17px) calc(var(--my) + 26px);}
+.holo-hint{font-family:'Baloo 2',sans-serif;font-weight:700;font-size:10.5px;color:rgba(44,42,46,.5);text-align:center;margin-top:8px;}
+
 /* Location footer */
 .tcard-loc{
   text-align:center;margin-top:8px;
@@ -3118,7 +3139,42 @@ function sfxUnlock(){
     if(!_audioCtx){ const AC=window.AudioContext||window.webkitAudioContext; if(!AC) return; _audioCtx=new AC(); }
     if(_audioCtx.state==='suspended') _audioCtx.resume();
   }catch(e){}
+  holoRequestGyro();
 }
+
+/* ===== EFFET HOLOGRAPHIQUE réactif (inclinaison / doigt) ===== */
+let _holoGyroAsked=false;
+function _holoApplyTilt(nx,ny){ // nx,ny dans [-1,1]
+  const cards=document.querySelectorAll('.holo-card'); if(!cards.length) return;
+  const rx=(-ny*7).toFixed(2)+'deg', ry=(nx*7).toFixed(2)+'deg';
+  const mx=(50+nx*45).toFixed(1)+'%', my=(50+ny*45).toFixed(1)+'%';
+  cards.forEach(el=>{ el.style.setProperty('--rx',rx); el.style.setProperty('--ry',ry); el.style.setProperty('--mx',mx); el.style.setProperty('--my',my); });
+}
+function _holoOnOrient(e){
+  if(e.gamma==null&&e.beta==null) return;
+  const nx=Math.max(-1,Math.min(1,(e.gamma||0)/40));           // gauche/droite
+  const ny=Math.max(-1,Math.min(1,((e.beta||0)-40)/40));       // avant/arrière (téléphone tenu ~40°)
+  _holoApplyTilt(nx,ny);
+}
+function holoRequestGyro(){
+  if(_holoGyroAsked) return; _holoGyroAsked=true;
+  try{
+    if(window.DeviceOrientationEvent && typeof DeviceOrientationEvent.requestPermission==='function'){
+      DeviceOrientationEvent.requestPermission().then(s=>{ if(s==='granted') window.addEventListener('deviceorientation',_holoOnOrient,true); }).catch(()=>{});
+    } else if(window.DeviceOrientationEvent){
+      window.addEventListener('deviceorientation',_holoOnOrient,true);
+    }
+  }catch(e){}
+}
+// Repli / bonus : réaction au doigt (glisse sur la carte) et à la souris.
+document.addEventListener('pointermove',e=>{
+  const card=e.target&&e.target.closest?e.target.closest('.holo-card'):null; if(!card) return;
+  const r=card.getBoundingClientRect();
+  const nx=Math.max(-1,Math.min(1,((e.clientX-r.left)/r.width-0.5)*2));
+  const ny=Math.max(-1,Math.min(1,((e.clientY-r.top)/r.height-0.5)*2));
+  card.style.setProperty('--rx',(-ny*9).toFixed(2)+'deg'); card.style.setProperty('--ry',(nx*9).toFixed(2)+'deg');
+  card.style.setProperty('--mx',(50+nx*45).toFixed(1)+'%'); card.style.setProperty('--my',(50+ny*45).toFixed(1)+'%');
+},{passive:true});
 function _tone(o){
   if(!soundOn||!_audioCtx) return;
   try{
@@ -4268,7 +4324,11 @@ function pcStat(label,val,color){
   return `<div class="pc-stat"><div class="pc-stat-lbl">${label}</div><div class="tcard-stat-val">${val||0}</div><div class="pc-stat-bar"><div class="tcard-stat-fill" style="width:${pct}%;background:${color};"></div></div></div>`;
 }
 function specimenCard(rock,pop){
-  const flashy=['epique','legendaire','mythique','cosmique','galaxie','secret'].includes(rock.rarity)?'pc-shine':'';
+  // Cartes holographiques réactives à partir de l'Épique ; effet renforcé pour les hautes raretés.
+  const isHolo=['epique','legendaire','mythique','cosmique','galaxie','secret'].includes(rock.rarity);
+  const holoStrong=['mythique','cosmique','galaxie','secret'].includes(rock.rarity);
+  const holoCls=isHolo?(' holo-card'+(holoStrong?' holo-strong':'')):'';
+  const flashy='';
   const typeInfo=ROCK_TYPES.find(t=>t.key===rock.rockType)||null;
   // On affiche l'illustration IA si elle existe, sinon la photo d'origine
   // (on n'utilise plus animePhoto qui ajoutait un halo coloré peu esthétique).
@@ -4285,7 +4345,7 @@ function specimenCard(rock,pop){
   const subBits=[];
   if(rock.sizeCm) subBits.push(`📏 ~${rock.sizeCm} cm`);
   if(locName(rock.location)) subBits.push(`📍 ${locName(rock.location)}`);
-  const card=`<div class="pcard ${pop?'card-pop':''} ${flashy}" style="--rarity-glow:${hex}40;background:linear-gradient(150deg,${hex},${hex}B0 55%,${hex}85);">
+  const card=`<div class="pcard ${pop?'card-pop':''}${holoCls}" style="--rarity-glow:${hex}40;--holo:${hex};background:linear-gradient(150deg,${hex},${hex}B0 55%,${hex}85);">
     <div class="pcard-inner">
       <div class="pc-head">
         <span class="pc-name">${rock.name}</span>
@@ -4306,7 +4366,7 @@ function specimenCard(rock,pop){
       </div>
       ${(rock.personality||rock.quip)?`<div class="pc-flavor">${rock.personality?rock.personality:''}${rock.quip?` <i>« ${rock.quip} »</i>`:''}</div>`:''}
       <div class="pc-foot"><span>${rock.rarityLabel}</span><span>N°${String(rock.catalogNumber).padStart(4,'0')}</span></div>
-    </div>
+    </div>${isHolo?'<div class="holo-foil"></div><div class="holo-glare"></div>'+(holoStrong?'<div class="holo-sparkle"></div>':''):''}
   </div>`;
   let wrapped=holo?`<div class="frame-holo" style="border-radius:20px;">${card}</div>`:card;
   if(rock.evolved) wrapped=`<div class="evolved-glow" style="border-radius:20px;">${wrapped}</div>`;
