@@ -866,7 +866,7 @@ nav{display:flex;gap:8px;padding:10px 14px max(14px,env(safe-area-inset-bottom))
 .mission-fill{height:100%;border-radius:999px;background:linear-gradient(90deg,#2D9CDB,#6FCF97);transition:width .4s ease;}
 .mission-fill.ready{background:linear-gradient(90deg,#FFD700,#FFB300);animation:nrgPulse .9s ease-in-out infinite;}
 .mission-prog{font-family:'Nunito',sans-serif;font-weight:700;font-size:10px;color:rgba(44,42,46,.55);text-align:right;margin-top:3px;}
-/* Classement des dresseurs */
+/* Classement des dresseur·ses */
 .lb-list{display:flex;flex-direction:column;gap:7px;max-height:56vh;overflow-y:auto;}
 .lb-row{display:flex;align-items:center;gap:10px;background:linear-gradient(160deg,rgba(255,255,255,.82),rgba(255,255,255,.64));border:1px solid rgba(255,255,255,.9);border-radius:14px;padding:8px 12px;box-shadow:0 4px 12px rgba(0,0,0,.14);}
 .lb-row.me{border-color:var(--goldd);background:linear-gradient(160deg,rgba(255,231,154,.6),rgba(255,244,214,.5));box-shadow:0 4px 14px rgba(184,142,20,.3);}
@@ -1667,41 +1667,41 @@ const ACHIEVEMENTS = [
   // BRONZE — faciles
   { id:'first',   tier:'bronze', icon:'🪨', label:'Premier Amour',    desc:'Capture ton 1er caillou' },
   { id:'ai_first',tier:'bronze', icon:'🤖', label:'IA vs Caillou',    desc:'1ère analyse IA d\'un caillou' },
-  { id:'share1',  tier:'bronze', icon:'📱', label:'Influenceur Minéral', desc:'Partage un caillou' },
-  { id:'chaos',   tier:'bronze', icon:'💥', label:'Agent du Chaos',   desc:'Un caillou de type Chaos' },
-  { id:'level5',  tier:'bronze', icon:'🌱', label:'Apprenti Caillou', desc:'Atteins le niveau 5' },
+  { id:'share1',  tier:'bronze', icon:'📱', label:'Influenceur·se Minéral·e', desc:'Partage un caillou' },
+  { id:'chaos',   tier:'bronze', icon:'💥', label:'Agent·e du Chaos',   desc:'Un caillou de type Chaos' },
+  { id:'level5',  tier:'bronze', icon:'🌱', label:'Apprenti·e Caillou', desc:'Atteins le niveau 5' },
   // ARGENT — moyens
   { id:'five',    tier:'argent', icon:'✋', label:'Collection Naissante', desc:'5 cailloux dans le dex' },
   { id:'streak3', tier:'argent', icon:'🔥', label:'Dépendance Légère', desc:'3 jours consécutifs de scan' },
-  { id:'rare3',   tier:'argent', icon:'💎', label:'Chasseur d\'Élite', desc:'3 cailloux Rare ou mieux' },
-  { id:'speed',   tier:'argent', icon:'🐢', label:'Roi de la Vitesse', desc:'Un caillou VIT > 50 (il triche)' },
-  { id:'level10', tier:'argent', icon:'🛡️', label:'Vétéran Minéral', desc:'Atteins le niveau 10' },
+  { id:'rare3',   tier:'argent', icon:'💎', label:'Chasseur·se d\'Élite', desc:'3 cailloux Rare ou mieux' },
+  { id:'speed',   tier:'argent', icon:'🐢', label:'Monarque de la Vitesse', desc:'Un caillou VIT > 50 (il triche)' },
+  { id:'level10', tier:'argent', icon:'🛡️', label:'Vétéran·e Minéral·e', desc:'Atteins le niveau 10' },
   // OR — difficiles
-  { id:'ten',     tier:'or', icon:'📦', label:'Collectionneur Sérieux', desc:'10 cailloux capturés' },
-  { id:'twenty5', tier:'or', icon:'🏔️', label:'Géologue Amateur', desc:'25 cailloux — sérieusement ?' },
-  { id:'epic1',   tier:'or', icon:'🔮', label:'Connaisseur', desc:'1er caillou Épique ou Légendaire' },
-  { id:'streak7', tier:'or', icon:'⚡', label:'Accro Confirmé', desc:'7 jours consécutifs de scan' },
+  { id:'ten',     tier:'or', icon:'📦', label:'Collectionneur·se Sérieux·se', desc:'10 cailloux capturés' },
+  { id:'twenty5', tier:'or', icon:'🏔️', label:'Géologue Amateur·rice', desc:'25 cailloux — sérieusement ?' },
+  { id:'epic1',   tier:'or', icon:'🔮', label:'Connaisseur·se', desc:'1er caillou Épique ou Légendaire' },
+  { id:'streak7', tier:'or', icon:'⚡', label:'Accro Confirmé·e', desc:'7 jours consécutifs de scan' },
   { id:'ai_ten',  tier:'or', icon:'🧠', label:'IA-ddiction', desc:'10 cailloux analysés par IA' },
-  { id:'level20', tier:'or', icon:'⚔️', label:'Maître des Roches', desc:'Atteins le niveau 20' },
-  { id:'level30', tier:'or', icon:'🏆', label:'Sage Pierreux', desc:'Atteins le niveau 30' },
+  { id:'level20', tier:'or', icon:'⚔️', label:'Maître·sse des Roches', desc:'Atteins le niveau 20' },
+  { id:'level30', tier:'or', icon:'🏆', label:'Sage Pierreux·se', desc:'Atteins le niveau 30' },
   // PLATINE — légendaires
-  { id:'fifty',   tier:'platine', icon:'🌋', label:'Maître des Pierres', desc:'50 cailloux. Consulte quelqu\'un.' },
-  { id:'epic5',   tier:'platine', icon:'🌟', label:'Élu des Pierres', desc:'5 cailloux Épiques ou Légendaires' },
+  { id:'fifty',   tier:'platine', icon:'🌋', label:'Maître·sse des Pierres', desc:'50 cailloux. Consulte quelqu\'un.' },
+  { id:'epic5',   tier:'platine', icon:'🌟', label:'Élu·e des Pierres', desc:'5 cailloux Épiques ou Légendaires' },
   { id:'legend1', tier:'platine', icon:'👑', label:'Légende Vivante', desc:'1er caillou Légendaire' },
   { id:'streak30',tier:'platine', icon:'🏅', label:'Obsession Clinique', desc:'30 jours de suite. C\'est trop.' },
   { id:'level50', tier:'platine', icon:'💠', label:'Lithologue Suprême', desc:'Atteins le niveau 50' },
   { id:'level100',tier:'platine', icon:'🌌', label:'Légende des Z\'Hommes', desc:'Atteins le niveau 100' },
   // COMBAT
   { id:'win1',    tier:'bronze', icon:'⚔️', label:'Première Victoire', desc:'Gagne ton 1er combat' },
-  { id:'win25',   tier:'argent', icon:'🥊', label:'Bagarreur',        desc:'Gagne 25 combats' },
-  { id:'win100',  tier:'or',     icon:'🏆', label:'Gladiateur',       desc:'Gagne 100 combats' },
-  { id:'arena10', tier:'argent', icon:'🏟️', label:'Habitué de l\'Arène', desc:'Franchis 10 vagues d\'arène' },
-  { id:'boss1',   tier:'or',     icon:'💀', label:'Tueur de Boss',    desc:'Bats un Boss de la semaine' },
-  { id:'tourney1',tier:'or',     icon:'🏅', label:'Champion du Tournoi', desc:'Remporte un Tournoi des cailloux' },
+  { id:'win25',   tier:'argent', icon:'🥊', label:'Bagarreur·se',        desc:'Gagne 25 combats' },
+  { id:'win100',  tier:'or',     icon:'🏆', label:'Gladiateur·rice',       desc:'Gagne 100 combats' },
+  { id:'arena10', tier:'argent', icon:'🏟️', label:'Habitué·e de l\'Arène', desc:'Franchis 10 vagues d\'arène' },
+  { id:'boss1',   tier:'or',     icon:'💀', label:'Tueur·se de Boss',    desc:'Bats un Boss de la semaine' },
+  { id:'tourney1',tier:'or',     icon:'🏅', label:'Champion·ne du Tournoi', desc:'Remporte un Tournoi des cailloux' },
   { id:'colossal',tier:'platine',icon:'🦖', label:'Titan',            desc:'Un caillou de puissance ATK+DEF ≥ 220' },
   // EXPLORATION
-  { id:'region1', tier:'argent', icon:'🌍', label:'Explorateur',      desc:'Conquiers ta 1ère région' },
-  { id:'regionAll',tier:'platine',icon:'🗺️', label:'Maître Explorateur', desc:'Conquiers les 6 régions' },
+  { id:'region1', tier:'argent', icon:'🌍', label:'Explorateur·rice',      desc:'Conquiers ta 1ère région' },
+  { id:'regionAll',tier:'platine',icon:'🗺️', label:'Maître·sse Explorateur·rice', desc:'Conquiers les 6 régions' },
   { id:'allTypes',tier:'or',     icon:'🌈', label:'Collection Complète', desc:'Possède un caillou de chaque type' },
 ];
 
@@ -2131,7 +2131,7 @@ async function loadMyClan(){
 }
 async function syncMyClanStats(){
   if(!myClan||!sb) return;
-  try{ await sb.from('clan_members').update({ username:meta.username||'Joueur', wins:meta.wins||0, xp:meta.xp||0, rock_count:dex.length, updated_at:new Date().toISOString() }).eq('user_id',session.user.id); }catch(e){}
+  try{ await sb.from('clan_members').update({ username:meta.username||'Joueur·se', wins:meta.wins||0, xp:meta.xp||0, rock_count:dex.length, updated_at:new Date().toISOString() }).eq('user_id',session.user.id); }catch(e){}
 }
 async function loadClanMembers(){
   if(!myClan||!sb) return;
@@ -2218,7 +2218,7 @@ function clanScreen(){
       </div>
       <div class="clan-members">
         ${sorted.map(m=>`<div class="clan-member${m.user_id===session.user.id?' me':''}">
-          <span class="cm-name">@${m.username||'Joueur'}${m.user_id===myClan.owner_id?' 👑':''}</span>
+          <span class="cm-name">@${m.username||'Joueur·se'}${m.user_id===myClan.owner_id?' 👑':''}</span>
           <span class="cm-stats">⚔️${m.wins||0} · ⭐${getLevelInfo(m.xp||0).level} · 🪨${m.rock_count||0}</span>
         </div>`).join('')}
       </div>
@@ -2560,39 +2560,39 @@ function shopScreen(){
 }
 
 const LEVEL_TITLES = [
-  { min:1,   title:"Ramasseur du Dimanche" },
-  { min:2,   title:"Apprenti Trottoir" },
-  { min:3,   title:"Dénicheur de Gravier" },
-  { min:4,   title:"Flâneur Pierreux" },
-  { min:5,   title:"Curieux du Bitume" },
-  { min:6,   title:"Collectionneur Compulsif" },
-  { min:7,   title:"Renifleur de Roches" },
-  { min:8,   title:"Lithophile Débutant" },
-  { min:9,   title:"Chasseur de Trottoirs" },
-  { min:10,  title:"Lithologue Amateur" },
+  { min:1,   title:"Ramasseur·se du Dimanche" },
+  { min:2,   title:"Apprenti·e Trottoir" },
+  { min:3,   title:"Dénicheur·se de Gravier" },
+  { min:4,   title:"Flâneur·se Pierreux·se" },
+  { min:5,   title:"Curieux·se du Bitume" },
+  { min:6,   title:"Collectionneur·se Compulsif·ve" },
+  { min:7,   title:"Renifleur·se de Roches" },
+  { min:8,   title:"Lithophile Débutant·e" },
+  { min:9,   title:"Chasseur·se de Trottoirs" },
+  { min:10,  title:"Lithologue Amateur·rice" },
   { min:11,  title:"Œil de Lynx Minéral" },
   { min:12,  title:"Spécialiste du Caillou Banal" },
-  { min:13,  title:"Traqueur de Gravillons" },
+  { min:13,  title:"Traqueur·se de Gravillons" },
   { min:14,  title:"Stratège des Sentiers" },
-  { min:15,  title:"Chasseur de Cailloux" },
-  { min:16,  title:"Vétéran du Pavé" },
-  { min:17,  title:"Maniaque Minéral" },
-  { min:18,  title:"Détective Rocheux" },
+  { min:15,  title:"Chasseur·se de Cailloux" },
+  { min:16,  title:"Vétéran·e du Pavé" },
+  { min:17,  title:"Maniaque Minéral·e" },
+  { min:18,  title:"Détective Rocheux·se" },
   { min:19,  title:"Œil Affûté" },
-  { min:20,  title:"Expert Pierreux" },
-  { min:22,  title:"Connaisseur Confirmé" },
-  { min:24,  title:"Chasseur d'Élite" },
-  { min:26,  title:"Vétéran des Carrières" },
-  { min:28,  title:"Maître du Trottoir" },
-  { min:30,  title:"Maître Minéral" },
-  { min:33,  title:"Gardien des Gisements" },
-  { min:36,  title:"Baron du Basalte" },
+  { min:20,  title:"Expert·e Pierreux·se" },
+  { min:22,  title:"Connaisseur·se Confirmé·e" },
+  { min:24,  title:"Chasseur·se d'Élite" },
+  { min:26,  title:"Vétéran·e des Carrières" },
+  { min:28,  title:"Maître·sse du Trottoir" },
+  { min:30,  title:"Maître·sse Minéral·e" },
+  { min:33,  title:"Gardien·ne des Gisements" },
+  { min:36,  title:"Baron·ne du Basalte" },
   { min:40,  title:"Sage des Roches" },
-  { min:44,  title:"Oracle Minéral" },
+  { min:44,  title:"Oracle Minéral·e" },
   { min:48,  title:"Druide des Dolomies" },
-  { min:50,  title:"Lithologue Certifié" },
-  { min:55,  title:"Chevalier du Quartz" },
-  { min:60,  title:"Gardien du Granit" },
+  { min:50,  title:"Lithologue Certifié·e" },
+  { min:55,  title:"Chevalier·ère du Quartz" },
+  { min:60,  title:"Gardien·ne du Granit" },
   { min:65,  title:"Vénérable des Vallées" },
   { min:70,  title:"Archonte du Granit" },
   { min:80,  title:"Mage des Météorites" },
@@ -2600,7 +2600,7 @@ const LEVEL_TITLES = [
   { min:100, title:"Légende Minérale des Z'Hommes" },
   { min:120, title:"Mythe Vivant des Cailloux" },
   { min:150, title:"Avatar de la Croûte Terrestre" },
-  { min:200, title:"Dieu Suprême du Gravier Éternel" },
+  { min:200, title:"Divinité Suprême du Gravier Éternel" },
 ];
 function xpForLevel(n){ return 100+(n-1)*40; }
 function getLevelInfo(totalXp){
@@ -4766,8 +4766,8 @@ function adminTabContent(){
   const t=adminTabId;
   if(t==='stats'){
     const s=adminStats; if(!s||s.loading) return `<div class="admin-empty">Chargement…</div>`;
-    return `<div class="admin-stats-grid">${adminStatTile('👥',s.players,'Joueurs')}${adminStatTile('🪨',s.rocks,'Cailloux')}${adminStatTile('📸',s.scans,'Scans du jour')}</div>
-      <div class="admin-sec-title">🏆 Top joueurs (victoires)</div>
+    return `<div class="admin-stats-grid">${adminStatTile('👥',s.players,'Joueur·ses')}${adminStatTile('🪨',s.rocks,'Cailloux')}${adminStatTile('📸',s.scans,'Scans du jour')}</div>
+      <div class="admin-sec-title">🏆 Top joueur·ses (victoires)</div>
       ${(s.top&&s.top.length)?`<div class="admin-list">${s.top.map((p,i)=>`<div class="admin-row"><span>${i+1}. @${escHtml(p.username||'—')}</span><span>${p.wins||0} V · ${p.losses||0} D</span></div>`).join('')}</div>`:`<div class="admin-empty">Aucune donnée.<br><small>Active le SQL admin pour voir tous les joueurs.</small></div>`}`;
   }
   if(t==='mod'){
@@ -4785,7 +4785,7 @@ function adminTabContent(){
   if(t==='players'){
     const r=adminSearchResult; let res='';
     if(r&&r.loading) res=`<div class="admin-empty">Recherche…</div>`;
-    else if(r&&r.notfound) res=`<div class="admin-empty">Aucun joueur « ${escHtml(r.notfound)} ».</div>`;
+    else if(r&&r.notfound) res=`<div class="admin-empty">Aucun·e joueur·se « ${escHtml(r.notfound)} ».</div>`;
     else if(r&&r.error) res=`<div class="admin-empty">Erreur : ${escHtml(r.error)}</div>`;
     else if(r&&r.uid){ const m=r.meta||{};
       res=`<div class="admin-card">
@@ -4801,11 +4801,11 @@ function adminTabContent(){
           <button class="admin-btn danger" data-action="adminDeletePlayer" data-uid="${r.uid}" data-name="${escHtml(r.username)}">🗑️ Supprimer</button>
         </div></div>`;
     }
-    return `<div class="admin-search"><input class="input-field" id="adminSearchInput" placeholder="Pseudo du joueur" value="${escHtml(adminLastQuery)}" autocomplete="off"><button class="admin-btn" data-action="adminSearchPlayer">🔍</button></div>${res}`;
+    return `<div class="admin-search"><input class="input-field" id="adminSearchInput" placeholder="Pseudo du·de la joueur·se" value="${escHtml(adminLastQuery)}" autocomplete="off"><button class="admin-btn" data-action="adminSearchPlayer">🔍</button></div>${res}`;
   }
   if(t==='logs'){
     const e=adminErrors;
-    const ann=`<div class="admin-sec-title">📢 Annonce à tous les joueurs</div>
+    const ann=`<div class="admin-sec-title">📢 Annonce à tous·tes les joueur·ses</div>
       <textarea id="adminAnnounceInput" class="input-field" style="min-height:60px;resize:vertical;width:100%;" placeholder="Ex: Événement Galaxie ce week-end ! (vide = effacer)">${escHtml(appAnnouncement||'')}</textarea>
       <button class="admin-btn" style="margin-top:6px;" data-action="adminSaveAnnounce">Publier l'annonce</button>`;
     let logs;
@@ -4840,7 +4840,7 @@ function adminScreen(){
 
 function accountScreen(){
   const user=session?.user;
-  const name=user?.user_metadata?.full_name||user?.email||'Joueur';
+  const name=user?.user_metadata?.full_name||user?.email||'Joueur·se';
   const avatar=user?.user_metadata?.avatar_url;
   return `<div class="setup-wrap">
     <div style="text-align:center;margin-bottom:12px;">
@@ -5023,10 +5023,10 @@ function handleOnlineMsg(msg){
     clearTimeout(onlineState.connTimeout);
     clearTimeout(onlineState.chanTimeout);
     if(onlineState.mode==='trade'){
-      showToast('🔄 Ami connecté ! Choisis ton caillou à échanger.');
+      showToast('🔄 Ami·e connecté·e ! Choisis ton caillou à échanger.');
       screen='trade-pick'; render();
     } else {
-      showToast('🎉 Adversaire connecté ! Choisis ton caillou.');
+      showToast('🎉 Adversaire connecté·e ! Choisis ton caillou.');
       screen='online-pick'; render();
     }
   }
@@ -5101,13 +5101,13 @@ async function sendTradeInvite(friendId, friendUsername){
   const code='TRD'+genRoomCode();
   try{
     const { error } = await sb.from('challenges').insert({
-      challenger_id:session.user.id, challenger_username:meta.username||'Joueur',
+      challenger_id:session.user.id, challenger_username:meta.username||'Joueur·se',
       target_id:friendId, room_code:code, status:'pending',
     });
     if(error) throw error;
   }catch(e){ showToast('❌ Erreur: '+(e?.message||e)); return; }
   showToast(`🔄 Invitation d'échange envoyée à ${friendUsername} !`);
-  sendPushToFriend(friendId,'🔄 Échange CaillouDEX !',`${meta.username||'Un joueur'} veut échanger un caillou avec toi !`);
+  sendPushToFriend(friendId,'🔄 Échange CaillouDEX !',`${meta.username||'Un·e joueur·se'} veut échanger un caillou avec toi !`);
   onlineState={ isHost:true, isChallenge:true, mode:'trade', targetUsername:friendUsername, roomCode:code,
     opponentId:friendId, opponentUsername:friendUsername, peer:null, conn:null,
     myOfferRock:null, myOffer:null, oppOffer:null, myConfirmed:false, oppConfirmed:false,
@@ -5242,7 +5242,7 @@ function tradeConfirmScreen(){
     <div class="trade-status">${status}</div>
     <button class="btn btn-gold" ${(!bothPicked||onlineState.myConfirmed)?'disabled style="opacity:.5;"':''} data-action="tradeConfirmBtn">${onlineState.myConfirmed?'✅ Confirmé':'✅ Confirmer l\'échange'}</button>
     <button class="btn btn-ghost" style="margin-top:8px;" ${onlineState.tradeInserted?'disabled style="opacity:.4;"':''} data-action="tradeCancelBtn">✕ Annuler</button>
-    <p class="trade-warn">⚠️ Restez connectés tous les deux jusqu'à la fin.</p>
+    <p class="trade-warn">⚠️ Restez connecté·es tous les deux jusqu'à la fin.</p>
   </div>`;
 }
 function tradeDoneScreen(){
@@ -5295,13 +5295,13 @@ async function sendChallenge(friendId,friendUsername){
   const code=genRoomCode();
   try{
     const { error } = await sb.from('challenges').insert({
-      challenger_id:session.user.id, challenger_username:meta.username||'Joueur',
+      challenger_id:session.user.id, challenger_username:meta.username||'Joueur·se',
       target_id:friendId, room_code:code, status:'pending',
     });
     if(error) throw error;
   }catch(e){ showToast('❌ Erreur: '+(e?.message||e)); return; }
   showToast(`⚔️ Défi envoyé à ${friendUsername} !`);
-  sendPushToFriend(friendId, '⚔️ Défi CaillouDEX !', `${meta.username||'Un joueur'} te défie en combat ! Ouvre l'app pour accepter.`);
+  sendPushToFriend(friendId, '⚔️ Défi CaillouDEX !', `${meta.username||'Un·e joueur·se'} te défie en combat ! Ouvre l'app pour accepter.`);
   onlineState={ isHost:true, isChallenge:true, targetUsername:friendUsername, roomCode:code,
     opponentId:friendId, opponentUsername:friendUsername,
     peer:null, conn:null, myRock:null, opponentRock:null, cd:0, botTimer:null, cdTimer:null };
@@ -5330,7 +5330,7 @@ function showChallengeNotif(ch){
     <div class="cn-icon">${trade?'🔄':'⚔️'}</div>
     <div class="cn-body">
       <div class="cn-title">${trade?'ÉCHANGE DEMANDÉ !':'DÉFI REÇU !'}</div>
-      <div class="cn-desc"><b>${ch.challenger_username||'Un joueur'}</b> ${trade?'veut échanger un caillou':'te défie en combat'}</div>
+      <div class="cn-desc"><b>${ch.challenger_username||'Un·e joueur·se'}</b> ${trade?'veut échanger un caillou':'te défie en combat'}</div>
       <div class="cn-actions">
         <button class="cn-btn cn-accept" data-action="acceptChallengeBtn">${trade?'🔄 Échanger':'⚔️ Accepter'}</button>
         <button class="cn-btn cn-decline" data-action="dismissChallengeBtn">Refuser</button>
@@ -5505,7 +5505,7 @@ async function startOnlineBattle(){
     playerSpriteUrl, botSpriteUrl,
     playerFureur:0, botFureur:0, stake, betSettled:false,
   };
-  if(stake>0) battleState.log.push({text:`🎰 Pari lancé : 💎 ${stake} en jeu — le gagnant rafle tout !`,cls:'neutral'});
+  if(stake>0) battleState.log.push({text:`🎰 Pari lancé : 💎 ${stake} en jeu — le·la gagnant·e rafle tout !`,cls:'neutral'});
   screen='combat-fight'; render();
 }
 
@@ -5532,7 +5532,7 @@ function recordOnlineWin(){
   try{
     if(!session||!sb||!onlineState||!onlineState.opponentId) return;
     sb.from('match_history').insert({
-      winner_id:session.user.id, winner_username:meta.username||'Joueur',
+      winner_id:session.user.id, winner_username:meta.username||'Joueur·se',
       loser_id:onlineState.opponentId, loser_username:onlineState.opponentUsername||'Adversaire',
     }).then(()=>{},()=>{});
   }catch(e){}
@@ -5740,7 +5740,7 @@ function onlinePickScreen(){
         return `<button class="bet-pill${on?' on':''}${dis?' dis':''}" ${dis||waiting?'':`data-action="onlineSetBet" data-bet="${v}"`}>${v===0?'Amical':'💎 '+v}</button>`;
       }).join('')}
     </div>
-    <div class="bet-hint">${myBet>0?`Tu mises 💎 ${myBet} — l'enjeu réel = le plus petit pari des deux joueurs.`:'Combat amical, aucune gemme en jeu.'}</div>
+    <div class="bet-hint">${myBet>0?`Tu mises 💎 ${myBet} — l'enjeu réel = le plus petit pari des deux joueur·ses.`:'Combat amical, aucune gemme en jeu.'}</div>
   </div>`;
   // Format : match simple ou mini-tournoi (BO3). Choisi à la 1re manche uniquement.
   let formatBlock='';
@@ -5766,7 +5766,7 @@ function onlinePickScreen(){
   }
   return `<div class="combat-pick-wrap">
     <div class="combat-pick-title">🌐 CHOISIR TON CAILLOU</div>
-    <div class="combat-pick-sub">${waiting?'⏳ En attente du choix adverse...':'Adversaire connecté — fais ton choix !'}</div>
+    <div class="combat-pick-sub">${waiting?'⏳ En attente du choix adverse...':'Adversaire connecté·e — fais ton choix !'}</div>
     ${formatBlock}
     ${betRow}
     <div class="combat-pick-grid">
@@ -6000,7 +6000,7 @@ async function generateBotCharacter(botRock){
     const mime=data.mime_type||'image/jpeg', url=`data:${mime};base64,${data.image}`;
     apply(url);
     try{ localStorage.setItem(BOT_PORTRAIT_LS+key,url); }catch(e){}
-    // partage pour les autres joueurs (silencieux si le tableau n'existe pas encore)
+    // partage pour les autres joueur·ses (silencieux si le tableau n'existe pas encore)
     try{ if(sb) await sb.from('bot_portraits').upsert({ name:key, image:data.image, mime }); }catch(e){}
   }catch(e){ console.error('generateBotCharacter',e); }
 }
@@ -6894,7 +6894,7 @@ function combatPickScreen(){
       : arena
       ? `<div class="combat-pick-sub">Choisis ton champion — enchaîne les vagues de bots de plus en plus forts ! 🏆 Record : <b>${arenaBest}</b> vague${arenaBest>1?'s':''}</div>`
       : tourney
-      ? `<div class="combat-pick-sub">Choisis ton champion — 3 combats à difficulté croissante jusqu'au titre de champion ! 🏆 Titres : <b>${tournoyTitles()}</b></div>`
+      ? `<div class="combat-pick-sub">Choisis ton champion — 3 combats à difficulté croissante jusqu'au titre de champion·ne ! 🏆 Titres : <b>${tournoyTitles()}</b></div>`
       : `<div class="combat-pick-sub">Lequel vas-tu envoyer au combat ?</div>
     <div class="diff-row">
       ${COMBAT_DIFFICULTIES.map(d=>`<button class="diff-pill${d.key===combatDifficulty?' sel':''}" data-action="setDifficulty" data-key="${d.key}">${d.label}</button>`).join('')}
@@ -7206,7 +7206,7 @@ const TUTORIAL_STEPS=[
   {emoji:'🌍', title:'5 · Explore', text:'Pars en Expédition dans les Régions : capture de vrais cailloux du bon type pour conquérir une zone et décrocher son légendaire. Un Événement met un type à l\'honneur chaque semaine !'},
   {emoji:'🤝', title:'6 · Entre amis', text:'Ajoute des amis pour les défier, leur offrir des Gravillons 🎁, échanger des cailloux 🔄, et rejoindre un Clan 🏰 pour grimper au classement des équipes.'},
   {emoji:'💎', title:'7 · Progresse', text:'Gagne des 💎 Gemmes et des 🪙 Gravillons en jouant pour améliorer et faire évoluer tes cailloux à la Boutique. Pense aux 🎯 missions du jour !'},
-  {emoji:'🚀', title:'C\'est parti !', text:'Astuce : règle les 🔊 sons et la 🎵 musique dans ton Compte (et retrouve ce tuto avec « Revoir le tutoriel »). Amuse-toi bien, dresseur de cailloux !'},
+  {emoji:'🚀', title:'C\'est parti !', text:'Astuce : règle les 🔊 sons et la 🎵 musique dans ton Compte (et retrouve ce tuto avec « Revoir le tutoriel »). Amuse-toi bien, dresseur·se de cailloux !'},
 ];
 let _tutoIdx=0, _tutoShown=false;
 function tutorialDone(){ try{ return localStorage.getItem('cdx_tutorial_done')==='1'; }catch(e){ return false; } }
@@ -7538,7 +7538,7 @@ function render(){
       </div>`).join('');
       inner=`<div class="overlay-inner">
         <div class="combat-pick-title">🏆 CLASSEMENT</div>
-        <div class="combat-pick-sub" style="margin-bottom:10px;">Les dresseurs classés par victoires</div>
+        <div class="combat-pick-sub" style="margin-bottom:10px;">Les dresseur·ses classé·es par victoires</div>
         <div class="lb-list">${rowsHtml}</div>
         ${leaderboard.length<2?`<p style="text-align:center;font-family:'Nunito',sans-serif;font-size:12px;color:rgba(44,42,46,.5);margin-top:12px;">Ajoute des amis pour remplir le classement !</p>`:''}
         <div class="btn-row" style="margin-top:16px;"><button class="btn btn-gold" data-action="closeLeaderboard">FERMER</button></div>
@@ -8210,7 +8210,7 @@ document.addEventListener('click',(e)=>{
   else if(action==='logout'){ signOut(); }
   else if(action==='deleteAccount'){
     if(confirm('Supprimer définitivement ton compte ? Ton dex, tes badges, ton niveau et tes Gravillons seront perdus pour toujours. Cette action est IRRÉVERSIBLE.')){
-      if(confirm('Es-tu vraiment sûr(e) ? Il n\'y a pas de retour en arrière possible.')) deleteAccount();
+      if(confirm('Es-tu vraiment sûr·e ? Il n\'y a pas de retour en arrière possible.')) deleteAccount();
     }
   }
   else if(action==='saveUsername'){
@@ -8271,7 +8271,7 @@ document.addEventListener('click',(e)=>{
         try{ onlineState.conn.send({type:'rematch-request'}); }catch(e){}
         onlineState.rematchRequested=true; showToast('🔄 Demande de revanche envoyée...'); render();
       } else {
-        showToast('Adversaire déconnecté.');
+        showToast('Adversaire déconnecté·e.');
         battleState=null; try{ if(onlineState&&onlineState.peer) onlineState.peer.destroy(); }catch(e){} onlineState=null;
         screen='online-menu'; render();
       }
@@ -8281,7 +8281,7 @@ document.addEventListener('click',(e)=>{
   }
   else if(action==='rematchAccept'){
     if(onlineState&&onlineState.conn&&onlineState.conn.open){ try{ onlineState.conn.send({type:'rematch-accept'}); }catch(e){} startRematch(); }
-    else { showToast('Adversaire déconnecté.'); battleState=null; onlineState=null; screen='online-menu'; render(); }
+    else { showToast('Adversaire déconnecté·e.'); battleState=null; onlineState=null; screen='online-menu'; render(); }
   }
   else if(action==='rematchDecline'){
     if(onlineState&&onlineState.conn&&onlineState.conn.open){ try{ onlineState.conn.send({type:'rematch-decline'}); }catch(e){} }
