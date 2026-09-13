@@ -600,24 +600,18 @@ nav{display:flex;gap:8px;padding:10px 14px max(14px,env(safe-area-inset-bottom))
 
 /* ===== CARTES HOLOGRAPHIQUES réactives (inclinaison du téléphone / doigt) ===== */
 .holo-card{--mx:50%;--my:50%;--rx:0deg;--ry:0deg;
-  transform:perspective(760px) rotateX(var(--rx)) rotateY(var(--ry));
-  transform-style:preserve-3d;transition:transform .12s ease-out;will-change:transform;}
+  transform:perspective(680px) rotateX(var(--rx)) rotateY(var(--ry));
+  transform-style:preserve-3d;transition:transform .1s ease-out;will-change:transform;}
 .holo-card>*{position:relative;z-index:1;}
-/* Reflet lumineux qui suit l'inclinaison */
+/* Reflet lumineux vif qui suit l'inclinaison — TOUTE la carte brille */
 .holo-glare{position:absolute;inset:0;border-radius:20px;pointer-events:none;z-index:6;mix-blend-mode:soft-light;
-  background:radial-gradient(circle at var(--mx) var(--my),rgba(255,255,255,.75),rgba(255,255,255,.18) 26%,transparent 58%);}
-/* Feuille arc-en-ciel holographique */
-.holo-foil{position:absolute;inset:0;border-radius:20px;pointer-events:none;z-index:5;opacity:.4;mix-blend-mode:color-dodge;
-  background:linear-gradient(115deg,transparent 12%,rgba(255,0,140,.5),rgba(255,190,0,.5),rgba(0,255,170,.5),rgba(80,130,255,.5),rgba(200,0,255,.5),transparent 88%);
-  background-size:280% 280%;background-position:calc(var(--mx) + 0%) calc(var(--my) + 0%);
-  -webkit-mask:linear-gradient(180deg,#000 0%,#000 46%,rgba(0,0,0,.3) 62%,rgba(0,0,0,.28) 100%);mask:linear-gradient(180deg,#000 0%,#000 46%,rgba(0,0,0,.3) 62%,rgba(0,0,0,.28) 100%);}
-.holo-card.holo-strong .holo-foil{opacity:.55;}
-.holo-card.holo-strong .holo-glare{background:radial-gradient(circle at var(--mx) var(--my),rgba(255,255,255,.9),rgba(255,255,255,.22) 24%,transparent 56%);}
-/* Paillettes scintillantes (hautes raretés) */
-.holo-sparkle{position:absolute;inset:0;border-radius:20px;pointer-events:none;z-index:5;opacity:.5;mix-blend-mode:screen;
-  background-image:radial-gradient(rgba(255,255,255,.9) 1px,transparent 1.6px),radial-gradient(rgba(255,255,255,.7) 1px,transparent 1.6px);
-  background-size:34px 34px,52px 52px;background-position:var(--mx) var(--my),calc(var(--mx) + 17px) calc(var(--my) + 26px);}
-.holo-hint{font-family:'Baloo 2',sans-serif;font-weight:700;font-size:10.5px;color:rgba(44,42,46,.5);text-align:center;margin-top:8px;}
+  background:radial-gradient(circle at var(--mx) var(--my),rgba(255,255,255,1),rgba(255,255,255,.35) 30%,transparent 62%);}
+/* Bande holographique arc-en-ciel qui BALAIE toute la carte selon l'inclinaison */
+.holo-foil{position:absolute;inset:0;border-radius:20px;pointer-events:none;z-index:5;opacity:.7;mix-blend-mode:screen;
+  background:linear-gradient(110deg,transparent 26%,rgba(255,70,180,.85) 40%,rgba(255,225,90,.85) 47%,rgba(110,255,180,.85) 54%,rgba(110,180,255,.85) 61%,rgba(210,110,255,.85) 68%,transparent 82%);
+  background-size:260% 260%;background-position:var(--mx) var(--my);}
+.holo-card.holo-strong .holo-foil{opacity:.85;}
+.holo-card.holo-strong .holo-glare{background:radial-gradient(circle at var(--mx) var(--my),rgba(255,255,255,1),rgba(255,255,255,.4) 28%,transparent 60%);}
 
 /* Location footer */
 .tcard-loc{
@@ -3146,14 +3140,14 @@ function sfxUnlock(){
 let _holoGyroAsked=false;
 function _holoApplyTilt(nx,ny){ // nx,ny dans [-1,1]
   const cards=document.querySelectorAll('.holo-card'); if(!cards.length) return;
-  const rx=(-ny*7).toFixed(2)+'deg', ry=(nx*7).toFixed(2)+'deg';
-  const mx=(50+nx*45).toFixed(1)+'%', my=(50+ny*45).toFixed(1)+'%';
+  const rx=(-ny*16).toFixed(2)+'deg', ry=(nx*16).toFixed(2)+'deg';
+  const mx=(50+nx*70).toFixed(1)+'%', my=(50+ny*70).toFixed(1)+'%';
   cards.forEach(el=>{ el.style.setProperty('--rx',rx); el.style.setProperty('--ry',ry); el.style.setProperty('--mx',mx); el.style.setProperty('--my',my); });
 }
 function _holoOnOrient(e){
   if(e.gamma==null&&e.beta==null) return;
-  const nx=Math.max(-1,Math.min(1,(e.gamma||0)/40));           // gauche/droite
-  const ny=Math.max(-1,Math.min(1,((e.beta||0)-40)/40));       // avant/arrière (téléphone tenu ~40°)
+  const nx=Math.max(-1,Math.min(1,(e.gamma||0)/22));           // gauche/droite (plus sensible)
+  const ny=Math.max(-1,Math.min(1,((e.beta||0)-40)/22));       // avant/arrière (téléphone tenu ~40°)
   _holoApplyTilt(nx,ny);
 }
 function holoRequestGyro(){
@@ -3172,8 +3166,8 @@ document.addEventListener('pointermove',e=>{
   const r=card.getBoundingClientRect();
   const nx=Math.max(-1,Math.min(1,((e.clientX-r.left)/r.width-0.5)*2));
   const ny=Math.max(-1,Math.min(1,((e.clientY-r.top)/r.height-0.5)*2));
-  card.style.setProperty('--rx',(-ny*9).toFixed(2)+'deg'); card.style.setProperty('--ry',(nx*9).toFixed(2)+'deg');
-  card.style.setProperty('--mx',(50+nx*45).toFixed(1)+'%'); card.style.setProperty('--my',(50+ny*45).toFixed(1)+'%');
+  card.style.setProperty('--rx',(-ny*16).toFixed(2)+'deg'); card.style.setProperty('--ry',(nx*16).toFixed(2)+'deg');
+  card.style.setProperty('--mx',(50+nx*70).toFixed(1)+'%'); card.style.setProperty('--my',(50+ny*70).toFixed(1)+'%');
 },{passive:true});
 function _tone(o){
   if(!soundOn||!_audioCtx) return;
@@ -4366,7 +4360,7 @@ function specimenCard(rock,pop){
       </div>
       ${(rock.personality||rock.quip)?`<div class="pc-flavor">${rock.personality?rock.personality:''}${rock.quip?` <i>« ${rock.quip} »</i>`:''}</div>`:''}
       <div class="pc-foot"><span>${rock.rarityLabel}</span><span>N°${String(rock.catalogNumber).padStart(4,'0')}</span></div>
-    </div>${isHolo?'<div class="holo-foil"></div><div class="holo-glare"></div>'+(holoStrong?'<div class="holo-sparkle"></div>':''):''}
+    </div>${isHolo?'<div class="holo-foil"></div><div class="holo-glare"></div>':''}
   </div>`;
   let wrapped=holo?`<div class="frame-holo" style="border-radius:20px;">${card}</div>`:card;
   if(rock.evolved) wrapped=`<div class="evolved-glow" style="border-radius:20px;">${wrapped}</div>`;
