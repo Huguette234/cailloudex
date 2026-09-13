@@ -612,6 +612,17 @@ nav{display:flex;gap:8px;padding:10px 14px max(14px,env(safe-area-inset-bottom))
   background-size:260% 260%;background-position:var(--mx) var(--my);}
 .holo-card.holo-strong .holo-foil{opacity:.85;}
 .holo-card.holo-strong .holo-glare{background:radial-gradient(circle at var(--mx) var(--my),rgba(255,255,255,1),rgba(255,255,255,.4) 28%,transparent 60%);}
+/* En ligne : la carte holo est cliquable (ouvre la visionneuse) */
+.holo-card[data-action="holoView"]{cursor:pointer;}
+.holo-tap{font-family:'Baloo 2',sans-serif;font-weight:800;font-size:11px;color:var(--goldd);text-align:center;margin-top:10px;letter-spacing:.02em;}
+/* Visionneuse plein écran */
+.holo-stage{position:fixed;inset:0;z-index:130;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;
+  background:radial-gradient(circle at 50% 38%,rgba(30,22,48,.92),rgba(6,6,14,.97));backdrop-filter:blur(7px);-webkit-backdrop-filter:blur(7px);animation:fadeIn .22s ease;overflow:hidden;touch-action:none;}
+.holo-stage .holo-view-card{width:min(88vw,380px);}
+.holo-stage .holo-card{transition:transform .07s ease-out;}
+.holo-stage .holo-tap{display:none;}
+.holo-stage-hint{color:rgba(255,255,255,.85);font-family:'Baloo 2',sans-serif;font-weight:700;font-size:12.5px;line-height:1.5;text-align:center;margin-top:26px;max-width:300px;}
+.holo-stage-close{position:absolute;top:16px;right:18px;width:42px;height:42px;border-radius:50%;background:rgba(255,255,255,.15);color:#fff;font-size:20px;font-weight:800;display:flex;align-items:center;justify-content:center;cursor:pointer;border:1.5px solid rgba(255,255,255,.3);z-index:2;}
 
 /* Location footer */
 .tcard-loc{
@@ -3133,21 +3144,23 @@ function sfxUnlock(){
     if(!_audioCtx){ const AC=window.AudioContext||window.webkitAudioContext; if(!AC) return; _audioCtx=new AC(); }
     if(_audioCtx.state==='suspended') _audioCtx.resume();
   }catch(e){}
-  holoRequestGyro();
 }
 
-/* ===== EFFET HOLOGRAPHIQUE réactif (inclinaison / doigt) ===== */
+/* ===== VISIONNEUSE HOLOGRAPHIQUE (plein écran, on incline/bouge la carte) =====
+   L'inclinaison ne s'applique QUE dans cette visionneuse -> plus de conflit avec
+   le défilement de la page. En ligne, la carte a un reflet fixe et se touche. */
 let _holoGyroAsked=false;
+function _holoStageCard(){ const s=document.querySelector('.holo-stage'); return s?s.querySelector('.holo-card'):null; }
 function _holoApplyTilt(nx,ny){ // nx,ny dans [-1,1]
-  const cards=document.querySelectorAll('.holo-card'); if(!cards.length) return;
-  const rx=(-ny*16).toFixed(2)+'deg', ry=(nx*16).toFixed(2)+'deg';
-  const mx=(50+nx*70).toFixed(1)+'%', my=(50+ny*70).toFixed(1)+'%';
-  cards.forEach(el=>{ el.style.setProperty('--rx',rx); el.style.setProperty('--ry',ry); el.style.setProperty('--mx',mx); el.style.setProperty('--my',my); });
+  const el=_holoStageCard(); if(!el) return;
+  el.style.setProperty('--rx',(-ny*18).toFixed(2)+'deg'); el.style.setProperty('--ry',(nx*18).toFixed(2)+'deg');
+  el.style.setProperty('--mx',(50+nx*72).toFixed(1)+'%'); el.style.setProperty('--my',(50+ny*72).toFixed(1)+'%');
 }
 function _holoOnOrient(e){
+  if(!document.querySelector('.holo-stage')) return;      // uniquement quand la visionneuse est ouverte
   if(e.gamma==null&&e.beta==null) return;
-  const nx=Math.max(-1,Math.min(1,(e.gamma||0)/22));           // gauche/droite (plus sensible)
-  const ny=Math.max(-1,Math.min(1,((e.beta||0)-40)/22));       // avant/arrière (téléphone tenu ~40°)
+  const nx=Math.max(-1,Math.min(1,(e.gamma||0)/22));
+  const ny=Math.max(-1,Math.min(1,((e.beta||0)-40)/22));
   _holoApplyTilt(nx,ny);
 }
 function holoRequestGyro(){
@@ -3160,15 +3173,27 @@ function holoRequestGyro(){
     }
   }catch(e){}
 }
-// Repli / bonus : réaction au doigt (glisse sur la carte) et à la souris.
+// Dans la visionneuse : bouger le doigt/la souris n'importe où incline la carte.
 document.addEventListener('pointermove',e=>{
-  const card=e.target&&e.target.closest?e.target.closest('.holo-card'):null; if(!card) return;
-  const r=card.getBoundingClientRect();
-  const nx=Math.max(-1,Math.min(1,((e.clientX-r.left)/r.width-0.5)*2));
-  const ny=Math.max(-1,Math.min(1,((e.clientY-r.top)/r.height-0.5)*2));
-  card.style.setProperty('--rx',(-ny*16).toFixed(2)+'deg'); card.style.setProperty('--ry',(nx*16).toFixed(2)+'deg');
-  card.style.setProperty('--mx',(50+nx*70).toFixed(1)+'%'); card.style.setProperty('--my',(50+ny*70).toFixed(1)+'%');
+  const stage=document.querySelector('.holo-stage'); if(!stage) return;
+  const el=stage.querySelector('.holo-card'); if(!el) return;
+  const r=el.getBoundingClientRect();
+  const nx=Math.max(-1,Math.min(1,(e.clientX-(r.left+r.width/2))/(r.width/2)));
+  const ny=Math.max(-1,Math.min(1,(e.clientY-(r.top+r.height/2))/(r.height/2)));
+  _holoApplyTilt(nx,ny);
 },{passive:true});
+function openHoloViewer(id){
+  if(document.querySelector('.holo-stage')) return;
+  const rock=findRockById(id); if(!rock) return;
+  holoRequestGyro();
+  const ov=document.createElement('div'); ov.className='holo-stage'; ov.id='holoStage';
+  ov.innerHTML=`<div class="holo-stage-close" data-action="holoClose">✕</div>
+    <div class="holo-view-card">${specimenCard(rock,false,true)}</div>
+    <div class="holo-stage-hint">📱 Incline ton téléphone ou glisse ton doigt pour faire briller la carte</div>`;
+  document.body.appendChild(ov);
+  playSfx('rare');
+}
+function closeHoloViewer(){ const s=document.getElementById('holoStage'); if(s) s.remove(); }
 function _tone(o){
   if(!soundOn||!_audioCtx) return;
   try{
@@ -4317,7 +4342,7 @@ function pcStat(label,val,color){
   const pct=Math.max(0,Math.min(100,Math.round((val||0)/STAT_CAP*100)));
   return `<div class="pc-stat"><div class="pc-stat-lbl">${label}</div><div class="tcard-stat-val">${val||0}</div><div class="pc-stat-bar"><div class="tcard-stat-fill" style="width:${pct}%;background:${color};"></div></div></div>`;
 }
-function specimenCard(rock,pop){
+function specimenCard(rock,pop,viewer){
   // Cartes holographiques réactives à partir de l'Épique ; effet renforcé pour les hautes raretés.
   const isHolo=['epique','legendaire','mythique','cosmique','galaxie','secret'].includes(rock.rarity);
   const holoStrong=['mythique','cosmique','galaxie','secret'].includes(rock.rarity);
@@ -4339,7 +4364,7 @@ function specimenCard(rock,pop){
   const subBits=[];
   if(rock.sizeCm) subBits.push(`📏 ~${rock.sizeCm} cm`);
   if(locName(rock.location)) subBits.push(`📍 ${locName(rock.location)}`);
-  const card=`<div class="pcard ${pop?'card-pop':''}${holoCls}" style="--rarity-glow:${hex}40;--holo:${hex};background:linear-gradient(150deg,${hex},${hex}B0 55%,${hex}85);">
+  const card=`<div class="pcard ${pop?'card-pop':''}${holoCls}" style="--rarity-glow:${hex}40;--holo:${hex};background:linear-gradient(150deg,${hex},${hex}B0 55%,${hex}85);"${(isHolo&&!viewer)?` data-action="holoView" data-id="${rock.id}"`:''}>
     <div class="pcard-inner">
       <div class="pc-head">
         <span class="pc-name">${rock.name}</span>
@@ -4364,6 +4389,7 @@ function specimenCard(rock,pop){
   </div>`;
   let wrapped=holo?`<div class="frame-holo" style="border-radius:20px;">${card}</div>`:card;
   if(rock.evolved) wrapped=`<div class="evolved-glow" style="border-radius:20px;">${wrapped}</div>`;
+  if(isHolo&&!viewer) wrapped+=`<div class="holo-tap">✨ Touche la carte pour l'effet holographique</div>`;
   return wrapped;
 }
 
@@ -8322,6 +8348,8 @@ document.addEventListener('click',(e)=>{
   // Studio IA : page autonome, même origine (la session Supabase y est déjà valide)
   else if(action==='openStudio'){ location.href='./studio.html'; }
   else if(action==='closeMap'){ closeMap(); }
+  else if(action==='holoView'){ openHoloViewer(t.dataset.id); }
+  else if(action==='holoClose'){ closeHoloViewer(); }
   else if(action==='dexType'){ dexType=t.dataset.type; render(); }
   else if(action==='dexBack'){ dexType=null; render(); }
   else if(action==='dexTypes'){ dexSortActive=false; dexQuery=''; dexFavOnly=false; render(); }
