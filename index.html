@@ -5141,7 +5141,7 @@ function onlineConnReady(){
 function onlineSend(msg){
   try{
     if(onlineState&&onlineState.rt){ onlineState.rt.send({type:'broadcast',event:'m',payload:msg}); return true; }
-    if(onlineState&&onlineState.conn&&onlineState.conn.open){ onlineSend(msg); return true; }
+    if(onlineState&&onlineState.conn&&onlineState.conn.open){ onlineState.conn.send(msg); return true; }
   }catch(e){}
   return false;
 }
@@ -5150,27 +5150,52 @@ function _rtCleanup(){
   if(!onlineState) return;
   try{ clearInterval(onlineState.helloTimer); }catch(e){}
   try{ clearTimeout(onlineState.rtTimeout); }catch(e){}
+  try{ clearTimeout(onlineState.subTimeout); }catch(e){}
   if(onlineState.rt){ try{ sb.removeChannel(onlineState.rt); }catch(e){} onlineState.rt=null; }
+}
+// Appelé dès que les deux joueurs sont dans le canal (via présence OU handshake hello).
+function _onlineMatched(){
+  if(!onlineState||onlineState.matched) return;
+  onlineState.matched=true;
+  clearInterval(onlineState.helloTimer); clearTimeout(onlineState.rtTimeout); clearTimeout(onlineState.subTimeout);
+  clearInterval(onlineState.cdTimer); clearTimeout(onlineState.botTimer); clearTimeout(onlineState.connTimeout); clearTimeout(onlineState.chanTimeout);
+  if(onlineState.mode==='trade'){ showToast('🔄 Ami connecté ! Choisis ton caillou à échanger.'); screen='trade-pick'; render(); }
+  else { showToast('🎉 Adversaire connecté ! Choisis ton caillou.'); screen='online-pick'; render(); }
 }
 function startRealtimeMatch(code){
   if(!sb||!onlineState) return false;
   let ch;
-  try{ ch=sb.channel('m-'+code,{config:{broadcast:{self:false}}}); }
+  try{ ch=sb.channel('m-'+code,{config:{broadcast:{self:false},presence:{key:(session&&session.user&&session.user.id)||('u'+Math.random())}}}); }
   catch(e){ showToast('❌ Connexion au serveur impossible.'); return false; }
   onlineState.rt=ch; onlineState.rtReady=false; onlineState.matched=false;
   ch.on('broadcast',{event:'m'},({payload})=>{ if(payload) handleOnlineMsg(payload); });
+  // Présence : dès qu'on voit 2 membres dans le canal, on démarre (fiable, indépendant du timing).
+  ch.on('presence',{event:'sync'},()=>{
+    try{ const st=ch.presenceState(); if(Object.keys(st||{}).length>=2) _onlineMatched(); }catch(e){}
+  });
+  ch.on('presence',{event:'join'},()=>{
+    try{ const st=ch.presenceState(); if(Object.keys(st||{}).length>=2) _onlineMatched(); }catch(e){}
+  });
   ch.subscribe(status=>{
     if(!onlineState||onlineState.rt!==ch) return;
     if(status==='SUBSCRIBED'){
       onlineState.rtReady=true;
       onlineState.diag='③ En attente de l\'autre joueur…'; if(screen==='online-wait') render();
+      try{ ch.track({t:Date.now()}); }catch(e){}   // annonce sa présence
       clearInterval(onlineState.helloTimer);
       const ping=()=>{ if(!onlineState||onlineState.matched){ clearInterval(onlineState.helloTimer); return; } try{ ch.send({type:'broadcast',event:'m',payload:{type:'hello',v:1}}); }catch(e){} };
       ping(); onlineState.helloTimer=setInterval(ping,700);
-    } else if(status==='CHANNEL_ERROR'||status==='TIMED_OUT'){
-      onlineState.diag='⚠️ Connexion au serveur instable…'; if(screen==='online-wait') render();
+    } else if(status==='CHANNEL_ERROR'||status==='TIMED_OUT'||status==='CLOSED'){
+      onlineState.diag='⚠️ Serveur temps réel injoignable — réessaie.'; if(screen==='online-wait') render();
     }
   });
+  // Diagnostic : si le canal ne se connecte pas du tout au bout de 12 s.
+  clearTimeout(onlineState.subTimeout);
+  onlineState.subTimeout=setTimeout(()=>{
+    if(onlineState&&!onlineState.rtReady&&!onlineState.matched&&screen==='online-wait'){
+      onlineState.diag='⚠️ Connexion au serveur temps réel impossible.'; render();
+    }
+  },12000);
   // Filet : si l'autre ne rejoint jamais.
   clearTimeout(onlineState.rtTimeout);
   onlineState.rtTimeout=setTimeout(()=>{
@@ -5223,22 +5248,9 @@ function setupOnlineConn(conn){
 function handleOnlineMsg(msg){
   if(!msg||!onlineState) return;
   if(msg.type==='hello'){
-    clearTimeout(onlineState.botTimer);
-    clearInterval(onlineState.cdTimer);
-    clearTimeout(onlineState.connTimeout);
-    clearTimeout(onlineState.chanTimeout);
-    clearTimeout(onlineState.rtTimeout);
-    // Répond une fois pour que l'autre sorte aussi de l'attente.
+    // Répond une fois pour que l'autre sorte aussi de l'attente (secours si la présence tarde).
     if(!onlineState.helloAcked){ onlineState.helloAcked=true; try{ if(onlineState.rt) onlineState.rt.send({type:'broadcast',event:'m',payload:{type:'hello',v:1}}); }catch(e){} }
-    if(onlineState.matched) return;         // déjà appariés -> on ne rebascule pas
-    onlineState.matched=true; clearInterval(onlineState.helloTimer);
-    if(onlineState.mode==='trade'){
-      showToast('🔄 Ami connecté ! Choisis ton caillou à échanger.');
-      screen='trade-pick'; render();
-    } else {
-      showToast('🎉 Adversaire connecté ! Choisis ton caillou.');
-      screen='online-pick'; render();
-    }
+    _onlineMatched();
     return;
   }
   if(msg.type==='trade-offer'){ onlineState.oppOffer=msg.rock; if(screen==='trade-pick'||screen==='trade-confirm') render(); }
