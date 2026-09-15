@@ -2740,8 +2740,13 @@ function addXp(amount){
 }
 
 let _savingMeta=false, _saveMetaQueued=false;
-async function saveMeta(){
+// Sécurité anti-perte : tant que les données du compte n'ont pas été chargées
+// avec succès depuis Supabase, on N'ÉCRASE JAMAIS le cloud (sinon un serveur
+// injoignable au démarrage pouvait réécrire la progression avec des zéros).
+let _cloudReady=false;
+async function saveMeta(force){
   if(!session||!sb) return;
+  if(!_cloudReady && !force){ return; }
   if(_savingMeta){ _saveMetaQueued=true; return; }
   _savingMeta=true;
   try{
@@ -2761,11 +2766,12 @@ async function saveMeta(){
 
 async function loadCloudData(){
   if(!session||!sb) return;
+  _cloudReady=false;              // on rebloque les sauvegardes tant que le chargement n'a pas réussi
   try{
     const { data:rocks, error } = await sb.from('rocks').select('*').eq('user_id',session.user.id).order('catalog_number',{ascending:true});
     if(error) throw error;
     dex=(rocks||[]).map(rowToRock);
-  }catch(e){ dex=[]; console.error('loadCloudData rocks',e); showToast('❌ Chargement du dex impossible: '+(e?.message||e)); }
+  }catch(e){ console.error('loadCloudData rocks',e); showToast('⚠️ Connexion au compte impossible — tes cailloux ne sont pas perdus, réessaie plus tard.'); return; }
   try{
     const { data:row, error } = await sb.from('player_meta').select('*').eq('user_id',session.user.id).maybeSingle();
     if(error) throw error;
@@ -2781,8 +2787,12 @@ async function loadCloudData(){
       // Auto-synchronise le pseudo dans la table publique "profiles" pour que les
       // amis puissent nous retrouver (les anciens comptes n'y avaient jamais été inscrits).
       if(meta.username){ try{ sb.from('profiles').upsert({ user_id:session.user.id, username:meta.username }).then(()=>{},()=>{}); }catch(e){} }
-    } else { await saveMeta(); }
-  }catch(e){ console.error('loadCloudData meta',e); }
+      _cloudReady=true;                 // données chargées : sauvegardes de nouveau autorisées
+    } else {
+      // Compte réellement neuf (aucune ligne) : on crée la ligne par défaut, une seule fois.
+      _cloudReady=true; await saveMeta(true);
+    }
+  }catch(e){ console.error('loadCloudData meta',e); showToast('⚠️ Connexion au compte impossible — tes données ne sont pas perdues, réessaie plus tard.'); }
 }
 
 // Remise a zero unique du compteur de generation IA pour les comptes existants
