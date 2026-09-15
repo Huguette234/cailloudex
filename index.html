@@ -5108,6 +5108,7 @@ function loadPeerJS(){
 
 function cancelOnline(){
   if(onlineState){
+    _rtCleanup();
     clearTimeout(onlineState.botTimer);
     clearInterval(onlineState.cdTimer);
     clearTimeout(onlineState.connTimeout);
@@ -5122,6 +5123,55 @@ function cancelOnline(){
 function onlineConnReady(){
   if(!onlineState||!onlineState.conn) return;
   onlineState.conn.send({type:'hello',v:1});
+}
+
+/* ===== TRANSPORT DES MATCHS : Supabase Realtime (fiable en 4G/5G, sans TURN) =====
+   On relaie tous les messages du combat/échange via un canal Realtime nommé
+   d'après le code de la salle. Plus de dépendance au P2P/WebRTC. */
+function onlineSend(msg){
+  try{
+    if(onlineState&&onlineState.rt){ onlineState.rt.send({type:'broadcast',event:'m',payload:msg}); return true; }
+    if(onlineState&&onlineState.conn&&onlineState.conn.open){ onlineSend(msg); return true; }
+  }catch(e){}
+  return false;
+}
+function onlineReady(){ return !!(onlineState&&(onlineState.rtReady||(onlineState.conn&&onlineState.conn.open))); }
+function _rtCleanup(){
+  if(!onlineState) return;
+  try{ clearInterval(onlineState.helloTimer); }catch(e){}
+  try{ clearTimeout(onlineState.rtTimeout); }catch(e){}
+  if(onlineState.rt){ try{ sb.removeChannel(onlineState.rt); }catch(e){} onlineState.rt=null; }
+}
+function startRealtimeMatch(code){
+  if(!sb||!onlineState) return false;
+  let ch;
+  try{ ch=sb.channel('m-'+code,{config:{broadcast:{self:false}}}); }
+  catch(e){ showToast('❌ Connexion au serveur impossible.'); return false; }
+  onlineState.rt=ch; onlineState.rtReady=false; onlineState.matched=false;
+  ch.on('broadcast',{event:'m'},({payload})=>{ if(payload) handleOnlineMsg(payload); });
+  ch.subscribe(status=>{
+    if(!onlineState||onlineState.rt!==ch) return;
+    if(status==='SUBSCRIBED'){
+      onlineState.rtReady=true;
+      onlineState.diag='③ En attente de l\'autre joueur…'; if(screen==='online-wait') render();
+      clearInterval(onlineState.helloTimer);
+      const ping=()=>{ if(!onlineState||onlineState.matched){ clearInterval(onlineState.helloTimer); return; } try{ ch.send({type:'broadcast',event:'m',payload:{type:'hello',v:1}}); }catch(e){} };
+      ping(); onlineState.helloTimer=setInterval(ping,700);
+    } else if(status==='CHANNEL_ERROR'||status==='TIMED_OUT'){
+      onlineState.diag='⚠️ Connexion au serveur instable…'; if(screen==='online-wait') render();
+    }
+  });
+  // Filet : si l'autre ne rejoint jamais.
+  clearTimeout(onlineState.rtTimeout);
+  onlineState.rtTimeout=setTimeout(()=>{
+    if(!onlineState||onlineState.matched||battleState||screen!=='online-wait') return;
+    if(onlineState.isHost && !onlineState.isChallenge && onlineState.mode!=='trade'){
+      showToast('📶 Personne n\'a rejoint — un bot prend la relève !'); _rtCleanup(); onlineState=null; screen='combat-pick'; render();
+    } else {
+      showToast('❌ Ton ami n\'a pas rejoint à temps. Réessaie.'); cancelOnline();
+    }
+  }, 75000);
+  return true;
 }
 
 function setupOnlineConn(conn){
@@ -5167,6 +5217,11 @@ function handleOnlineMsg(msg){
     clearInterval(onlineState.cdTimer);
     clearTimeout(onlineState.connTimeout);
     clearTimeout(onlineState.chanTimeout);
+    clearTimeout(onlineState.rtTimeout);
+    // Répond une fois pour que l'autre sorte aussi de l'attente.
+    if(!onlineState.helloAcked){ onlineState.helloAcked=true; try{ if(onlineState.rt) onlineState.rt.send({type:'broadcast',event:'m',payload:{type:'hello',v:1}}); }catch(e){} }
+    if(onlineState.matched) return;         // déjà appariés -> on ne rebascule pas
+    onlineState.matched=true; clearInterval(onlineState.helloTimer);
     if(onlineState.mode==='trade'){
       showToast('🔄 Ami connecté ! Choisis ton caillou à échanger.');
       screen='trade-pick'; render();
@@ -5174,6 +5229,7 @@ function handleOnlineMsg(msg){
       showToast('🎉 Adversaire connecté ! Choisis ton caillou.');
       screen='online-pick'; render();
     }
+    return;
   }
   if(msg.type==='trade-offer'){ onlineState.oppOffer=msg.rock; if(screen==='trade-pick'||screen==='trade-confirm') render(); }
   if(msg.type==='trade-media'){ if(onlineState.oppOffer&&msg.field){ onlineState.oppOffer[msg.field]=msg.data; if(screen==='trade-confirm') render(); } }
@@ -5219,7 +5275,7 @@ const COMBAT_EMOTES=['😎','🔥','😭','😂','😤','👑','🫡','😱'];
 function sendEmote(emoji){
   if(!emoji||!battleState||!battleState.online) return;
   showEmoteBubble('mine',emoji);
-  try{ if(onlineState&&onlineState.conn&&onlineState.conn.open) onlineState.conn.send({type:'emote',emoji}); }catch(e){}
+  try{ if(onlineReady()) onlineSend({type:'emote',emoji}); }catch(e){}
 }
 function showEmoteBubble(side,emoji){
   const card=document.querySelector(side==='mine'?'.bcard-mine':'.bcard-foe'); if(!card||!emoji) return;
@@ -5240,9 +5296,6 @@ function isTradeCode(code){ return /^TRD/.test(code||''); }
 async function sendTradeInvite(friendId, friendUsername){
   if(!session||!sb){ showToast('Connecte-toi d\'abord.'); return; }
   if(!dex.length){ showToast('🪨 Tu n\'as aucun caillou à échanger !'); return; }
-  try{ showToast('Chargement réseau...'); await loadPeerJS(); }
-  catch(e){ showToast('❌ Module réseau indisponible'); return; }
-  await loadIceServers();
   const code='TRD'+genRoomCode();
   try{
     const { error } = await sb.from('challenges').insert({
@@ -5254,13 +5307,11 @@ async function sendTradeInvite(friendId, friendUsername){
   showToast(`🔄 Invitation d'échange envoyée à ${friendUsername} !`);
   sendPushToFriend(friendId,'🔄 Échange CaillouDEX !',`${meta.username||'Un joueur'} veut échanger un caillou avec toi !`);
   onlineState={ isHost:true, isChallenge:true, mode:'trade', targetUsername:friendUsername, roomCode:code,
-    opponentId:friendId, opponentUsername:friendUsername, peer:null, conn:null,
+    opponentId:friendId, opponentUsername:friendUsername, rt:null, conn:null,
     myOfferRock:null, myOffer:null, oppOffer:null, myConfirmed:false, oppConfirmed:false,
     tradeInserted:false, oppCommitted:false, tradeDone:false, cd:0 };
   screen='online-wait'; render();
-  const peer=new Peer(code,getPeerConfig()); onlineState.peer=peer;
-  peer.on('connection',conn=>{ setupOnlineConn(conn); });
-  peer.on('error',e=>{ showToast('Erreur: '+e.type); cancelOnline(); });
+  startRealtimeMatch(code);
 }
 async function pickTradeRock(rock){
   if(!onlineState||onlineState.myOffer) return;
@@ -5271,15 +5322,15 @@ async function pickTradeRock(rock){
     atk:rock.atk, def:rock.def, vit:rock.vit, aiGenerated:rock.aiGenerated,
     colorCategory:rock.colorCategory, shiny:rock.shiny, upgradeLevel:rock.upgradeLevel, evolved:rock.evolved };
   onlineState.myOffer=o;
-  try{ onlineState.conn.send({type:'trade-offer', rock:o}); }catch(e){}
+  try{ onlineSend({type:'trade-offer', rock:o}); }catch(e){}
   screen='trade-confirm'; render();
   // Images envoyées séparément et compressées (évite un message P2P trop lourd)
   try{
-    const photo=await shrinkForNetwork(rock.photo,512,0.72);
-    if(onlineState&&onlineState.conn) onlineState.conn.send({type:'trade-media', field:'photo', data:photo||null});
+    const photo=await shrinkForNetwork(rock.photo,420,0.62);
+    if(onlineState) onlineSend({type:'trade-media', field:'photo', data:photo||null});
     if(rock.characterPhoto){
-      const cp=await shrinkForNetwork(rock.characterPhoto,512,0.72);
-      if(onlineState&&onlineState.conn) onlineState.conn.send({type:'trade-media', field:'characterPhoto', data:cp||null});
+      const cp=await shrinkForNetwork(rock.characterPhoto,420,0.62);
+      if(onlineState) onlineSend({type:'trade-media', field:'characterPhoto', data:cp||null});
     }
   }catch(e){}
 }
@@ -5287,7 +5338,7 @@ function tradeConfirm(){
   if(!onlineState||onlineState.myConfirmed) return;
   if(!onlineState.myOffer||!onlineState.oppOffer){ showToast('Attendez d\'avoir tous les deux choisi.'); return; }
   onlineState.myConfirmed=true;
-  try{ onlineState.conn.send({type:'trade-confirm'}); }catch(e){}
+  try{ onlineSend({type:'trade-confirm'}); }catch(e){}
   if(onlineState.oppConfirmed) tradeCommit();
   else { showToast('✅ En attente de la confirmation de ton ami...'); render(); }
 }
@@ -5309,7 +5360,7 @@ async function tradeCommit(){
     if(error) throw error;
     dex.push(rowToRock(data));
   }catch(e){ showToast('❌ Erreur à la réception du caillou. Réessaie.'); }
-  try{ onlineState.conn.send({type:'trade-committed'}); }catch(e){}
+  try{ onlineSend({type:'trade-committed'}); }catch(e){}
   if(onlineState.oppCommitted) tradeFinalizeDelete();
   else render();
 }
@@ -5326,11 +5377,12 @@ async function tradeFinalizeDelete(){
   screen='trade-done'; render();
 }
 function tradeCancel(){
-  try{ if(onlineState&&onlineState.conn&&onlineState.conn.open) onlineState.conn.send({type:'trade-cancel'}); }catch(e){}
+  try{ if(onlineReady()) onlineSend({type:'trade-cancel'}); }catch(e){}
   showToast('Échange annulé.');
   tradeCleanup();
 }
 function tradeCleanup(){
+  _rtCleanup();
   try{ if(onlineState&&onlineState.conn) onlineState.conn.close(); }catch(e){}
   try{ if(onlineState&&onlineState.peer) onlineState.peer.destroy(); }catch(e){}
   onlineState=null; screen='friends'; render();
@@ -5404,39 +5456,28 @@ function tradeDoneScreen(){
 }
 
 async function createOnlineSalle(){
-  try{ showToast('Chargement réseau...'); await loadPeerJS(); }
-  catch(e){ showToast('❌ Module réseau indisponible'); return; }
-  await loadIceServers();
+  if(!sb){ showToast('Connecte-toi d\'abord.'); return; }
   const code=genRoomCode();
-  onlineState={ isHost:true, roomCode:code, peer:null, conn:null,
+  onlineState={ isHost:true, roomCode:code, rt:null, conn:null,
     myRock:null, opponentRock:null, cd:30, botTimer:null, cdTimer:null };
   screen='online-wait'; render();
-  const peer=new Peer(code,getPeerConfig());
-  onlineState.peer=peer;
-  peer.on('open',()=>{
-    onlineState.cdTimer=setInterval(()=>{
-      onlineState.cd--;
-      if(screen==='online-wait'){ const cdEl=document.getElementById('onlineCd'); if(cdEl) cdEl.textContent=onlineState.cd; }
-      if(onlineState.cd<=0){
-        clearInterval(onlineState.cdTimer);
-        showToast('⏱️ Personne... un bot prend la relève !');
-        try{ peer.destroy(); }catch(e){}
-        onlineState=null; screen='combat-pick'; render();
-      }
-    },1000);
-  });
-  peer.on('connection',conn=>{
-    clearInterval(onlineState.cdTimer);
-    setupOnlineConn(conn);
-  });
-  peer.on('error',e=>{ showToast('Erreur: '+e.type); cancelOnline(); });
+  // Compte à rebours : un bot prend la relève si personne ne rejoint.
+  onlineState.cdTimer=setInterval(()=>{
+    if(!onlineState){ return; }
+    onlineState.cd--;
+    if(screen==='online-wait'){ const cdEl=document.getElementById('onlineCd'); if(cdEl) cdEl.textContent=onlineState.cd; }
+    if(onlineState.cd<=0){
+      clearInterval(onlineState.cdTimer);
+      if(onlineState.matched) return;
+      showToast('⏱️ Personne... un bot prend la relève !');
+      _rtCleanup(); onlineState=null; screen='combat-pick'; render();
+    }
+  },1000);
+  startRealtimeMatch(code);
 }
 
 async function sendChallenge(friendId,friendUsername){
   if(!session||!sb) return;
-  try{ await loadPeerJS(); }
-  catch(e){ showToast('❌ Module réseau indisponible'); return; }
-  await loadIceServers();
   const code=genRoomCode();
   try{
     const { error } = await sb.from('challenges').insert({
@@ -5449,12 +5490,9 @@ async function sendChallenge(friendId,friendUsername){
   sendPushToFriend(friendId, '⚔️ Défi CaillouDEX !', `${meta.username||'Un joueur'} te défie en combat ! Ouvre l'app pour accepter.`);
   onlineState={ isHost:true, isChallenge:true, targetUsername:friendUsername, roomCode:code,
     opponentId:friendId, opponentUsername:friendUsername,
-    peer:null, conn:null, myRock:null, opponentRock:null, cd:0, botTimer:null, cdTimer:null };
+    rt:null, conn:null, myRock:null, opponentRock:null, cd:0, botTimer:null, cdTimer:null };
   screen='online-wait'; render();
-  const peer=new Peer(code,getPeerConfig());
-  onlineState.peer=peer;
-  peer.on('connection',conn=>{ setupOnlineConn(conn); });
-  peer.on('error',e=>{ showToast('Erreur: '+e.type); cancelOnline(); });
+  startRealtimeMatch(code);
 }
 
 async function checkPendingChallenge(){
@@ -5547,37 +5585,15 @@ function dismissChallenge(){
 }
 
 async function joinOnlineSalle(code, opp){
-  try{ await loadPeerJS(); }
-  catch(e){ showToast('❌ Module réseau indisponible'); return; }
-  await loadIceServers();
+  if(!sb){ showToast('Connecte-toi d\'abord.'); return; }
   const _trade=isTradeCode(code);
-  onlineState={ isHost:false, mode:_trade?'trade':'battle', roomCode:code, peer:null, conn:null, diag:'① Recherche du serveur…',
+  onlineState={ isHost:false, mode:_trade?'trade':'battle', roomCode:code, rt:null, conn:null, diag:'② Connexion…',
     opponentId:opp&&opp.id, opponentUsername:opp&&opp.username,
     myRock:null, opponentRock:null, cd:0, botTimer:null, cdTimer:null,
     myOfferRock:null, myOffer:null, oppOffer:null, myConfirmed:false, oppConfirmed:false,
     tradeInserted:false, oppCommitted:false, tradeDone:false };
   screen='online-wait'; render();
-  const peer=new Peer(getPeerConfig());
-  onlineState.peer=peer;
-  peer.on('open',()=>{
-    if(onlineState){ onlineState.diag='② Connexion à l\'adversaire…'; if(screen==='online-wait') render(); }
-    const conn=peer.connect(code,{reliable:true,serialization:'json'});
-    setupOnlineConn(conn);
-    // Filet de securite : si la connexion n'aboutit pas (reseau bloquant),
-    // on ne reste pas bloque a l'attente indefiniment.
-    onlineState.connTimeout=setTimeout(()=>{
-      if(onlineState&&!battleState&&screen==='online-wait'){
-        showToast('❌ Connexion impossible (réseau). Réessaie ou passe en Wi-Fi.');
-        cancelOnline();
-      }
-    },20000);
-  });
-  peer.on('error',e=>{
-    if(onlineState){ onlineState.diag='⚠️ Erreur: '+e.type; }
-    showToast(e.type==='peer-unavailable'?'❌ Salle introuvable':'Erreur: '+e.type);
-    if(e.type==='peer-unavailable') cancelOnline();
-    else if(screen==='online-wait') render();
-  });
+  startRealtimeMatch(code);
 }
 
 function shrinkForNetwork(dataUrl,maxSize=160,quality=0.55){
@@ -5614,7 +5630,7 @@ async function pickOnlineRock(rock){
   const stats={name:effRock.name,atk:effRock.atk,def:effRock.def,vit:effRock.vit,
     specialMove:effRock.specialMove,rarityLabel:effRock.rarityLabel,hex:effRock.hex,
     rarity:effRock.rarity,rockType:effRock.rockType,emoji:'⬜',bet:onlineState.myBet||0,series:!!onlineState.seriesWanted};
-  try{ onlineState.conn.send({type:'rock-pick',rock:stats}); }catch(e){}
+  try{ onlineSend({type:'rock-pick',rock:stats}); }catch(e){}
   if(onlineState.opponentRock) startOnlineBattle();
   else{ showToast('En attente du choix adverse...'); }
   // 2) Puis les images, en petit et separement (best-effort ; le duel n'en depend pas).
@@ -5623,7 +5639,7 @@ async function pickOnlineRock(rock){
       shrinkForNetwork(effRock.photo,128,0.5),
       shrinkForNetwork(effRock.characterPhoto||null,128,0.55),
     ]);
-    if(onlineState&&onlineState.conn) onlineState.conn.send({type:'rock-media',photo:smallPhoto||null,characterPhoto:smallChar||null});
+    if(onlineState) onlineSend({type:'rock-media',photo:smallPhoto||null,characterPhoto:smallChar||null});
   }catch(e){}
 }
 
@@ -5706,7 +5722,7 @@ function recordSeriesResult(won){
 async function playerOnlineAction(moveId){
   if(!battleState||battleState.turn!=='player') return;
   if(moveId==='flee'){
-    try{ onlineState.conn.send({type:'action',action:'flee',dmg:0}); }catch(e){}
+    try{ onlineSend({type:'action',action:'flee',dmg:0}); }catch(e){}
     showToast('🏃 Tu fuis sans gloire...');
     incrementStat('losses',1);
     battleState.winner='bot'; battleState.turn='end';
@@ -5716,7 +5732,7 @@ async function playerOnlineAction(moveId){
   if(moveId==='feed'){
     const result=consumeFoodHeal(true);
     if(!result){ showToast('Tu n\'as pas de nourriture !'); return; }
-    try{ onlineState.conn.send({type:'action',action:'feed',foodName:result.food.name,foodEmoji:result.food.emoji,healAmt:result.healAmt}); }catch(e){}
+    try{ onlineSend({type:'action',action:'feed',foodName:result.food.name,foodEmoji:result.food.emoji,healAmt:result.healAmt}); }catch(e){}
     addCombatLog(`${result.food.emoji} ${battleState.playerRock.name} mange : ${result.food.name} (+${result.healAmt} PV) !`,'neutral');
     battleState.turn='opponent'; render();
     return;
@@ -5745,7 +5761,7 @@ async function playerOnlineAction(moveId){
   if(moveId==='special') battleState.playerSpecialUsed=true;
   if(moveId==='ultimate') battleState.playerUltimateUsed=true;
   // On envoie le coup ; l'adversaire pare et nous renvoie le résultat (PV faisant foi).
-  try{ onlineState.conn.send({type:'atk',action:moveId,dmg,fureur:battleState.playerFureur||0}); }catch(e){}
+  try{ onlineSend({type:'atk',action:moveId,dmg,fureur:battleState.playerFureur||0}); }catch(e){}
   battleState._pendingHit={dmg,moveId,isFureur,tMult,perf:timing>=1.6};
   // turn reste 'animating' jusqu'à réception du résultat
   render();
@@ -5817,7 +5833,7 @@ async function onlineDefend(msg){
   else if(msg.action==='type') m=`${battleState.botRock.name} frappe avec son type`;
   else m=`${battleState.botRock.name} attaque`;
   addCombatLog(`${m} : -${finalDmg} PV${par}`,'dmg-player');
-  try{ onlineState.conn.send({type:'atk-result',dmg:finalDmg,oppHP:battleState.playerHP,dead,parried:parry<1,fureur:battleState.playerFureur||0}); }catch(e){}
+  try{ onlineSend({type:'atk-result',dmg:finalDmg,oppHP:battleState.playerHP,dead,parried:parry<1,fureur:battleState.playerFureur||0}); }catch(e){}
   if(dead){
     battleState.winner='bot'; battleState.turn='end';
     incrementStat('losses',1);
@@ -8577,7 +8593,7 @@ document.addEventListener('click',(e)=>{
   else if(action==='combatRematch'){
     if(battleState&&battleState.online){
       if(onlineState&&onlineState.conn&&onlineState.conn.open){
-        try{ onlineState.conn.send({type:'rematch-request'}); }catch(e){}
+        try{ onlineSend({type:'rematch-request'}); }catch(e){}
         onlineState.rematchRequested=true; showToast('🔄 Demande de revanche envoyée...'); render();
       } else {
         showToast('Adversaire déconnecté.');
@@ -8589,11 +8605,11 @@ document.addEventListener('click',(e)=>{
     else { screen='combat-pick'; render(); }
   }
   else if(action==='rematchAccept'){
-    if(onlineState&&onlineState.conn&&onlineState.conn.open){ try{ onlineState.conn.send({type:'rematch-accept'}); }catch(e){} startRematch(); }
+    if(onlineReady()){ try{ onlineSend({type:'rematch-accept'}); }catch(e){} startRematch(); }
     else { showToast('Adversaire déconnecté.'); battleState=null; onlineState=null; screen='online-menu'; render(); }
   }
   else if(action==='rematchDecline'){
-    if(onlineState&&onlineState.conn&&onlineState.conn.open){ try{ onlineState.conn.send({type:'rematch-decline'}); }catch(e){} }
+    if(onlineReady()){ try{ onlineSend({type:'rematch-decline'}); }catch(e){} }
     if(onlineState) onlineState.rematchIncoming=false;
     battleState=null; screen='online-menu'; render();
   }
