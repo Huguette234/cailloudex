@@ -606,16 +606,26 @@ nav{display:flex;gap:8px;padding:10px 14px max(14px,env(safe-area-inset-bottom))
 /* Reflet lumineux doux qui suit l'inclinaison (n'écrase pas le texte) */
 .holo-glare{position:absolute;inset:0;border-radius:20px;pointer-events:none;z-index:6;mix-blend-mode:soft-light;
   background:radial-gradient(circle at var(--mx) var(--my),rgba(255,255,255,.9),rgba(255,255,255,.25) 32%,transparent 62%);}
-/* Nappe holographique arc-en-ciel CONTINUE (pas de bord net) qui glisse selon l'inclinaison.
-   Blend "overlay" -> colore la carte mais garde le texte sombre bien lisible. */
-.holo-foil{position:absolute;inset:0;border-radius:20px;pointer-events:none;z-index:5;opacity:.5;mix-blend-mode:overlay;
+/* Base : nappe arc-en-ciel douce qui colore la carte (garde le texte lisible en ligne). */
+.holo-foil{position:absolute;inset:0;border-radius:20px;pointer-events:none;z-index:4;opacity:.42;mix-blend-mode:overlay;
   background:linear-gradient(125deg,#ff50b4,#ffdc5a,#6effb4,#6eb4ff,#d26eff,#ff50b4);
   background-size:220% 220%;background-position:var(--mx) var(--my);}
-.holo-card.holo-strong .holo-foil{opacity:.62;}
+/* Bandes diagonales "rainbow rare" qui balaient toute la carte selon l'inclinaison. */
+.holo-rainbow{position:absolute;inset:0;border-radius:20px;pointer-events:none;z-index:5;opacity:.32;mix-blend-mode:overlay;
+  background:repeating-linear-gradient(115deg,
+    rgba(255,70,150,.75) 0px, rgba(255,190,80,.75) 26px, rgba(120,235,150,.75) 52px,
+    rgba(90,180,255,.75) 78px, rgba(200,110,255,.75) 104px, rgba(255,70,150,.75) 130px);
+  background-size:200% 100%;background-position:var(--mx) 0;}
+/* Paillettes fines (effet "cosmos"). */
+.holo-sparkle{position:absolute;inset:0;border-radius:20px;pointer-events:none;z-index:5;opacity:.35;mix-blend-mode:screen;
+  background-image:radial-gradient(rgba(255,255,255,.95) 1px,transparent 1.7px),radial-gradient(rgba(255,255,255,.7) 1px,transparent 1.6px);
+  background-size:30px 30px,48px 48px;background-position:var(--mx) var(--my),calc(var(--mx) + 15px) calc(var(--my) + 22px);}
 .holo-card.holo-strong .holo-glare{background:radial-gradient(circle at var(--mx) var(--my),rgba(255,255,255,.95),rgba(255,255,255,.3) 30%,transparent 60%);}
-/* Dans la visionneuse : un peu plus intense mais toujours propre et lisible */
-.holo-stage .holo-foil{opacity:.6;}
-.holo-stage .holo-card.holo-strong .holo-foil{opacity:.72;}
+/* Dans la VISIONNEUSE : plein régime "rainbow rare" (les bandes ressortent franchement). */
+.holo-stage .holo-foil{opacity:.55;}
+.holo-stage .holo-rainbow{opacity:.7;mix-blend-mode:color-dodge;}
+.holo-stage .holo-sparkle{opacity:.6;}
+.holo-stage .holo-card.holo-strong .holo-rainbow{opacity:.82;}
 /* En ligne : la carte holo est cliquable (ouvre la visionneuse) */
 .holo-card[data-action="holoView"]{cursor:pointer;}
 .holo-tap{font-family:'Baloo 2',sans-serif;font-weight:800;font-size:11px;color:var(--goldd);text-align:center;margin-top:10px;letter-spacing:.02em;}
@@ -4425,7 +4435,7 @@ function specimenCard(rock,pop,viewer){
       </div>
       ${(rock.personality||rock.quip)?`<div class="pc-flavor">${rock.personality?rock.personality:''}${rock.quip?` <i>« ${rock.quip} »</i>`:''}</div>`:''}
       <div class="pc-foot"><span>${rock.rarityLabel}</span><span>N°${String(rock.catalogNumber).padStart(4,'0')}</span></div>
-    </div>${isHolo?'<div class="holo-foil"></div><div class="holo-glare"></div>':''}
+    </div>${isHolo?'<div class="holo-foil"></div><div class="holo-rainbow"></div><div class="holo-sparkle"></div><div class="holo-glare"></div>':''}
   </div>`;
   let wrapped=holo?`<div class="frame-holo" style="border-radius:20px;">${card}</div>`:card;
   if(rock.evolved) wrapped=`<div class="evolved-glow" style="border-radius:20px;">${wrapped}</div>`;
