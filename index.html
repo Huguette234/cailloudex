@@ -603,33 +603,25 @@ nav{display:flex;gap:8px;padding:10px 14px max(14px,env(safe-area-inset-bottom))
    proprement, avec un balayage arc-en-ciel lent. Le texte reste lisible (blend overlay). */
 .holo-card{position:relative;}
 .holo-card>.pcard-inner{position:relative;z-index:1;}
-.holo-foil,.holo-rainbow,.holo-sparkle,.holo-glare{position:absolute;inset:0;border-radius:20px;pointer-events:none;}
-/* Nappe arc-en-ciel douce qui glisse en diagonale */
-.holo-foil{z-index:4;opacity:.4;mix-blend-mode:overlay;
-  background:linear-gradient(125deg,#ff50b4,#ffdc5a,#6effb4,#6eb4ff,#d26eff,#ff50b4);
-  background-size:260% 260%;animation:holoFoil 9s ease-in-out infinite;}
-@keyframes holoFoil{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
-/* Bandes diagonales "rainbow rare" qui défilent lentement */
-.holo-rainbow{z-index:5;opacity:.28;mix-blend-mode:overlay;
-  background:repeating-linear-gradient(115deg,
-    rgba(255,70,150,.7) 0px, rgba(255,190,80,.7) 26px, rgba(120,235,150,.7) 52px,
-    rgba(90,180,255,.7) 78px, rgba(200,110,255,.7) 104px, rgba(255,70,150,.7) 130px);
-  background-size:200% 100%;animation:holoBands 7s linear infinite;}
-@keyframes holoBands{0%{background-position:0 0}100%{background-position:200% 0}}
+.holo-svg,.holo-sparkle,.holo-glare{position:absolute;inset:0;width:100%;height:100%;border-radius:20px;pointer-events:none;overflow:hidden;}
+/* Foil arc-en-ciel rendu en SVG (dégradés bien nets) */
+.holo-svg{z-index:5;opacity:.42;mix-blend-mode:overlay;}
+.holo-card.holo-strong .holo-svg{opacity:.55;}
+/* Les bandes glissent gauche/droite : au gyroscope (JS) ou, à défaut, par un léger balancement auto */
+.holo-band{transform:translateX(0);animation:holoSway 6.5s ease-in-out infinite;will-change:transform;}
+@keyframes holoSway{0%,100%{transform:translateX(-26px)}50%{transform:translateX(26px)}}
+.holo-gyro .holo-band{animation:none;}   /* le gyroscope prend la main (transform posé en JS) */
 /* Reflet lumineux qui traverse doucement la carte */
 .holo-glare{z-index:6;mix-blend-mode:soft-light;
-  background:linear-gradient(115deg,transparent 38%,rgba(255,255,255,.55) 50%,transparent 62%);
-  background-size:250% 100%;animation:holoGlare 6s ease-in-out infinite;}
+  background:linear-gradient(115deg,transparent 38%,rgba(255,255,255,.5) 50%,transparent 62%);
+  background-size:250% 100%;animation:holoGlare 6.5s ease-in-out infinite;}
 @keyframes holoGlare{0%{background-position:130% 0}100%{background-position:-40% 0}}
 /* Paillettes fines qui scintillent doucement */
-.holo-sparkle{z-index:5;opacity:.3;mix-blend-mode:screen;
+.holo-sparkle{z-index:5;opacity:.28;mix-blend-mode:screen;
   background-image:radial-gradient(rgba(255,255,255,.95) 1px,transparent 1.7px),radial-gradient(rgba(255,255,255,.7) 1px,transparent 1.6px);
   background-size:30px 30px,48px 48px;background-position:0 0,15px 22px;animation:holoTwinkle 3.6s ease-in-out infinite;}
-@keyframes holoTwinkle{0%,100%{opacity:.18}50%{opacity:.42}}
-/* Hautes raretés : un poil plus intense */
-.holo-card.holo-strong .holo-rainbow{opacity:.4;}
-.holo-card.holo-strong .holo-foil{opacity:.5;}
-@media (prefers-reduced-motion:reduce){ .holo-foil,.holo-rainbow,.holo-glare,.holo-sparkle{animation:none;} }
+@keyframes holoTwinkle{0%,100%{opacity:.16}50%{opacity:.4}}
+@media (prefers-reduced-motion:reduce){ .holo-band,.holo-glare,.holo-sparkle{animation:none;} }
 
 /* Location footer */
 .tcard-loc{
@@ -3187,13 +3179,40 @@ function sfxUnlock(){
     if(!_audioCtx){ const AC=window.AudioContext||window.webkitAudioContext; if(!AC) return; _audioCtx=new AC(); }
     if(_audioCtx.state==='suspended') _audioCtx.resume();
   }catch(e){}
+  try{ holoInitGyro(); }catch(e){}   // active le foil réactif au 1er geste (permission iOS)
 }
 
-/* Ancienne visionneuse holographique (clic + gyroscope) RETIRÉE :
-   elle buguait et rendait mal. Les cartes holo brillent désormais toutes seules
-   en CSS (voir .holo-foil / .holo-rainbow / .holo-glare). */
 function openHoloViewer(){}   // no-op (compat)
 function closeHoloViewer(){}  // no-op (compat)
+
+/* ===== HOLO : le foil arc-en-ciel (SVG) glisse gauche/droite selon l'inclinaison =====
+   Uniquement l'axe gauche/droite (gamma), lissé, SANS rotation 3D ni conflit de
+   défilement -> propre, pas de bug. Repli : léger balancement auto (CSS) si pas de gyro. */
+let _holoTarget=0,_holoCur=0,_holoRAF=null,_holoAsked=false;
+function _holoLoop(){
+  _holoCur += (_holoTarget-_holoCur)*0.14;
+  const px=(_holoCur*72).toFixed(1)+'px';
+  const bands=document.querySelectorAll('.holo-band');
+  bands.forEach(b=>{ b.style.transform='translateX('+px+')'; });
+  if(bands.length && Math.abs(_holoTarget-_holoCur)>0.002){ _holoRAF=requestAnimationFrame(_holoLoop); } else { _holoRAF=null; }
+}
+function _holoOnOrient(e){
+  if(e.gamma==null) return;
+  const cards=document.querySelectorAll('.holo-card'); if(!cards.length) return;
+  cards.forEach(c=>{ if(!c.classList.contains('holo-gyro')) c.classList.add('holo-gyro'); });
+  _holoTarget=Math.max(-1,Math.min(1,(e.gamma||0)/28));   // roulis gauche/droite, débattement doux
+  if(!_holoRAF) _holoRAF=requestAnimationFrame(_holoLoop);
+}
+function holoInitGyro(){
+  if(_holoAsked) return; _holoAsked=true;
+  try{
+    if(window.DeviceOrientationEvent && typeof DeviceOrientationEvent.requestPermission==='function'){
+      DeviceOrientationEvent.requestPermission().then(s=>{ if(s==='granted') window.addEventListener('deviceorientation',_holoOnOrient,true); }).catch(()=>{});
+    } else if(window.DeviceOrientationEvent){
+      window.addEventListener('deviceorientation',_holoOnOrient,true);
+    }
+  }catch(e){}
+}
 function _tone(o){
   if(!soundOn||!_audioCtx) return;
   try{
@@ -4385,7 +4404,14 @@ function specimenCard(rock,pop,viewer){
       </div>
       ${(rock.personality||rock.quip)?`<div class="pc-flavor">${rock.personality?rock.personality:''}${rock.quip?` <i>« ${rock.quip} »</i>`:''}</div>`:''}
       <div class="pc-foot"><span>${rock.rarityLabel}</span><span>N°${String(rock.catalogNumber).padStart(4,'0')}</span></div>
-    </div>${isHolo?'<div class="holo-foil"></div><div class="holo-rainbow"></div><div class="holo-sparkle"></div><div class="holo-glare"></div>':''}
+    </div>${isHolo?`<svg class="holo-svg" viewBox="0 0 240 340" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+      <defs>
+        <linearGradient id="holoGrad" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="52" y2="46" spreadMethod="repeat">
+          <stop offset="0" stop-color="#ff4f9a"/><stop offset="0.18" stop-color="#ffd15a"/><stop offset="0.36" stop-color="#6cff9e"/><stop offset="0.54" stop-color="#5ab8ff"/><stop offset="0.72" stop-color="#c86cff"/><stop offset="1" stop-color="#ff4f9a"/>
+        </linearGradient>
+      </defs>
+      <g class="holo-band"><rect x="-240" y="-20" width="720" height="380" fill="url(#holoGrad)"/></g>
+    </svg><div class="holo-sparkle"></div><div class="holo-glare"></div>`:''}
   </div>`;
   let wrapped=holo?`<div class="frame-holo" style="border-radius:20px;">${card}</div>`:card;
   if(rock.evolved) wrapped=`<div class="evolved-glow" style="border-radius:20px;">${wrapped}</div>`;
