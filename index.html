@@ -598,45 +598,38 @@ nav{display:flex;gap:8px;padding:10px 14px max(14px,env(safe-area-inset-bottom))
 .pc-foot{display:flex;justify-content:space-between;align-items:center;margin:8px 2px 1px;font-family:'Baloo 2',sans-serif;font-weight:800;font-size:9.5px;color:#8a7c56;letter-spacing:.04em;}
 .pcard.pc-shine::after{content:"";position:absolute;top:0;left:-150%;width:55%;height:100%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.4),transparent);animation:shineSweep 2.8s ease-in-out infinite;pointer-events:none;border-radius:20px;}
 
-/* ===== CARTES HOLOGRAPHIQUES réactives (inclinaison du téléphone / doigt) ===== */
-.holo-card{--mx:50%;--my:50%;--rx:0deg;--ry:0deg;
-  transform:perspective(680px) rotateX(var(--rx)) rotateY(var(--ry));
-  transform-style:preserve-3d;transition:transform .1s ease-out;will-change:transform;}
-.holo-card>*{position:relative;z-index:1;}
-/* Reflet lumineux doux qui suit l'inclinaison (n'écrase pas le texte) */
-.holo-glare{position:absolute;inset:0;border-radius:20px;pointer-events:none;z-index:6;mix-blend-mode:soft-light;
-  background:radial-gradient(circle at var(--mx) var(--my),rgba(255,255,255,.9),rgba(255,255,255,.25) 32%,transparent 62%);}
-/* Base : nappe arc-en-ciel douce qui colore la carte (garde le texte lisible en ligne). */
-.holo-foil{position:absolute;inset:0;border-radius:20px;pointer-events:none;z-index:4;opacity:.42;mix-blend-mode:overlay;
+/* ===== CARTES HOLOGRAPHIQUES : brillance auto, douce et continue (sans interaction) =====
+   Fini le clic/gyroscope (qui buguait) : les hautes raretés brillent toutes seules,
+   proprement, avec un balayage arc-en-ciel lent. Le texte reste lisible (blend overlay). */
+.holo-card{position:relative;}
+.holo-card>.pcard-inner{position:relative;z-index:1;}
+.holo-foil,.holo-rainbow,.holo-sparkle,.holo-glare{position:absolute;inset:0;border-radius:20px;pointer-events:none;}
+/* Nappe arc-en-ciel douce qui glisse en diagonale */
+.holo-foil{z-index:4;opacity:.4;mix-blend-mode:overlay;
   background:linear-gradient(125deg,#ff50b4,#ffdc5a,#6effb4,#6eb4ff,#d26eff,#ff50b4);
-  background-size:220% 220%;background-position:var(--mx) var(--my);}
-/* Bandes diagonales "rainbow rare" qui balaient toute la carte selon l'inclinaison. */
-.holo-rainbow{position:absolute;inset:0;border-radius:20px;pointer-events:none;z-index:5;opacity:.32;mix-blend-mode:overlay;
+  background-size:260% 260%;animation:holoFoil 9s ease-in-out infinite;}
+@keyframes holoFoil{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+/* Bandes diagonales "rainbow rare" qui défilent lentement */
+.holo-rainbow{z-index:5;opacity:.28;mix-blend-mode:overlay;
   background:repeating-linear-gradient(115deg,
-    rgba(255,70,150,.75) 0px, rgba(255,190,80,.75) 26px, rgba(120,235,150,.75) 52px,
-    rgba(90,180,255,.75) 78px, rgba(200,110,255,.75) 104px, rgba(255,70,150,.75) 130px);
-  background-size:200% 100%;background-position:var(--mx) 0;}
-/* Paillettes fines (effet "cosmos"). */
-.holo-sparkle{position:absolute;inset:0;border-radius:20px;pointer-events:none;z-index:5;opacity:.35;mix-blend-mode:screen;
+    rgba(255,70,150,.7) 0px, rgba(255,190,80,.7) 26px, rgba(120,235,150,.7) 52px,
+    rgba(90,180,255,.7) 78px, rgba(200,110,255,.7) 104px, rgba(255,70,150,.7) 130px);
+  background-size:200% 100%;animation:holoBands 7s linear infinite;}
+@keyframes holoBands{0%{background-position:0 0}100%{background-position:200% 0}}
+/* Reflet lumineux qui traverse doucement la carte */
+.holo-glare{z-index:6;mix-blend-mode:soft-light;
+  background:linear-gradient(115deg,transparent 38%,rgba(255,255,255,.55) 50%,transparent 62%);
+  background-size:250% 100%;animation:holoGlare 6s ease-in-out infinite;}
+@keyframes holoGlare{0%{background-position:130% 0}100%{background-position:-40% 0}}
+/* Paillettes fines qui scintillent doucement */
+.holo-sparkle{z-index:5;opacity:.3;mix-blend-mode:screen;
   background-image:radial-gradient(rgba(255,255,255,.95) 1px,transparent 1.7px),radial-gradient(rgba(255,255,255,.7) 1px,transparent 1.6px);
-  background-size:30px 30px,48px 48px;background-position:var(--mx) var(--my),calc(var(--mx) + 15px) calc(var(--my) + 22px);}
-.holo-card.holo-strong .holo-glare{background:radial-gradient(circle at var(--mx) var(--my),rgba(255,255,255,.95),rgba(255,255,255,.3) 30%,transparent 60%);}
-/* Dans la VISIONNEUSE : plein régime "rainbow rare" (les bandes ressortent franchement). */
-.holo-stage .holo-foil{opacity:.55;}
-.holo-stage .holo-rainbow{opacity:.7;mix-blend-mode:color-dodge;}
-.holo-stage .holo-sparkle{opacity:.6;}
-.holo-stage .holo-card.holo-strong .holo-rainbow{opacity:.82;}
-/* En ligne : la carte holo est cliquable (ouvre la visionneuse) */
-.holo-card[data-action="holoView"]{cursor:pointer;}
-.holo-tap{font-family:'Baloo 2',sans-serif;font-weight:800;font-size:11px;color:var(--goldd);text-align:center;margin-top:10px;letter-spacing:.02em;}
-/* Visionneuse plein écran */
-.holo-stage{position:fixed;inset:0;z-index:130;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;
-  background:radial-gradient(circle at 50% 38%,rgba(30,22,48,.92),rgba(6,6,14,.97));backdrop-filter:blur(7px);-webkit-backdrop-filter:blur(7px);animation:fadeIn .22s ease;overflow:hidden;touch-action:none;}
-.holo-stage .holo-view-card{width:min(88vw,380px);}
-.holo-stage .holo-card{transition:transform .07s ease-out;}
-.holo-stage .holo-tap{display:none;}
-.holo-stage-hint{color:rgba(255,255,255,.85);font-family:'Baloo 2',sans-serif;font-weight:700;font-size:12.5px;line-height:1.5;text-align:center;margin-top:26px;max-width:300px;}
-.holo-stage-close{position:absolute;top:16px;right:18px;width:42px;height:42px;border-radius:50%;background:rgba(255,255,255,.15);color:#fff;font-size:20px;font-weight:800;display:flex;align-items:center;justify-content:center;cursor:pointer;border:1.5px solid rgba(255,255,255,.3);z-index:2;}
+  background-size:30px 30px,48px 48px;background-position:0 0,15px 22px;animation:holoTwinkle 3.6s ease-in-out infinite;}
+@keyframes holoTwinkle{0%,100%{opacity:.18}50%{opacity:.42}}
+/* Hautes raretés : un poil plus intense */
+.holo-card.holo-strong .holo-rainbow{opacity:.4;}
+.holo-card.holo-strong .holo-foil{opacity:.5;}
+@media (prefers-reduced-motion:reduce){ .holo-foil,.holo-rainbow,.holo-glare,.holo-sparkle{animation:none;} }
 
 /* Location footer */
 .tcard-loc{
@@ -3196,54 +3189,11 @@ function sfxUnlock(){
   }catch(e){}
 }
 
-/* ===== VISIONNEUSE HOLOGRAPHIQUE (plein écran, on incline/bouge la carte) =====
-   L'inclinaison ne s'applique QUE dans cette visionneuse -> plus de conflit avec
-   le défilement de la page. En ligne, la carte a un reflet fixe et se touche. */
-let _holoGyroAsked=false;
-function _holoStageCard(){ const s=document.querySelector('.holo-stage'); return s?s.querySelector('.holo-card'):null; }
-function _holoApplyTilt(nx,ny){ // nx,ny dans [-1,1]
-  const el=_holoStageCard(); if(!el) return;
-  el.style.setProperty('--rx',(-ny*18).toFixed(2)+'deg'); el.style.setProperty('--ry',(nx*18).toFixed(2)+'deg');
-  el.style.setProperty('--mx',(50+nx*72).toFixed(1)+'%'); el.style.setProperty('--my',(50+ny*72).toFixed(1)+'%');
-}
-function _holoOnOrient(e){
-  if(!document.querySelector('.holo-stage')) return;      // uniquement quand la visionneuse est ouverte
-  if(e.gamma==null&&e.beta==null) return;
-  const nx=Math.max(-1,Math.min(1,(e.gamma||0)/22));
-  const ny=Math.max(-1,Math.min(1,((e.beta||0)-40)/22));
-  _holoApplyTilt(nx,ny);
-}
-function holoRequestGyro(){
-  if(_holoGyroAsked) return; _holoGyroAsked=true;
-  try{
-    if(window.DeviceOrientationEvent && typeof DeviceOrientationEvent.requestPermission==='function'){
-      DeviceOrientationEvent.requestPermission().then(s=>{ if(s==='granted') window.addEventListener('deviceorientation',_holoOnOrient,true); }).catch(()=>{});
-    } else if(window.DeviceOrientationEvent){
-      window.addEventListener('deviceorientation',_holoOnOrient,true);
-    }
-  }catch(e){}
-}
-// Dans la visionneuse : bouger le doigt/la souris n'importe où incline la carte.
-document.addEventListener('pointermove',e=>{
-  const stage=document.querySelector('.holo-stage'); if(!stage) return;
-  const el=stage.querySelector('.holo-card'); if(!el) return;
-  const r=el.getBoundingClientRect();
-  const nx=Math.max(-1,Math.min(1,(e.clientX-(r.left+r.width/2))/(r.width/2)));
-  const ny=Math.max(-1,Math.min(1,(e.clientY-(r.top+r.height/2))/(r.height/2)));
-  _holoApplyTilt(nx,ny);
-},{passive:true});
-function openHoloViewer(id){
-  if(document.querySelector('.holo-stage')) return;
-  const rock=findRockById(id); if(!rock) return;
-  holoRequestGyro();
-  const ov=document.createElement('div'); ov.className='holo-stage'; ov.id='holoStage';
-  ov.innerHTML=`<div class="holo-stage-close" data-action="holoClose">✕</div>
-    <div class="holo-view-card">${specimenCard(rock,false,true)}</div>
-    <div class="holo-stage-hint">📱 Incline ton téléphone ou glisse ton doigt pour faire briller la carte</div>`;
-  document.body.appendChild(ov);
-  playSfx('rare');
-}
-function closeHoloViewer(){ const s=document.getElementById('holoStage'); if(s) s.remove(); }
+/* Ancienne visionneuse holographique (clic + gyroscope) RETIRÉE :
+   elle buguait et rendait mal. Les cartes holo brillent désormais toutes seules
+   en CSS (voir .holo-foil / .holo-rainbow / .holo-glare). */
+function openHoloViewer(){}   // no-op (compat)
+function closeHoloViewer(){}  // no-op (compat)
 function _tone(o){
   if(!soundOn||!_audioCtx) return;
   try{
@@ -4414,7 +4364,7 @@ function specimenCard(rock,pop,viewer){
   const subBits=[];
   if(rock.sizeCm) subBits.push(`📏 ~${rock.sizeCm} cm`);
   if(locName(rock.location)) subBits.push(`📍 ${locName(rock.location)}`);
-  const card=`<div class="pcard ${pop?'card-pop':''}${holoCls}" style="--rarity-glow:${hex}40;--holo:${hex};background:linear-gradient(150deg,${hex},${hex}B0 55%,${hex}85);"${(isHolo&&!viewer)?` data-action="holoView" data-id="${rock.id}"`:''}>
+  const card=`<div class="pcard ${pop?'card-pop':''}${holoCls}" style="--rarity-glow:${hex}40;--holo:${hex};background:linear-gradient(150deg,${hex},${hex}B0 55%,${hex}85);">
     <div class="pcard-inner">
       <div class="pc-head">
         <span class="pc-name">${rock.name}</span>
@@ -4439,7 +4389,6 @@ function specimenCard(rock,pop,viewer){
   </div>`;
   let wrapped=holo?`<div class="frame-holo" style="border-radius:20px;">${card}</div>`:card;
   if(rock.evolved) wrapped=`<div class="evolved-glow" style="border-radius:20px;">${wrapped}</div>`;
-  if(isHolo&&!viewer) wrapped+=`<div class="holo-tap">✨ Touche la carte pour l'effet holographique</div>`;
   return wrapped;
 }
 
