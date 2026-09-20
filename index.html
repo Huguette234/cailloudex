@@ -1383,8 +1383,9 @@ nav{display:flex;gap:8px;padding:10px 14px max(14px,env(safe-area-inset-bottom))
 .pk-pack-img{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 16px 30px rgba(0,0,0,.5)) drop-shadow(0 0 26px var(--pk));}
 
 /* ===== OUVERTURE DE PACK style TCG Pocket (on coupe le pack en glissant) ===== */
-.tcg-wrap{min-height:72vh;justify-content:flex-start;}
-.pk-tcg{position:relative;z-index:1;width:min(76vw,310px);height:min(76vw,310px);display:flex;align-items:center;justify-content:center;margin:5vh 0 0;--cut:15%;}
+.tcg-wrap{min-height:86vh;justify-content:flex-start;overflow:hidden;}
+/* Gros pack ancré vers le bas (déborde légèrement, comme TCG Pocket) */
+.pk-tcg{position:relative;z-index:1;width:min(94vw,440px);height:min(94vw,440px);display:flex;align-items:center;justify-content:center;margin:auto auto -14vh;--cut:15%;}
 .pk-pack{position:relative;width:100%;height:100%;touch-action:none;cursor:grab;animation:pkFloat 3.2s ease-in-out infinite;}
 .pk-pack.opening{animation:none;}
 .pk-half{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 14px 26px rgba(0,0,0,.5)) drop-shadow(0 0 24px var(--pk));}
@@ -1394,7 +1395,12 @@ nav{display:flex;gap:8px;padding:10px 14px max(14px,env(safe-area-inset-bottom))
 .pk-seam{position:absolute;left:0;top:var(--cut);height:5px;width:0;opacity:0;transform:translateY(-50%);border-radius:3px;z-index:6;pointer-events:none;
   background:linear-gradient(90deg,rgba(255,255,255,0),#fff 25%,#fff 75%,rgba(255,255,255,.6));
   box-shadow:0 0 10px 3px #fff,0 0 22px 7px var(--pk);}
-.pk-seam-spark{position:absolute;right:-7px;top:50%;width:18px;height:18px;transform:translateY(-50%);border-radius:50%;background:radial-gradient(#fff,rgba(255,255,255,0) 70%);box-shadow:0 0 16px 7px #fff;}
+/* Étincelle/flare lumineux au bout de la coupe (suit le doigt) */
+.pk-seam-spark{position:absolute;right:-14px;top:50%;width:34px;height:34px;transform:translateY(-50%);border-radius:50%;
+  background:radial-gradient(circle,#fff 0%,rgba(255,255,255,.9) 22%,rgba(255,255,255,0) 70%);
+  box-shadow:0 0 26px 12px #fff,0 0 46px 18px var(--pk);}
+.pk-seam-spark::before{content:"";position:absolute;top:50%;left:50%;width:120px;height:5px;transform:translate(-50%,-50%);border-radius:3px;background:linear-gradient(90deg,rgba(255,255,255,0),#fff 60%,rgba(255,255,255,0));filter:blur(.5px);opacity:.9;}
+.pk-seam-spark::after{content:"";position:absolute;top:50%;left:50%;width:6px;height:60px;transform:translate(-50%,-50%);background:linear-gradient(180deg,rgba(255,255,255,0),#fff 50%,rgba(255,255,255,0));filter:blur(1px);opacity:.8;}
 .pk-rays{position:absolute;inset:-55%;z-index:0;opacity:0;pointer-events:none;border-radius:50%;
   background:conic-gradient(from 0deg,rgba(255,80,180,.55),rgba(255,220,90,.55),rgba(110,255,180,.55),rgba(110,180,255,.55),rgba(210,110,255,.55),rgba(255,80,180,.55));
   -webkit-mask:repeating-conic-gradient(from 0deg,#000 0deg 3deg,transparent 3deg 9deg);mask:repeating-conic-gradient(from 0deg,#000 0deg 3deg,transparent 3deg 9deg);}
@@ -1405,8 +1411,9 @@ nav{display:flex;gap:8px;padding:10px 14px max(14px,env(safe-area-inset-bottom))
 .pk-pack.opening .pk-bottom{animation:pkBotFly .85s cubic-bezier(.4,0,.2,1) forwards;}
 @keyframes pkBotFly{0%{transform:translateY(0)}100%{transform:translateY(60%);opacity:0}}
 .pk-pack.opening .pk-seam{width:100%;opacity:1;box-shadow:0 0 22px 9px #fff,0 0 44px 18px var(--pk);}
-.pk-swipe-hint{position:relative;z-index:1;margin-top:34px;font-family:'Baloo 2',sans-serif;font-weight:800;font-size:14px;color:var(--goldd);animation:hintSlide 1.6s ease-in-out infinite;}
-@keyframes hintSlide{0%,100%{opacity:.65;transform:translateX(-5px)}50%{opacity:1;transform:translateX(5px)}}
+/* Texte façon TCG Pocket : sobre, en haut */
+.pk-swipe-hint{position:relative;z-index:2;margin:9vh 0 0;font-family:'Nunito','Baloo 2',sans-serif;font-weight:600;font-size:21px;color:rgba(70,66,74,.55);text-align:center;animation:hintFade 2s ease-in-out infinite;}
+@keyframes hintFade{0%,100%{opacity:.55}50%{opacity:.9}}
 /* La carte "sort" du pack : elle monte depuis le bas en grossissant, léger dépassement, puis se pose. */
 .card-popup{animation:cardPopUp .6s cubic-bezier(.2,1.5,.45,1) both;}
 @keyframes cardPopUp{0%{opacity:0;transform:translateY(80px) scale(.45);}55%{opacity:1;transform:translateY(-10px) scale(1.08);}100%{transform:translateY(0) scale(1);}}
@@ -4432,7 +4439,7 @@ function packRevealScreen(){
   }
   return `<div class="pack-wrap tcg-wrap">
     <div class="pack-vignette"></div>
-    <div class="pack-sub">✨ Analyse terminée</div>
+    <div class="pk-swipe-hint">Tracez une ligne pour ouvrir</div>
     <div class="pk-tcg" style="--pk:${r.hex};">
       <div class="pk-rays"></div>
       <div class="pk-pack" id="pkPack">
@@ -4441,8 +4448,6 @@ function packRevealScreen(){
         <div class="pk-seam"><span class="pk-seam-spark"></span></div>
       </div>
     </div>
-    <div class="pk-swipe-hint">👉 Glisse pour déchirer le pack ✂️</div>
-    ${teaseHigh?`<div class="pack-tease" style="color:${r.hex};">…une aura puissante émane de ce caillou 👀</div>`:''}
   </div>`;
 }
 // ---- Ouverture façon TCG Pocket : on "coupe" le pack en glissant le doigt ----
