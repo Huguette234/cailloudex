@@ -2361,7 +2361,7 @@ function friendsScreen(){
             <button class="btn-feed" style="width:auto;padding:6px 12px;font-size:11px;background:linear-gradient(135deg,#C45CFF,#8020C0);" data-action="acceptChallengeBtn">Accepter</button>
           </div>`:''}
         </div>`;
-      }).join(''):`<p class="rd-pill" style="text-align:center;font-family:'Nunito',sans-serif;font-size:13px;color:rgba(44,42,46,.75);margin-top:10px;">Pas encore d'amis ajoutés.</p>`}
+      }).join(''):`<p class="rd-pill" style="text-align:center;font-family:'Nunito',sans-serif;font-size:13px;color:rgba(44,42,46,.75);margin-top:10px;">Personne à défier pour l'instant 🤷<br>Ajoute un pote et viens lui mettre une raclée de gravier !</p>`}
     </div>
   </div>`;
 }
@@ -4705,7 +4705,7 @@ function dexResultsHtml(){
     let list=dex.filter(r=> (!dexFavOnly||isFav(r.id)) && (!q || (r.name||'').toLowerCase().includes(q) || (r.typeLabel||'').toLowerCase().includes(q) || (r.rarityLabel||'').toLowerCase().includes(q)));
     list=sortDex(list);
     const back=`<div class="dex-back" data-action="dexTypes">← Voir par type</div>`;
-    if(!list.length) return back+`<p style="text-align:center;font-family:'Nunito',sans-serif;font-size:13px;color:rgba(44,42,46,.5);margin-top:26px;">${dexFavOnly&&!q?'Aucun favori · touche l\'étoile ☆ d\'un caillou pour l\'ajouter !':'Aucun caillou ne correspond à ta recherche.'}</p>`;
+    if(!list.length) return back+`<p style="text-align:center;font-family:'Nunito',sans-serif;font-size:13px;color:rgba(44,42,46,.5);margin-top:26px;">${dexFavOnly&&!q?'Aucun favori pour l\'instant · touche l\'étoile ☆ d\'un caillou pour l\'ajouter !':'Hmm, aucun caillou ne répond à l\'appel ici 🔎'}</p>`;
     const label=(dexFavOnly?'⭐ Favoris':'Tri')+' · '+(DEX_SORT_LABELS[dexSort]||'');
     return back+`<div style="font-family:'Baloo 2',sans-serif;font-weight:700;font-size:11px;color:rgba(44,42,46,.46);text-align:center;margin:2px 0 10px;">${list.length} caillou${list.length>1?'x':''} · ${label}</div><div class="dexgrid2">${list.map(dexCard).join('')}</div>`;
   }
@@ -4713,7 +4713,7 @@ function dexResultsHtml(){
 }
 function updateDexResults(){ const el=document.getElementById('dexResults'); if(el) el.innerHTML=dexResultsHtml(); }
 function dexScreen(){
-  if(dex.length===0) return `<div class="empty">${mascotSvg('happy')}<p>Ton Dex est vide.<br>Va scanner ton premier caillou ! 🪨<br><span style="font-size:11px;opacity:.6;">${hasApiKey()?'IA active · chaque capture est unique !':'Active l\'IA pour des noms personnalisés'}</span></p></div>`;
+  if(dex.length===0) return `<div class="empty">${mascotSvg('happy')}<p>Ton Dex est vide comme une carrière un lundi matin…<br>Attrape ton premier caillou, je m'occupe du reste ! 🪨<br><span style="font-size:11px;opacity:.6;">${hasApiKey()?'IA active · chaque caillou est unique au monde !':'Active l\'IA pour des noms rien qu\'à toi'}</span></p></div>`;
 
   // NIVEAU 2 · cartes d'un type choisi
   if(dexType){
@@ -5214,7 +5214,7 @@ function setupOnlineConn(conn){
     if(!onlineState||onlineState.chanOpen||battleState||screen!=='online-wait') return;
     try{ conn.close(); }catch(e){}
     if(onlineState.isHost && !onlineState.isChallenge && onlineState.mode!=='trade'){
-      showToast('📶 Connexion réseau impossible · un bot prend la relève !');
+      showToast('📶 Réseau capricieux… un bot prend le relais, pas de panique !');
       try{ if(onlineState.peer) onlineState.peer.destroy(); }catch(e){}
       onlineState=null; screen='combat-pick'; render();
     } else {
@@ -5403,7 +5403,7 @@ function tradeCleanup(){
 function tradePickScreen(){
   if(!dex.length) return `<div style="text-align:center;padding:40px 16px;">
     <div style="font-size:52px;margin-bottom:12px;">🪨</div>
-    <div style="font-family:'Baloo 2',sans-serif;font-weight:800;font-size:16px;color:rgba(44,42,46,.86);">Aucun caillou à échanger !</div>
+    <div style="font-family:'Baloo 2',sans-serif;font-weight:800;font-size:16px;color:rgba(44,42,46,.86);">Rien à troquer pour l'instant !</div>
     <button class="btn btn-ghost" style="margin-top:16px;" data-action="tradeCancelBtn">Annuler</button></div>`;
   return `<div class="combat-pick-wrap">
     <div class="combat-pick-title">🔄 CAILLOU À ÉCHANGER</div>
@@ -5481,7 +5481,7 @@ async function createOnlineSalle(){
     if(onlineState.cd<=0){
       clearInterval(onlineState.cdTimer);
       if(onlineState.matched) return;
-      showToast('⏱️ Personne... un bot prend la relève !');
+      showToast('⏱️ Personne au loin… un bot vient te tenir tête !');
       _rtCleanup(); onlineState=null; screen='combat-pick'; render();
     }
   },1000);
@@ -5898,8 +5898,8 @@ function onlinePickScreen(){
   const waiting=onlineState&&onlineState.myRock;
   if(!dex.length) return `<div style="text-align:center;padding:40px 16px;">
     <div style="font-size:52px;margin-bottom:12px;">🪨</div>
-    <div style="font-family:'Baloo 2',sans-serif;font-weight:800;font-size:16px;color:rgba(44,42,46,.86);">Pas de cailloux dans ton dex !</div>
-    <p style="font-family:'Nunito',sans-serif;font-size:13px;color:rgba(44,42,46,.5);margin:8px 0 20px;">Capture d'abord des cailloux.</p>
+    <div style="font-family:'Baloo 2',sans-serif;font-weight:800;font-size:16px;color:rgba(44,42,46,.86);">Ton Dex est encore tout vide !</div>
+    <p style="font-family:'Nunito',sans-serif;font-size:13px;color:rgba(44,42,46,.5);margin:8px 0 20px;">Attrape quelques cailloux avant de te lancer 🪨</p>
     <button class="btn btn-ghost" data-action="onlineCancel">Annuler</button>
   </div>`;
   const myBet=onlineState?(onlineState.myBet||0):0;
@@ -7045,8 +7045,8 @@ function hpBarColor(pct){ return pct>0.5?'#4CAF50':pct>0.25?'#FF9800':'#F44336';
 function combatPickScreen(){
   if(!dex.length) return `<div style="text-align:center;padding:40px 16px;">
     <div style="font-size:52px;margin-bottom:12px;">🪨</div>
-    <div style="font-family:'Baloo 2',sans-serif;font-weight:800;font-size:16px;color:rgba(44,42,46,.86);">Pas de cailloux dans ton dex !</div>
-    <p style="font-family:'Nunito',sans-serif;font-size:13px;color:rgba(44,42,46,.5);margin:8px 0 20px;">Capture d'abord des cailloux<br>avant de les envoyer au combat.</p>
+    <div style="font-family:'Baloo 2',sans-serif;font-weight:800;font-size:16px;color:rgba(44,42,46,.86);">Ton Dex est encore tout vide !</div>
+    <p style="font-family:'Nunito',sans-serif;font-size:13px;color:rgba(44,42,46,.5);margin:8px 0 20px;">Attrape quelques cailloux avant de te lancer 🪨<br>avant de les envoyer au combat.</p>
     <button class="btn btn-gold" data-action="goto" data-screen="scanner">📷 CAPTURER</button>
   </div>`;
   const arena=arenaPicking, boss=bossPicking, tourney=tournoyPicking;
@@ -8798,7 +8798,7 @@ const MIN_LOADING_MS=5000; // durée minimale d'affichage de l'écran de chargem
     });
     if(session){ await migrateLocalDexIfNeeded(); await loadCloudData(); await maybeResetLaunch(); await maybeResetCharGen(); await checkPendingChallenge(); startChallengePolling(); startChallengeRealtime(); }
     try{ await loadAnnouncement(); }catch(e){}
-  }catch(e){ showToast('❌ Connexion au serveur impossible. Réessaie.'); }
+  }catch(e){ showToast('😴 Le serveur fait la sieste. Réessaie dans un instant.'); }
   getDailyChallenge();
   // Laisse l'écran de chargement s'afficher au moins MIN_LOADING_MS (sauf si le filet de sécurité a déjà basculé).
   const _elapsed=Date.now()-_loadStart;
