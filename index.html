@@ -1599,6 +1599,17 @@ nav{display:flex;gap:8px;padding:10px 14px max(14px,env(safe-area-inset-bottom))
 .map-pop img{width:48px;height:48px;border-radius:10px;object-fit:cover;flex-shrink:0;}
 .map-pop b{font-family:'Baloo 2',sans-serif;font-size:13px;}
 .map-pop-cta{display:inline-block;margin-top:3px;font-family:'Baloo 2',sans-serif;font-weight:800;font-size:11px;color:#8020C0;}
+/* Confort & accessibilité : respecte le réglage système « réduire les animations ».
+   On garde les fondus courts mais on calme les mouvements/boucles pour les personnes
+   sensibles au mouvement (et ça soulage aussi les vieux téléphones). */
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{
+    animation-duration:.01ms !important;
+    animation-iteration-count:1 !important;
+    transition-duration:.08ms !important;
+    scroll-behavior:auto !important;
+  }
+}
 </style>
 </head>
 <body>
@@ -7264,17 +7275,41 @@ function combatFightScreen(){
   </div>`;
 }
 
+const RESULT_WIN_SUBS=[
+  '%P% écrase %B% dans un nuage de poussière !',
+  '%P% a réduit %B% en gravier fin. La classe. 😎',
+  '%B% n\'a rien vu venir : %P% l\'emporte haut la main !',
+  '%P% roule sur %B% comme un galet sur une pente !',
+  'KO ! %B% ira méditer au fond du ruisseau. Bravo !',
+  '%P% domine %B% de la tête et des arêtes. Magistral !',
+  'Boum. %B% est en miettes, %P% n\'a même pas transpiré.',
+];
+const RESULT_LOSE_SUBS=[
+  '%B% t\'a complètement roulé dessus.',
+  '%B% ne t\'a laissé que des miettes de gravier… Réessaie !',
+  'Aïe. %B% était taillé dans du roc, cette fois.',
+  '%P% a serré les dents, mais %B% était trop coriace.',
+  'Pas cette fois : %B% l\'emporte. On y retourne ?',
+  '%B% t\'a envoyé au tapis (de galets). Revanche ?',
+];
+const RESULT_DRAW_SUBS=[
+  'Les deux cailloux s\'effondrent en même temps. Match nul !',
+  'Égalité parfaite : %P% et %B% se valent au gramme près.',
+  'Personne ne cède ! %P% et %B% se quittent dos à dos.',
+];
+function fillResultSub(tpl,p,b){ return tpl.replace(/%P%/g,p).replace(/%B%/g,b); }
 function combatResultScreen(){
   const s=battleState;
   const won=s.winner==='player';
   const draw=s.winner==='draw';
   const banner=won?(s.boss?'BOSS VAINCU !':'VICTOIRE !'):draw?'ÉGALITÉ':'DÉFAITE...';
-  const sub=won?(s.boss
-      ? `${s.playerRock.name} terrasse le boss ${s.botRock.name} ! 💀${s.bossFirstWin?' Récompense hebdomadaire débloquée 🎁':' (déjà battu cette semaine · petit lot)'}`
-      : `${s.playerRock.name} écrase ${s.botRock.name} dans un nuage de poussière !`)
-    :draw?'Les deux cailloux s\'effondrent simultanément. Nul !'
-    :s.boss?`Le boss ${s.botRock.name} t\'a réduit en gravier... Réessaie !`
-    :`${s.botRock.name} t\'a complètement roulé dessus.`;
+  if(!s._sub){
+    const pn=s.playerRock?s.playerRock.name:'Ton caillou', bn=s.botRock?s.botRock.name:'l\'adversaire';
+    if(s.boss&&won){ s._sub=`${pn} terrasse le boss ${bn} ! 💀${s.bossFirstWin?' Récompense hebdomadaire débloquée 🎁':' (déjà battu cette semaine · petit lot)'}`; }
+    else if(s.boss&&!won&&!draw){ s._sub=`Le boss ${bn} t'a réduit en gravier... Réessaie !`; }
+    else { const pool=won?RESULT_WIN_SUBS:draw?RESULT_DRAW_SUBS:RESULT_LOSE_SUBS; s._sub=fillResultSub(pool[Math.floor(Math.random()*pool.length)],pn,bn); }
+  }
+  const sub=s._sub;
   const emoji=won?(s.boss?'👑':'🏆'):draw?'🤝':'💀';
   const ser=(s.online&&onlineState)?onlineState.series:null;
   const seriesDecided=ser&&(ser.me>=ser.target||ser.opp>=ser.target);
