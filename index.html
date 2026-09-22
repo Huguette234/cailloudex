@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>CaillouDEX — Les Cailloux des Z'Hommes</title>
+<title>CaillouDEX · Les Cailloux des Z'Hommes</title>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#F3ECDD">
 <link rel="apple-touch-icon" href="icon-192.png">
@@ -466,7 +466,7 @@ nav{display:flex;gap:8px;padding:10px 14px max(14px,env(safe-area-inset-bottom))
 .personality-box p{font-family:'Nunito',sans-serif;font-style:italic;font-size:12px;color:rgba(44,42,46,.72);margin:0;line-height:1.5;}
 
 /* ======================================================
-   ÉTAPE 2 — CARTE STYLE TRADING CARD (moins IA, plus beau)
+   ÉTAPE 2 · CARTE STYLE TRADING CARD (moins IA, plus beau)
    ====================================================== */
 
 /* Wrapper global de carte */
@@ -630,7 +630,7 @@ nav{display:flex;gap:8px;padding:10px 14px max(14px,env(safe-area-inset-bottom))
   color:rgba(255,255,255,.3);letter-spacing:.04em;
 }
 
-/* Dex grid — cartes avec rareté visible */
+/* Dex grid · cartes avec rareté visible */
 .dex-item{position:relative;border-radius:16px;overflow:hidden;cursor:pointer;
   aspect-ratio:1;transition:transform .14s cubic-bezier(.2,.8,.3,1),box-shadow .18s;box-shadow:0 6px 16px rgba(0,0,0,.32),inset 0 0 0 1px rgba(255,255,255,.08);}
 .dex-item:active{transform:scale(.94);box-shadow:0 3px 9px rgba(0,0,0,.3),inset 0 0 0 1px rgba(255,255,255,.08);}
@@ -655,7 +655,7 @@ nav{display:flex;gap:8px;padding:10px 14px max(14px,env(safe-area-inset-bottom))
   box-shadow:0 0 6px currentColor;
 }
 
-/* Dex — cartes style "carte à collectionner" */
+/* Dex · cartes style "carte à collectionner" */
 .dexlist{display:flex;flex-direction:column;gap:14px;}
 .dexc{background:linear-gradient(180deg,rgba(31,49,76,.9),rgba(16,28,46,.94));border:1.5px solid;border-radius:22px;overflow:hidden;cursor:pointer;box-shadow:0 14px 30px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.12);transition:transform .14s cubic-bezier(.2,.8,.3,1),box-shadow .18s;}
 .dexc:active{transform:scale(.985);box-shadow:0 8px 18px rgba(0,0,0,.36),inset 0 1px 0 rgba(255,255,255,.12);}
@@ -694,7 +694,7 @@ nav{display:flex;gap:8px;padding:10px 14px max(14px,env(safe-area-inset-bottom))
 .dex-type-section{margin-bottom:24px;}
 .dex-type-head{display:flex;justify-content:space-between;align-items:center;font-family:'Playfair Display',Georgia,serif;font-size:14px;letter-spacing:.03em;padding:4px 2px 8px;margin-bottom:12px;border-bottom:2px solid;}
 .dex-type-count{font-family:'Baloo 2',sans-serif;font-weight:800;font-size:12px;color:rgba(44,42,46,.82);background:rgba(255,255,255,.62);border-radius:999px;padding:2px 11px;}
-/* Dex — menu des types (carres) */
+/* Dex · menu des types (carres) */
 .dextype-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
 .dextype-tile{aspect-ratio:1.5;border:2.5px solid rgba(255,255,255,.9);border-radius:16px;background:linear-gradient(180deg,rgba(255,255,255,.72),rgba(255,255,255,.55));display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:8px;cursor:pointer;transition:transform .1s;box-shadow:0 5px 16px rgba(0,0,0,.3);}
 .dextype-tile:active{transform:scale(.96);}
@@ -1162,7 +1162,7 @@ nav{display:flex;gap:8px;padding:10px 14px max(14px,env(safe-area-inset-bottom))
 .fu-foe .fureur-txt{text-shadow:0 0 18px #B24BE0,0 0 40px #8020C0,0 3px 6px rgba(0,0,0,.6);}
 .fureur-txt span{display:block;font-family:'Baloo 2',sans-serif;font-weight:800;font-size:16px;margin-top:6px;color:rgba(255,255,255,.9);text-shadow:0 2px 5px rgba(0,0,0,.7);}
 @keyframes furTxt{0%{transform:scale(.4);opacity:0;}55%{transform:scale(1.12);opacity:1;}100%{transform:scale(1);opacity:1;}}
-/* K.O. — "KO" peint au pinceau, sanglant, sur fond noir */
+/* K.O. · "KO" peint au pinceau, sanglant, sur fond noir */
 .cap-choice-ov{position:fixed;inset:0;z-index:120;display:flex;align-items:flex-end;justify-content:center;
   background:rgba(0,0,0,.55);opacity:0;transition:opacity .2s ease;backdrop-filter:blur(3px);}
 .cap-choice-ov.show{opacity:1;}
@@ -1453,7 +1453,7 @@ nav{display:flex;gap:8px;padding:10px 14px max(14px,env(safe-area-inset-bottom))
 /* Soleil + halo */
 .sp-sun{position:absolute;top:7%;right:20%;width:40px;height:40px;border-radius:50%;z-index:1;background:radial-gradient(circle,#fffdf0 32%,#ffe9a6 60%,rgba(255,221,130,0) 74%);box-shadow:0 0 46px 24px rgba(255,238,180,.5);animation:spSun 5s ease-in-out infinite;}
 @keyframes spSun{0%,100%{filter:brightness(1);}50%{filter:brightness(1.12);}}
-/* Collines lointaines (profondeur, brume) — juste au-dessus de l'eau */
+/* Collines lointaines (profondeur, brume) · juste au-dessus de l'eau */
 .sp-hills{position:absolute;left:0;right:0;top:58%;height:6%;z-index:1;overflow:hidden;}
 .sp-hills::before,.sp-hills::after{content:'';position:absolute;bottom:-42%;border-radius:50%;filter:blur(2px);}
 .sp-hills::before{left:-15%;width:82%;height:100%;background:#93afc7;opacity:.42;}
@@ -1467,7 +1467,7 @@ nav{display:flex;gap:8px;padding:10px 14px max(14px,env(safe-area-inset-bottom))
 .sp-cloud.c2{width:44px;top:20%;right:15%;opacity:.85;animation:spCloud 30s ease-in-out infinite reverse;}
 .sp-cloud.c3{width:34px;top:14%;left:53%;opacity:.68;animation:spCloud 27s ease-in-out infinite;}
 @keyframes spCloud{0%,100%{transform:translateX(0);}50%{transform:translateX(20px);}}
-/* Eau réaliste — surface vue en perspective, profondeur, reflets */
+/* Eau réaliste · surface vue en perspective, profondeur, reflets */
 .sp-water-gl{position:absolute;inset:0;width:100%;height:100%;display:block;z-index:1;}
 .sp-water{position:absolute;left:0;right:0;top:64%;bottom:0;z-index:2;overflow:hidden;perspective:230px;perspective-origin:50% 0;
   background:
@@ -1614,7 +1614,7 @@ const ROCK_TYPES = [
   { key:'neutre', label:'⬜ NEUTRE', color:'#9E9E9E', desc:'Existe. C\'est déjà honnêtement pas mal.' },
 ];
 
-/* ===== TYPES — forces/faiblesses ===== */
+/* ===== TYPES · forces/faiblesses ===== */
 const TYPE_CHART = {
   feu:{strong:['nature'],weak:['glace']},
   glace:{strong:['feu'],weak:['metal']},
@@ -1633,7 +1633,7 @@ function typeMultiplier(atkType,defType){
   return 1;
 }
 
-/* ===== NOURRITURE — soin en combat ===== */
+/* ===== NOURRITURE · soin en combat ===== */
 const FOOD_ITEMS = [
   { id:'crouton', name:'Croûton Minéral', emoji:'🍞', heal:0.20, lootChance:0.18, price:'0,99 €' },
   { id:'fromage', name:'Fromage de Schiste', emoji:'🧀', heal:0.35, lootChance:0.08, price:'1,99 €' },
@@ -1722,27 +1722,27 @@ const BADGE_TIERS = {
 const BADGE_TIER_ORDER=['bronze','argent','or','platine'];
 
 const ACHIEVEMENTS = [
-  // BRONZE — faciles
+  // BRONZE · faciles
   { id:'first',   tier:'bronze', icon:'🪨', label:'Premier Amour',    desc:'Capture ton 1er caillou' },
   { id:'ai_first',tier:'bronze', icon:'🤖', label:'IA vs Caillou',    desc:'1ère analyse IA d\'un caillou' },
   { id:'share1',  tier:'bronze', icon:'📱', label:'Influenceur Minéral', f:'Influenceuse Minérale', desc:'Partage un caillou' },
   { id:'chaos',   tier:'bronze', icon:'💥', label:'Agent du Chaos', f:'Agente du Chaos',   desc:'Un caillou de type Chaos' },
   { id:'level5',  tier:'bronze', icon:'🌱', label:'Apprenti Caillou', f:'Apprentie Caillou', desc:'Atteins le niveau 5' },
-  // ARGENT — moyens
+  // ARGENT · moyens
   { id:'five',    tier:'argent', icon:'✋', label:'Collection Naissante', desc:'5 cailloux dans le dex' },
   { id:'streak3', tier:'argent', icon:'🔥', label:'Dépendance Légère', desc:'3 jours consécutifs de scan' },
   { id:'rare3',   tier:'argent', icon:'💎', label:'Chasseur d\'Élite', f:'Chasseuse d\'Élite', desc:'3 cailloux Rare ou mieux' },
   { id:'speed',   tier:'argent', icon:'🐢', label:'Monarque de la Vitesse', desc:'Un caillou VIT > 50 (il triche)' },
   { id:'level10', tier:'argent', icon:'🛡️', label:'Vétéran Minéral', f:'Vétérane Minérale', desc:'Atteins le niveau 10' },
-  // OR — difficiles
+  // OR · difficiles
   { id:'ten',     tier:'or', icon:'📦', label:'Collectionneur Sérieux', f:'Collectionneuse Sérieuse', desc:'10 cailloux capturés' },
-  { id:'twenty5', tier:'or', icon:'🏔️', label:'Géologue Amateur', f:'Géologue Amatrice', desc:'25 cailloux — sérieusement ?' },
+  { id:'twenty5', tier:'or', icon:'🏔️', label:'Géologue Amateur', f:'Géologue Amatrice', desc:'25 cailloux · sérieusement ?' },
   { id:'epic1',   tier:'or', icon:'🔮', label:'Connaisseur', f:'Connaisseuse', desc:'1er caillou Épique ou Légendaire' },
   { id:'streak7', tier:'or', icon:'⚡', label:'Accro Confirmé', f:'Accro Confirmée', desc:'7 jours consécutifs de scan' },
   { id:'ai_ten',  tier:'or', icon:'🧠', label:'IA-ddiction', desc:'10 cailloux analysés par IA' },
   { id:'level20', tier:'or', icon:'⚔️', label:'Maître des Roches', f:'Maîtresse des Roches', desc:'Atteins le niveau 20' },
   { id:'level30', tier:'or', icon:'🏆', label:'Sage Pierreux', f:'Sage Pierreuse', desc:'Atteins le niveau 30' },
-  // PLATINE — légendaires
+  // PLATINE · légendaires
   { id:'fifty',   tier:'platine', icon:'🌋', label:'Maître des Pierres', f:'Maîtresse des Pierres', desc:'50 cailloux. Consulte quelqu\'un.' },
   { id:'epic5',   tier:'platine', icon:'🌟', label:'Élu des Pierres', f:'Élue des Pierres', desc:'5 cailloux Épiques ou Légendaires' },
   { id:'legend1', tier:'platine', icon:'👑', label:'Légende Vivante', desc:'1er caillou Légendaire' },
@@ -2021,7 +2021,7 @@ function addGravillons(amount){
   incrementStat('gravillons',amount);
 }
 
-/* ===== GEMMES (monnaie premium — paiement fictif pour l'instant) ===== */
+/* ===== GEMMES (monnaie premium · paiement fictif pour l'instant) ===== */
 function addGems(amount){
   if(!amount) return;
   incrementStat('gems',amount);
@@ -2408,19 +2408,19 @@ const GEM_PACKS = [
 function buyGemPack(packId){
   const pack=GEM_PACKS.find(p=>p.id===packId);
   if(!pack) return;
-  if(!confirm(`[MODE TEST — aucun vrai paiement]\n\nAcheter ${pack.gems} Gemmes pour ${pack.price} ?`)) return;
+  if(!confirm(`[MODE TEST · aucun vrai paiement]\n\nAcheter ${pack.gems} Gemmes pour ${pack.price} ?`)) return;
   addGems(pack.gems);
-  showToast(`💎 +${pack.gems} Gemmes ! (achat fictif — mode test)`);
+  showToast(`💎 +${pack.gems} Gemmes ! (achat fictif · mode test)`);
   screen='shop'; render();
 }
 function buyFoodReal(foodId){
   const food=FOOD_ITEMS.find(f=>f.id===foodId);
   if(!food) return;
-  if(!confirm(`[MODE TEST — aucun vrai paiement]\n\nAcheter 1× ${food.name} pour ${food.price} ?`)) return;
+  if(!confirm(`[MODE TEST · aucun vrai paiement]\n\nAcheter 1× ${food.name} pour ${food.price} ?`)) return;
   meta.food=meta.food||{};
   meta.food[food.id]=(meta.food[food.id]||0)+1;
   saveMeta();
-  showToast(`${food.emoji} ${food.name} ajouté ! (achat fictif — mode test)`);
+  showToast(`${food.emoji} ${food.name} ajouté ! (achat fictif · mode test)`);
   screen='shop'; render();
 }
 
@@ -2432,7 +2432,7 @@ function startUpgrade(rockId){
   const rock=dex.find(r=>r.id===rockId);
   if(!rock||!session) return;
   const level=rock.upgradeLevel||0;
-  if(level>=UPGRADE_MAX){ showToast('Niveau maximum atteint — fais-le évoluer !'); return; }
+  if(level>=UPGRADE_MAX){ showToast('Niveau maximum atteint · fais-le évoluer !'); return; }
   const cost=upgradeCost(level);
   if((meta.gems||0)<cost){ showToast('❌ Pas assez de Gemmes !'); return; }
   upgradeAlloc={rockId, add:{atk:0,def:0,vit:0}, pool:POINTS_PER_LEVEL, cost, level:level+1};
@@ -2583,7 +2583,7 @@ function shopScreen(){
     <div style="background:rgba(253,250,242,.78);border:1px solid rgba(247,220,111,.4);border-radius:12px;padding:9px 12px;margin:6px 0 4px;font-family:'Nunito',sans-serif;font-size:11.5px;color:rgba(44,42,46,.85);line-height:1.5;box-shadow:0 2px 8px rgba(0,0,0,.1);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);">
       💎 <b>Gagne des Gemmes gratuitement</b> en jouant : <b>+${WIN_GEMS}</b> par combat gagné, <b>+${CHALLENGE_GEMS}</b> au défi du jour, et jusqu'à <b>+${GEM_BY_RARITY.galaxie}</b> sur une capture rare. Les gemmes servent à améliorer et faire évoluer tes cailloux.
     </div>
-    <div class="shop-cat-title gem-title">💎 ACHETER DES GEMMES <span style="font-size:9px;opacity:.6;font-weight:700;">(RACCOURCI — MODE TEST)</span></div>
+    <div class="shop-cat-title gem-title">💎 ACHETER DES GEMMES <span style="font-size:9px;opacity:.6;font-weight:700;">(RACCOURCI · MODE TEST)</span></div>
     <div class="shop-grid">
       ${GEM_PACKS.map(pack=>`<div class="shop-item gem-pack" data-action="buyGemPack" data-id="${pack.id}">
         <div class="shop-item-icon">💎</div>
@@ -2591,7 +2591,7 @@ function shopScreen(){
         <div class="shop-item-price gem-price">${pack.price}</div>
       </div>`).join('')}
     </div>
-    <div class="shop-cat-title food-title">🍖 NOURRITURE <span style="font-size:9px;opacity:.6;font-weight:700;">(ARGENT RÉEL — MODE TEST)</span></div>
+    <div class="shop-cat-title food-title">🍖 NOURRITURE <span style="font-size:9px;opacity:.6;font-weight:700;">(ARGENT RÉEL · MODE TEST)</span></div>
     <div class="shop-grid">
       ${FOOD_ITEMS.map(f=>`<div class="shop-item food-pack" data-action="buyFoodReal" data-id="${f.id}">
         <div class="shop-item-icon">${f.emoji}</div>
@@ -2716,7 +2716,7 @@ function checkAndUnlockBadges(){
     try{ return checks[a.id] ? checks[a.id](dex,meta) : false; }catch(e){ return false; }
   });
   if(!fresh.length) return [];
-  // Ajout ADDITIF — on n'écrase jamais les badges existants
+  // Ajout ADDITIF · on n'écrase jamais les badges existants
   meta.badges=[...already, ...fresh.map(a=>a.id)];
   fresh.forEach((a,i)=>setTimeout(()=>showToast(a.icon+' Badge débloqué : '+GT(a)+' !'),700+i*1100));
   // Sauvegarde immédiate des badges sans passer par le debounce de saveMeta
@@ -2729,7 +2729,7 @@ function addXp(amount){
   const before=getLevelInfo(meta.xp||0).level;
   incrementStat('xp',amount);
   const fresh=checkAndUnlockBadges();
-  // XP bonus pour nouveaux badges — incrémentation directe SANS récursion pour éviter la cascade
+  // XP bonus pour nouveaux badges · incrémentation directe SANS récursion pour éviter la cascade
   if(fresh.length) incrementStat('xp', fresh.length*25);
   const after=getLevelInfo(meta.xp).level;
   saveMeta();
@@ -2773,7 +2773,7 @@ async function loadCloudData(){
     const { data:rocks, error } = await sb.from('rocks').select('*').eq('user_id',session.user.id).order('catalog_number',{ascending:true});
     if(error) throw error;
     dex=(rocks||[]).map(rowToRock);
-  }catch(e){ console.error('loadCloudData rocks',e); showToast('⚠️ Connexion au compte impossible — tes cailloux ne sont pas perdus, réessaie plus tard.'); return; }
+  }catch(e){ console.error('loadCloudData rocks',e); showToast('⚠️ Connexion au compte impossible · tes cailloux ne sont pas perdus, réessaie plus tard.'); return; }
   try{
     const { data:row, error } = await sb.from('player_meta').select('*').eq('user_id',session.user.id).maybeSingle();
     if(error) throw error;
@@ -2794,7 +2794,7 @@ async function loadCloudData(){
       // Compte réellement neuf (aucune ligne) : on crée la ligne par défaut, une seule fois.
       _cloudReady=true; await saveMeta(true);
     }
-  }catch(e){ console.error('loadCloudData meta',e); showToast('⚠️ Connexion au compte impossible — tes données ne sont pas perdues, réessaie plus tard.'); }
+  }catch(e){ console.error('loadCloudData meta',e); showToast('⚠️ Connexion au compte impossible · tes données ne sont pas perdues, réessaie plus tard.'); }
 }
 
 // Remise a zero unique du compteur de generation IA pour les comptes existants
@@ -2835,7 +2835,7 @@ async function maybeResetLaunch(){
     }).eq('user_id',session.user.id);
     if(metaErr) throw metaErr;
   }catch(e){ console.error('maybeResetLaunch',e); return; } // marqueur non posé → réessaiera au prochain lancement
-  // 3. Colonnes optionnelles (peuvent ne pas exister selon les migrations) — best-effort
+  // 3. Colonnes optionnelles (peuvent ne pas exister selon les migrations) · best-effort
   try{ await sb.from('player_meta').update({ streak_freeze_count:0, owned_frames:[], equipped_frame:null, custom_title:null, lucky_boost_until:null }).eq('user_id',session.user.id); }catch(e){}
   // 4. État local (on garde badges, wins, losses, username)
   dex=[];
@@ -2907,11 +2907,11 @@ function initStars(){
   }
 }
 
-/* ===== ACCÈS IA (lié à la connexion — partagé pour tout le monde) ===== */
+/* ===== ACCÈS IA (lié à la connexion · partagé pour tout le monde) ===== */
 function hasApiKey(){ return !!session; }
 
 /* ===== AI ANALYSIS (relais via Edge Function, clé serveur partagée) ===== */
-/* Compteur de scans du jour (affichage — la vraie limite est côté serveur) */
+/* Compteur de scans du jour (affichage · la vraie limite est côté serveur) */
 const DAILY_SCAN_LIMIT=10;
 function scanKey(){ return 'cdx_scans_'+todayStr(); }
 function getScansToday(){ try{ return parseInt(localStorage.getItem(scanKey())||'0',10)||0; }catch(e){ return 0; } }
@@ -2926,13 +2926,13 @@ async function analyzeWithAI(dataUrl){
       let body=null; try{ body=await error.context.json(); }catch(e2){}
       console.error('analyzeWithAI error',body);
       if(body?.error==='limit_reached'){ setScansToday(DAILY_SCAN_LIMIT); showToast(`⏱️ Limite de ${body.limit||10} scans IA/jour atteinte. Réessaie demain !`); }
-      else { incScansToday(); showToast('⚠️ IA indisponible ('+(body?.error||'erreur')+') — mode aléatoire pour cette fois.'); }
+      else { incScansToday(); showToast('⚠️ IA indisponible ('+(body?.error||'erreur')+') · mode aléatoire pour cette fois.'); }
       return null;
     }
     incScansToday();
     if(typeof data?.is_rock==='undefined'){
       console.error('analyzeWithAI unexpected payload',data);
-      showToast('⚠️ Réponse IA inattendue — mode aléatoire pour cette fois.');
+      showToast('⚠️ Réponse IA inattendue · mode aléatoire pour cette fois.');
       return null;
     }
     return data;
@@ -3111,7 +3111,7 @@ async function renderShareCard(rock){
     };
     q.onerror=()=>{ // hors-ligne / bloqué : pas de QR orphelin, on remet un pied de page simple
       ctx.fillStyle='rgba(255,255,255,0.55)'; ctx.textAlign='center'; ctx.font="700 32px 'Baloo 2'";
-      ctx.fillText('CaillouDEX — scanne le tien !',W/2,qy+Q/2+30);
+      ctx.fillText('CaillouDEX · scanne le tien !',W/2,qy+Q/2+30);
       res();
     };
     q.src='https://api.qrserver.com/v1/create-qr-code/?size=320x320&margin=0&data='+encodeURIComponent(appUrl);
@@ -3160,7 +3160,7 @@ async function shareRock(rock){
     const a=document.createElement('a'); a.href=url; a.download=fname;
     document.body.appendChild(a); a.click(); a.remove();
     setTimeout(()=>URL.revokeObjectURL(url),4000);
-    showToast('Image sauvegardée 📥 — partage depuis ta galerie');
+    showToast('Image sauvegardée 📥 · partage depuis ta galerie');
   }catch(e){ showToast('Partage impossible sur cet appareil.'); }
 }
 
@@ -3177,7 +3177,7 @@ function showToast(msg){
   else if(/^(✅|🎉|✨)/.test(m)) playSfx('success');
 }
 
-/* ===== SONS (synthétisés via Web Audio — aucun fichier, marche hors-ligne) ===== */
+/* ===== SONS (synthétisés via Web Audio · aucun fichier, marche hors-ligne) ===== */
 let _audioCtx=null;
 let soundOn=(()=>{ try{ return localStorage.getItem('cdx_sound')!=='off'; }catch(e){ return true; } })();
 function setSoundOn(on){ soundOn=!!on; try{ localStorage.setItem('cdx_sound', on?'on':'off'); }catch(e){} if(on){ sfxUnlock(); playSfx('success'); } }
@@ -3329,7 +3329,7 @@ function _scheduleChord(idx, t){
   bg.gain.setValueAtTime(0.0001,t); bg.gain.exponentialRampToValueAtTime(0.13,t+0.3);
   bg.gain.setValueAtTime(0.13,t+dur-0.5); bg.gain.exponentialRampToValueAtTime(0.0001,t+dur+0.2);
   b.connect(bg); bg.connect(master); b.start(t); b.stop(t+dur+0.3);
-  // Arpège cristallin discret (montée sur la mesure) — surtout dans la réverb
+  // Arpège cristallin discret (montée sur la mesure) · surtout dans la réverb
   chord.notes.forEach((freq,i)=>{ const at=t+(0.10+i*0.16)*dur; if(at<t+dur-0.2) _arpNote(at, freq*2); });
   // Mélodie principale (vibrato + écho + réverb)
   const mel=_MUSIC_MELODY[idx]||[];
@@ -3386,10 +3386,10 @@ function startMusic(){
   master.gain.setValueAtTime(0.0001, ctx.currentTime);
   master.gain.exponentialRampToValueAtTime(0.22, ctx.currentTime+3); // fondu d'entrée
   master.connect(ctx.destination);
-  // Réverbération (convolution) — donne l'espace/la profondeur
+  // Réverbération (convolution) · donne l'espace/la profondeur
   const conv=ctx.createConvolver(); try{ conv.buffer=_makeIR(ctx,2.8,2.4); }catch(e){}
   const revGain=ctx.createGain(); revGain.gain.value=0.85; conv.connect(revGain); revGain.connect(master);
-  // Écho (delay) réinjecté — surtout pour la mélodie
+  // Écho (delay) réinjecté · surtout pour la mélodie
   const delay=ctx.createDelay(1.2); delay.delayTime.value=0.38;
   const fb=ctx.createGain(); fb.gain.value=0.33; delay.connect(fb); fb.connect(delay);
   const delGain=ctx.createGain(); delGain.gain.value=0.42; delay.connect(delGain); delGain.connect(master); delay.connect(conv);
@@ -3494,7 +3494,7 @@ function pickSpecialMove(){ return SPECIAL_MOVES[Math.floor(Math.random()*SPECIA
 function pickType(){ return ROCK_TYPES[Math.floor(Math.random()*ROCK_TYPES.length)]; }
 // Détermine le type d'un caillou en repartant du choix thématique de l'IA, mais
 // en rééquilibrant grâce aux indices (couleur/brillance) pour que les types rares
-// dans la nature — surtout GLACE — restent atteignables (cailloux pâles/brillants).
+// dans la nature · surtout GLACE · restent atteignables (cailloux pâles/brillants).
 function resolveRockType(ai){
   const aiKey=(ai&&ai.type&&ROCK_TYPES.find(t=>t.key===ai.type))?ai.type:null;
   const cc=ai&&ai.color_category||null;   // clair | sombre | autre
@@ -3543,7 +3543,7 @@ async function bumpStreak(){
     meta.streak=row.new_streak;
     meta.lastCaptureDate=todayStr();
     meta.streakFreezeCount=row.freeze_used?Math.max(0,(meta.streakFreezeCount||0)-1):meta.streakFreezeCount;
-    if(row.freeze_used) setTimeout(()=>showToast('🧊 Gel de Série utilisé — ta série est protégée !'),600);
+    if(row.freeze_used) setTimeout(()=>showToast('🧊 Gel de Série utilisé · ta série est protégée !'),600);
     if(STREAK_XP_BONUS[meta.streak]){
       const bonus=STREAK_XP_BONUS[meta.streak];
       const gBonus=STREAK_GRAVILLON_BONUS[meta.streak]||0;
@@ -3703,7 +3703,7 @@ function regionsScreen(){
   const conquered=REGIONS.filter(r=>st.done[r.key]).length;
   return `<div class="regions-wrap">
     <div class="regions-title">🌍 EXPÉDITIONS</div>
-    <p class="regions-sub">Choisis une région à explorer, puis pars capturer de <b>vrais cailloux de son type</b> (ex. des cailloux clairs/blancs pour la Glace 🧊). Il en faut <b>${REGION_TARGET} du bon type</b> pour la conquérir et décrocher son légendaire — les autres cailloux ne comptent pas ! <br><span style="color:var(--goldd);font-weight:800;">🏆 ${conquered}/${REGIONS.length} régions conquises</span></p>
+    <p class="regions-sub">Choisis une région à explorer, puis pars capturer de <b>vrais cailloux de son type</b> (ex. des cailloux clairs/blancs pour la Glace 🧊). Il en faut <b>${REGION_TARGET} du bon type</b> pour la conquérir et décrocher son légendaire · les autres cailloux ne comptent pas ! <br><span style="color:var(--goldd);font-weight:800;">🏆 ${conquered}/${REGIONS.length} régions conquises</span></p>
     <div class="regions-grid">
       ${REGIONS.map(r=>{
         const t=ROCK_TYPES.find(x=>x.key===r.type)||{};
@@ -3790,7 +3790,7 @@ function mascotSvg(mood='neutral',extraClass='',hideShadow=false){
   const id='m'+(++_mid);
   const happy=mood==='happy';
   const mean=mood==='mean';
-  // Silhouette de galet organique — réutilisée pour le corps, le clip texture et le liseré
+  // Silhouette de galet organique · réutilisée pour le corps, le clip texture et le liseré
   const body='M18,17 C30,4 56,2 73,12 C90,21 95,41 86,57 C80,71 60,79 40,75 C20,72 5,60 6,41 C7,27 8,29 18,17 Z';
   const brows=mean
     ?{l:'M26,29 Q35,32 45,36',r:'M55,36 Q65,32 74,29'}
@@ -4185,7 +4185,7 @@ function dropRock(){
     },1500);
   },1250);
 }
-/* ===== Eau WebGL du Plouf (shader) — repli sur l'eau CSS si indisponible ===== */
+/* ===== Eau WebGL du Plouf (shader) · repli sur l'eau CSS si indisponible ===== */
 let splashWater=null;
 const SPLASH_WATER_FS=`precision highp float;
 uniform vec2 uRes; uniform float uTime; uniform float uImpactT; uniform float uImpactX; uniform float uImpactAmp;
@@ -4300,15 +4300,15 @@ function scannerScreen(){
   const oddsBar=RARITY_TIERS.map((t,i)=>`<span class="odds-seg" style="flex:${Math.max(0.5,w[i])};background:${t.hex};"></span>`).join('');
   const legend=RARITY_TIERS.map((t,i)=>`<span class="chip"><span class="dot" style="background:${t.hex}"></span>${t.label} ${w[i]}%</span>`).join('');
   const streakLine=meta.streak>0
-    ?`<div class="hint-soft">🔥 Série de ${meta.streak} jour${meta.streak>1?'s':''} — chances de rareté boostées !</div>`
+    ?`<div class="hint-soft">🔥 Série de ${meta.streak} jour${meta.streak>1?'s':''} · chances de rareté boostées !</div>`
     :`<div class="hint-soft">Scanne chaque jour pour booster ta chance de rareté.</div>`;
   const aiLine=hasApiKey()
-    ?`<div class="hint-soft" style="color:rgba(128,32,192,.8);">🤖 IA active — noms personnalisés + anti-triche</div>`
+    ?`<div class="hint-soft" style="color:rgba(128,32,192,.8);">🤖 IA active · noms personnalisés + anti-triche</div>`
     :`<div class="hint-soft">Active l'IA pour des noms uniques → <span style="color:var(--goldd);font-weight:800;cursor:pointer;" data-action="account">⚙️ IA</span></div>`;
   const gKey=guaranteedRarityKey();
   const gTier=gKey?RARITY_TIERS.find(x=>x.key===gKey):null;
   const guaranteedBadge=gTier?`<div class="guaranteed-badge" style="border-color:${gTier.hex};color:${gTier.hex};box-shadow:0 0 16px ${gTier.hex}55;">✨ Prochaine capture : <b>${gTier.label}</b> garantie</div>`:'';
-  const luckyBadge=isLuckyActive()?`<div class="hint-soft" style="color:rgba(30,138,76,.95);font-weight:700;">🍀 Porte-Bonheur actif — rareté boostée</div>`:'';
+  const luckyBadge=isLuckyActive()?`<div class="hint-soft" style="color:rgba(30,138,76,.95);font-weight:700;">🍀 Porte-Bonheur actif · rareté boostée</div>`:'';
   const scans=getScansToday(); const left=Math.max(0,DAILY_SCAN_LIMIT-scans);
   const reached=left<=0;
   const capAttr=reached?'':'data-action="capture"';
@@ -4329,12 +4329,12 @@ function scannerScreen(){
         <div class="scan2-reticle"><span class="r-ring"></span><span class="r-h"></span><span class="r-v"></span></div>
         <div class="scan2-mascot">${reached?'🔒':mascotSvg()}</div>
       </div>
-      <div class="scan2-hint">${reached?'Limite du jour atteinte — reviens demain !':'Vise ton caillou et touche pour capturer'}</div>
+      <div class="scan2-hint">${reached?'Limite du jour atteinte · reviens demain !':'Vise ton caillou et touche pour capturer'}</div>
     </div>
     <div class="scan2-shutter-wrap">
       <button class="scan2-shutter${reached?' locked':''}" ${capAttr} aria-label="Capturer"><span class="scan2-shutter-ring"></span><span class="scan2-shutter-core">${reached?'🔒':'📸'}</span></button>
     </div>
-    <div class="scan2-shutter-label">${left>0?`Il te reste <b>${left}</b> scan${left>1?'s':''} aujourd'hui`:`Limite du jour atteinte — reviens demain`}</div>
+    <div class="scan2-shutter-label">${left>0?`Il te reste <b>${left}</b> scan${left>1?'s':''} aujourd'hui`:`Limite du jour atteinte · reviens demain`}</div>
     <div class="scan2-odds">
       <div class="scan2-odds-title">🎲 TES CHANCES</div>
       <div class="odds-bar">${oddsBar}</div>
@@ -4705,7 +4705,7 @@ function dexResultsHtml(){
     let list=dex.filter(r=> (!dexFavOnly||isFav(r.id)) && (!q || (r.name||'').toLowerCase().includes(q) || (r.typeLabel||'').toLowerCase().includes(q) || (r.rarityLabel||'').toLowerCase().includes(q)));
     list=sortDex(list);
     const back=`<div class="dex-back" data-action="dexTypes">← Voir par type</div>`;
-    if(!list.length) return back+`<p style="text-align:center;font-family:'Nunito',sans-serif;font-size:13px;color:rgba(44,42,46,.5);margin-top:26px;">${dexFavOnly&&!q?'Aucun favori — touche l\'étoile ☆ d\'un caillou pour l\'ajouter !':'Aucun caillou ne correspond à ta recherche.'}</p>`;
+    if(!list.length) return back+`<p style="text-align:center;font-family:'Nunito',sans-serif;font-size:13px;color:rgba(44,42,46,.5);margin-top:26px;">${dexFavOnly&&!q?'Aucun favori · touche l\'étoile ☆ d\'un caillou pour l\'ajouter !':'Aucun caillou ne correspond à ta recherche.'}</p>`;
     const label=(dexFavOnly?'⭐ Favoris':'Tri')+' · '+(DEX_SORT_LABELS[dexSort]||'');
     return back+`<div style="font-family:'Baloo 2',sans-serif;font-weight:700;font-size:11px;color:rgba(44,42,46,.46);text-align:center;margin:2px 0 10px;">${list.length} caillou${list.length>1?'x':''} · ${label}</div><div class="dexgrid2">${list.map(dexCard).join('')}</div>`;
   }
@@ -4713,9 +4713,9 @@ function dexResultsHtml(){
 }
 function updateDexResults(){ const el=document.getElementById('dexResults'); if(el) el.innerHTML=dexResultsHtml(); }
 function dexScreen(){
-  if(dex.length===0) return `<div class="empty">${mascotSvg('happy')}<p>Ton Dex est vide.<br>Va scanner ton premier caillou ! 🪨<br><span style="font-size:11px;opacity:.6;">${hasApiKey()?'IA active — chaque capture est unique !':'Active l\'IA pour des noms personnalisés'}</span></p></div>`;
+  if(dex.length===0) return `<div class="empty">${mascotSvg('happy')}<p>Ton Dex est vide.<br>Va scanner ton premier caillou ! 🪨<br><span style="font-size:11px;opacity:.6;">${hasApiKey()?'IA active · chaque capture est unique !':'Active l\'IA pour des noms personnalisés'}</span></p></div>`;
 
-  // NIVEAU 2 — cartes d'un type choisi
+  // NIVEAU 2 · cartes d'un type choisi
   if(dexType){
     const t=ROCK_TYPES.find(x=>x.key===dexType)||{label:'❔ AUTRES',color:'#9E9E9E'};
     const rocks=sortDex(dex.filter(r=>(r.rockType||'neutre')===dexType));
@@ -4726,7 +4726,7 @@ function dexScreen(){
     </div>`;
   }
 
-  // NIVEAU 1 — recherche/tri + (résultats OU menu des types)
+  // NIVEAU 1 · recherche/tri + (résultats OU menu des types)
   return `<div>
     ${dexControlsHtml()}
     <div id="dexResults">${dexResultsHtml()}</div>
@@ -4795,7 +4795,7 @@ function adminForgotPw(){
   }
   _adminForgotArmed=0;
   try{ localStorage.removeItem('cdx_admin_pw'); }catch(e){}
-  adminUnlocked=false; showToast('Mot de passe réinitialisé — crée-en un nouveau.'); render();
+  adminUnlocked=false; showToast('Mot de passe réinitialisé · crée-en un nouveau.'); render();
 }
 function openAdmin(){ if(!isAdmin()){ showToast('🔒 Accès réservé.'); return; } screen='admin'; render(); if(adminUnlocked) setAdminTab(adminTabId); }
 function adminSubmitPw(){
@@ -4851,7 +4851,7 @@ async function adminGive(field,amt){
   const cur=(r.meta&&r.meta[field])||0;
   try{ const {error}=await sb.from('player_meta').update({[field]:cur+amt}).eq('user_id',r.uid); if(error) throw error;
     showToast(`✅ +${amt} ${field} → @${r.username}`); adminSearchResult.meta[field]=cur+amt; updateAdminBody();
-  }catch(e){ showToast('❌ '+(e?.message||e)+' — SQL admin activé ?'); }
+  }catch(e){ showToast('❌ '+(e?.message||e)+' · SQL admin activé ?'); }
 }
 async function adminResetPlayer(uid,username){
   if(!confirm('Remettre à zéro le compte de @'+username+' ?\n(garde badges, victoires, défaites)')) return;
@@ -4860,7 +4860,7 @@ async function adminResetPlayer(uid,username){
     const {error}=await sb.from('player_meta').update({gravillons:0,gems:0,xp:0,streak:0,inventory:{},food:{},today_challenge:null,challenge_date:null,challenge_completed_date:null,shared:0}).eq('user_id',uid);
     if(error) throw error;
     showToast('♻️ @'+username+' remis à zéro.'); adminSearchPlayer(adminLastQuery);
-  }catch(e){ showToast('❌ '+(e?.message||e)+' — SQL admin activé ?'); }
+  }catch(e){ showToast('❌ '+(e?.message||e)+' · SQL admin activé ?'); }
 }
 async function adminDeletePlayer(uid,username,then){
   if(!confirm('SUPPRIMER définitivement toutes les données de @'+username+' ?\nAction irréversible.')) return;
@@ -4873,7 +4873,7 @@ async function adminDeletePlayer(uid,username,then){
     showToast('🗑️ Données de @'+username+' supprimées.');
     adminSearchResult=null; updateAdminBody();
     if(typeof then==='function') then();
-  }catch(e){ showToast('❌ '+(e?.message||e)+' — SQL admin activé ?'); }
+  }catch(e){ showToast('❌ '+(e?.message||e)+' · SQL admin activé ?'); }
 }
 async function adminDeleteReport(id){
   try{ const {error}=await sb.from('reports').delete().eq('id',id); if(error) throw error; adminReports=null; adminLoadReports(); }
@@ -4884,7 +4884,7 @@ async function adminSaveAnnounce(){
   const el=document.getElementById('adminAnnounceInput'); const txt=(el&&el.value||'').trim();
   try{ const {error}=await sb.from('app_config').upsert({id:1, announcement:txt||null, updated_at:new Date().toISOString()}); if(error) throw error;
     appAnnouncement=txt||null; showToast(txt?'📢 Annonce publiée à tous !':'Annonce effacée.'); }
-  catch(e){ showToast('❌ '+(e?.message||e)+' — table app_config créée ?'); }
+  catch(e){ showToast('❌ '+(e?.message||e)+' · table app_config créée ?'); }
 }
 async function loadAnnouncement(){
   if(!sb) return;
@@ -4971,7 +4971,7 @@ function adminScreen(){
   return `<div class="admin-wrap">
     <div class="admin-head"><span>🛠️ ADMIN</span><button class="admin-close" data-action="goto" data-screen="account">✕</button></div>
     <div class="admin-tabs">${tb('stats','📊')}${tb('mod','🚩')}${tb('players','🎁')}${tb('logs','🐞')}</div>
-    <button class="admin-btn" style="width:100%;margin-bottom:12px;color:#F7DC6F;border-color:rgba(247,220,111,.35);" data-action="openStudio">🧵 Studio IA — visuels à fond constant</button>
+    <button class="admin-btn" style="width:100%;margin-bottom:12px;color:#F7DC6F;border-color:rgba(247,220,111,.35);" data-action="openStudio">🧵 Studio IA · visuels à fond constant</button>
     <div class="admin-body">${adminTabContent()}</div>
   </div>`;
 }
@@ -5016,7 +5016,7 @@ function accountScreen(){
       <span>📖 Revoir le tutoriel</span>
     </div>
     <p class="setup-sub">
-      🤖 IA active pour tout le monde — noms personnalisés<br>
+      🤖 IA active pour tout le monde · noms personnalisés<br>
       et détection anti-triche, sans clé à configurer.<br><br>
       Limite : 10 scans IA par jour et par compte.
     </p>
@@ -5176,7 +5176,7 @@ function startRealtimeMatch(code){
       const ping=()=>{ if(!onlineState||onlineState.matched){ clearInterval(onlineState.helloTimer); return; } try{ ch.send({type:'broadcast',event:'m',payload:{type:'hello',v:1}}); }catch(e){} };
       ping(); onlineState.helloTimer=setInterval(ping,700);
     } else if(status==='CHANNEL_ERROR'||status==='TIMED_OUT'||status==='CLOSED'){
-      onlineState.diag='⚠️ Serveur temps réel injoignable — réessaie.'; if(screen==='online-wait') render();
+      onlineState.diag='⚠️ Serveur temps réel injoignable · réessaie.'; if(screen==='online-wait') render();
     }
   });
   // Diagnostic : si le canal ne se connecte pas du tout au bout de 12 s.
@@ -5191,7 +5191,7 @@ function startRealtimeMatch(code){
   onlineState.rtTimeout=setTimeout(()=>{
     if(!onlineState||onlineState.matched||battleState||screen!=='online-wait') return;
     if(onlineState.isHost && !onlineState.isChallenge && onlineState.mode!=='trade'){
-      showToast('📶 Personne n\'a rejoint — un bot prend la relève !'); _rtCleanup(); onlineState=null; screen='combat-pick'; render();
+      showToast('📶 Personne n\'a rejoint · un bot prend la relève !'); _rtCleanup(); onlineState=null; screen='combat-pick'; render();
     } else {
       showToast('❌ Ton ami n\'a pas rejoint à temps. Réessaie.'); cancelOnline();
     }
@@ -5214,7 +5214,7 @@ function setupOnlineConn(conn){
     if(!onlineState||onlineState.chanOpen||battleState||screen!=='online-wait') return;
     try{ conn.close(); }catch(e){}
     if(onlineState.isHost && !onlineState.isChallenge && onlineState.mode!=='trade'){
-      showToast('📶 Connexion réseau impossible — un bot prend la relève !');
+      showToast('📶 Connexion réseau impossible · un bot prend la relève !');
       try{ if(onlineState.peer) onlineState.peer.destroy(); }catch(e){}
       onlineState=null; screen='combat-pick'; render();
     } else {
@@ -5673,12 +5673,12 @@ async function startOnlineBattle(){
     playerHP:combatMaxHP(pr.def), botHP:combatMaxHP(br.def),
     playerMaxHP:combatMaxHP(pr.def), botMaxHP:combatMaxHP(br.def),
     playerSpecialUsed:false, botSpecialUsed:false, playerUltimateUsed:false, botUltimateUsed:false,
-    log:[{text:`⚔️ ${pr.name} vs ${br.name} — que le meilleur caillou gagne !`,cls:'neutral'}],
+    log:[{text:`⚔️ ${pr.name} vs ${br.name} · que le meilleur caillou gagne !`,cls:'neutral'}],
     turn:myFirst?'player':'opponent', winner:null, online:true, entered:false,
     playerSpriteUrl, botSpriteUrl,
     playerFureur:0, botFureur:0, stake, betSettled:false,
   };
-  if(stake>0) battleState.log.push({text:`🎰 Pari lancé : 💎 ${stake} en jeu — le gagnant rafle tout !`,cls:'neutral'});
+  if(stake>0) battleState.log.push({text:`🎰 Pari lancé : 💎 ${stake} en jeu · le gagnant rafle tout !`,cls:'neutral'});
   screen='combat-fight'; render();
 }
 
@@ -5861,7 +5861,7 @@ function onlineMenuScreen(){
     <div style="font-family:'Playfair Display',Georgia,serif;font-size:24px;color:var(--accent);margin-bottom:6px;">COMBAT EN LIGNE</div>
     <p style="font-family:'Nunito',sans-serif;font-size:13px;color:rgba(44,42,46,.55);margin:0 0 22px;">Défie un ami ou affronte un bot<br>si personne n'est disponible.</p>
     <button class="btn btn-gold" style="width:100%;margin-bottom:10px;" data-action="onlineCreate">⚡ CRÉER UNE SALLE</button>
-    <p style="font-family:'Baloo 2',sans-serif;font-size:12px;color:rgba(44,42,46,.38);margin:8px 0 4px;">— ou rejoindre avec un code —</p>
+    <p style="font-family:'Baloo 2',sans-serif;font-size:12px;color:rgba(44,42,46,.38);margin:8px 0 4px;">ou rejoindre avec un code —</p>
     <div class="online-join-col">
       <input class="input-field" id="joinCodeInput" type="text" maxlength="6" placeholder="ABC123" autocomplete="off" style="text-transform:uppercase;text-align:center;letter-spacing:.25em;font-weight:800;font-size:22px;padding:16px 14px;" oninput="this.value=this.value.toUpperCase()">
       <button class="btn btn-purple" style="margin-top:10px;" data-action="onlineJoin">REJOINDRE →</button>
@@ -5877,7 +5877,7 @@ function onlineWaitScreen(){
       <div style="font-size:48px;margin-bottom:10px;">⏳</div>
       <div style="font-family:'Baloo 2',sans-serif;font-weight:800;font-size:13px;color:rgba(44,42,46,.5);letter-spacing:.1em;margin-bottom:4px;">${onlineState.isChallenge?'EN ATTENTE DE TON AMI':'EN ATTENTE D\'UN ADVERSAIRE'}</div>
       ${onlineState.isChallenge
-        ?`<p style="font-family:'Nunito',sans-serif;font-size:13px;color:rgba(44,42,46,.55);margin:8px 0;">Défi envoyé à <b>${onlineState.targetUsername||'ton ami'}</b> — en attente qu'il accepte...</p>`
+        ?`<p style="font-family:'Nunito',sans-serif;font-size:13px;color:rgba(44,42,46,.55);margin:8px 0;">Défi envoyé à <b>${onlineState.targetUsername||'ton ami'}</b> · en attente qu'il accepte...</p>`
         :`<div class="room-code">${onlineState.roomCode}</div>
       <p style="font-family:'Nunito',sans-serif;font-size:12px;color:rgba(44,42,46,.46);margin:4px 0 2px;">Partage ce code à ton ami.</p>
       <p style="font-family:'Nunito',sans-serif;font-size:11px;color:rgba(44,42,46,.34);">Bot de secours dans <span id="onlineCd">${onlineState.cd||30}</span>s.</p>`}
@@ -5905,7 +5905,7 @@ function onlinePickScreen(){
   const myBet=onlineState?(onlineState.myBet||0):0;
   const myGems=meta.gems||0;
   const betRow=`<div class="bet-block">
-    <div class="bet-label">🎰 Pari de gemmes <span class="bet-bal">— tu as 💎 ${myGems}</span></div>
+    <div class="bet-label">🎰 Pari de gemmes <span class="bet-bal">· tu as 💎 ${myGems}</span></div>
     <div class="bet-pills">
       ${BET_OPTIONS.map(v=>{
         const dis=v>myGems;
@@ -5913,7 +5913,7 @@ function onlinePickScreen(){
         return `<button class="bet-pill${on?' on':''}${dis?' dis':''}" ${dis||waiting?'':`data-action="onlineSetBet" data-bet="${v}"`}>${v===0?'Amical':'💎 '+v}</button>`;
       }).join('')}
     </div>
-    <div class="bet-hint">${myBet>0?`Tu mises 💎 ${myBet} — l'enjeu réel = le plus petit pari des deux joueurs.`:'Combat amical, aucune gemme en jeu.'}</div>
+    <div class="bet-hint">${myBet>0?`Tu mises 💎 ${myBet} · l'enjeu réel = le plus petit pari des deux joueurs.`:'Combat amical, aucune gemme en jeu.'}</div>
   </div>`;
   // Format : match simple ou mini-tournoi (BO3). Choisi à la 1re manche uniquement.
   let formatBlock='';
@@ -5933,13 +5933,13 @@ function onlinePickScreen(){
     } else if(ser&&!decided){
       formatBlock=`<div class="bet-block" style="text-align:center;">
         <div class="bet-label">🥊 Mini-tournoi en cours</div>
-        <div class="series-score">Toi <b>${ser.me}</b> · <b>${ser.opp}</b> Ami — 1er à ${ser.target}</div>
+        <div class="series-score">Toi <b>${ser.me}</b> · <b>${ser.opp}</b> Ami · 1er à ${ser.target}</div>
       </div>`;
     }
   }
   return `<div class="combat-pick-wrap">
     <div class="combat-pick-title">🌐 CHOISIR TON CAILLOU</div>
-    <div class="combat-pick-sub">${waiting?'⏳ En attente du choix adverse...':'Adversaire connecté — fais ton choix !'}</div>
+    <div class="combat-pick-sub">${waiting?'⏳ En attente du choix adverse...':'Adversaire connecté · fais ton choix !'}</div>
     ${formatBlock}
     ${betRow}
     <div class="combat-pick-grid">
@@ -6155,7 +6155,7 @@ async function generateBotCharacter(botRock){
   if(BOT_CHARACTER_CACHE[key]){ apply(BOT_CHARACTER_CACHE[key]); return; }
   // 2) cache local (appareil)
   try{ const ls=localStorage.getItem(BOT_PORTRAIT_LS+key); if(ls){ apply(ls); return; } }catch(e){}
-  // 3) portrait partagé (Supabase) — silencieux si le tableau n'existe pas encore
+  // 3) portrait partagé (Supabase) · silencieux si le tableau n'existe pas encore
   try{
     if(sb){
       const { data }=await sb.from('bot_portraits').select('image,mime').eq('name',key).maybeSingle();
@@ -6254,7 +6254,7 @@ const ENERGY_ACT=24;   // énergie gagnée quand on agit
 const ENERGY_HIT=12;   // énergie gagnée quand on encaisse
 const FUREUR_MULT=3.8; // multiplicateur de dégâts de l'attaque de Fureur
 
-/* ===== TERRAINS & MÉTÉO (solo) — amplifient/affaiblissent un type ===== */
+/* ===== TERRAINS & MÉTÉO (solo) · amplifient/affaiblissent un type ===== */
 const TERRAINS=[
   { key:'volcan',  label:'🌋 Volcan',       boost:'feu',     weaken:'glace',   bg:'radial-gradient(circle at 50% 120%,rgba(255,90,30,.5),transparent 60%)' },
   { key:'pluie',   label:'🌧️ Pluie battante', boost:'glace',   weaken:'feu',     bg:'radial-gradient(circle at 50% -10%,rgba(90,150,220,.45),transparent 60%)' },
@@ -6402,19 +6402,19 @@ async function initBattle(playerRock){
   if(bossRun){
     battleState.boss=true;
     battleState.aiIq=0.95;
-    battleState.log=[{text:`💀 BOSS DE LA SEMAINE — ${bot.name} surgit !`, cls:'neutral'}];
+    battleState.log=[{text:`💀 BOSS DE LA SEMAINE · ${bot.name} surgit !`, cls:'neutral'}];
   } else if(arena){
     battleState.arena=true;
     battleState.wave=arenaRun.wave;
     battleState.aiIq=arenaBotIq(arenaRun.wave);
     battleState.playerHP=Math.max(1,Math.round(maxHp*(arenaRun.carryHpFrac||1)));
-    battleState.log=[{text:`🏟️ Vague ${arenaRun.wave} — ${bot.name} entre dans l'arène !`, cls:'neutral'}];
+    battleState.log=[{text:`🏟️ Vague ${arenaRun.wave} · ${bot.name} entre dans l'arène !`, cls:'neutral'}];
   } else if(tourney){
     battleState.tourney=true;
     battleState.round=tournoyRun.round;
     battleState.aiIq=Math.min(1, 0.55 + tournoyRun.round*0.2);
     battleState.playerHP=Math.max(1,Math.round(maxHp*(tournoyRun.hpFrac||1)));
-    battleState.log=[{text:`🏆 ${TOURNOY_ROUND_NAMES[tournoyRun.round]} — ${bot.name} se dresse sur ton chemin !`, cls:'neutral'}];
+    battleState.log=[{text:`🏆 ${TOURNOY_ROUND_NAMES[tournoyRun.round]} · ${bot.name} se dresse sur ton chemin !`, cls:'neutral'}];
   } else {
     if(loadout.shield!==false && (meta.inventory?.shield||0)>0){ meta.inventory.shield--; battleState.shieldActive=true; usedBuffs.push('🛡️ Bouclier'); }
     if(loadout.crit!==false && (meta.inventory?.crit||0)>0){ meta.inventory.crit--; battleState.critPending=true; usedBuffs.push('💥 Frappe Critique'); }
@@ -6422,7 +6422,7 @@ async function initBattle(playerRock){
   }
   battleState.terrain=terrain;
   const boostT=ROCK_TYPES.find(t=>t.key===terrain.boost);
-  addCombatLog(`${terrain.label} — le type ${boostT?boostT.label.replace(/^\S+\s/,''):terrain.boost} est amplifié !`,'neutral');
+  addCombatLog(`${terrain.label} · le type ${boostT?boostT.label.replace(/^\S+\s/,''):terrain.boost} est amplifié !`,'neutral');
   // Ordre du tour : le plus rapide attaque en premier (égalité → joueur)
   const playerFirst=(effRock.vit||0)>=(bot.vit||0);
   battleState.playerFirst=playerFirst;
@@ -6602,7 +6602,7 @@ function arenaContinue(){ if(!arenaRun) return; arenaRun.wave++; initBattle(aren
 function arenaCashout(){
   arenaRun=null; arenaPicking=false; battleState=null;
   screen='home'; render();
-  showToast('🏟️ Arène quittée — récompenses gardées !');
+  showToast('🏟️ Arène quittée · récompenses gardées !');
 }
 function startArena(rock){
   arenaRun={ rock, wave:1, carryHpFrac:1, pot:{gems:0,grav:0,xp:0} };
@@ -6714,12 +6714,12 @@ function tournoyBracketScreen(){
     </div>`;
   }).join('');
   const cta=(!r.champion&&!r.eliminated)
-    ? `<button class="btn btn-gold" data-action="tournoyFight">⚔️ COMBATTRE — ${TOURNOY_ROUND_NAMES[r.round]}</button>`
+    ? `<button class="btn btn-gold" data-action="tournoyFight">⚔️ COMBATTRE · ${TOURNOY_ROUND_NAMES[r.round]}</button>`
     : '';
   return `<div class="result-wrap" style="padding-top:14px;">
     <div style="font-size:52px;">🏆</div>
     <div style="font-family:'Playfair Display',Georgia,serif;font-size:22px;color:var(--accent);margin:2px 0 2px;">TOURNOI DES CAILLOUX</div>
-    <p class="result-sub" style="margin:0 0 12px;">Ton parcours vers le titre — 🏆 Titres remportés : <b>${tournoyTitles()}</b></p>
+    <p class="result-sub" style="margin:0 0 12px;">Ton parcours vers le titre · 🏆 Titres remportés : <b>${tournoyTitles()}</b></p>
     <div class="tbr-wrap">${rows}</div>
     <div style="font-family:'Baloo 2',sans-serif;font-weight:800;font-size:13px;color:#9A7414;margin:10px 0 6px;">Cagnotte : +${r.pot.gems} 💎 &nbsp;+${r.pot.grav} 🪙 &nbsp;+${r.pot.xp} XP</div>
     ${cta}
@@ -7063,11 +7063,11 @@ function combatPickScreen(){
       <div style="display:flex;gap:6px;flex-shrink:0;">${rightBtns}</div>
     </div>
     ${boss
-      ? `<div class="combat-pick-sub">Choisis ton champion pour affronter <b>${wb.name}</b> ${wb.emoji} — ⚔️${wb.atk} 🛡️${wb.def} 💨${wb.vit}. Redoutable !</div>`
+      ? `<div class="combat-pick-sub">Choisis ton champion pour affronter <b>${wb.name}</b> ${wb.emoji} · ⚔️${wb.atk} 🛡️${wb.def} 💨${wb.vit}. Redoutable !</div>`
       : arena
-      ? `<div class="combat-pick-sub">Choisis ton champion — enchaîne les vagues de bots de plus en plus forts ! 🏆 Record : <b>${arenaBest}</b> vague${arenaBest>1?'s':''}</div>`
+      ? `<div class="combat-pick-sub">Choisis ton champion · enchaîne les vagues de bots de plus en plus forts ! 🏆 Record : <b>${arenaBest}</b> vague${arenaBest>1?'s':''}</div>`
       : tourney
-      ? `<div class="combat-pick-sub">Choisis ton champion — 3 combats à difficulté croissante jusqu'au titre de ${G('champion','championne')} ! 🏆 Titres : <b>${tournoyTitles()}</b></div>`
+      ? `<div class="combat-pick-sub">Choisis ton champion · 3 combats à difficulté croissante jusqu'au titre de ${G('champion','championne')} ! 🏆 Titres : <b>${tournoyTitles()}</b></div>`
       : `<div class="combat-pick-sub">Lequel vas-tu envoyer au combat ?</div>
     <div class="diff-row">
       ${COMBAT_DIFFICULTIES.map(d=>`<button class="diff-pill${d.key===combatDifficulty?' sel':''}" data-action="setDifficulty" data-key="${d.key}">${d.label}</button>`).join('')}
@@ -7085,7 +7085,7 @@ function combatPickScreen(){
       <div class="tournoy-banner-emoji">🏆</div>
       <div class="tournoy-banner-info">
         <div class="tournoy-banner-title">🏆 TOURNOI DES CAILLOUX</div>
-        <div class="tournoy-banner-name">Gravis le bracket — 3 combats jusqu'au titre</div>
+        <div class="tournoy-banner-name">Gravis le bracket · 3 combats jusqu'au titre</div>
       </div>
       <div class="tournoy-banner-cta">JOUER</div>
     </div>
@@ -7247,7 +7247,7 @@ function combatResultScreen(){
   const draw=s.winner==='draw';
   const banner=won?(s.boss?'BOSS VAINCU !':'VICTOIRE !'):draw?'ÉGALITÉ':'DÉFAITE...';
   const sub=won?(s.boss
-      ? `${s.playerRock.name} terrasse le boss ${s.botRock.name} ! 💀${s.bossFirstWin?' Récompense hebdomadaire débloquée 🎁':' (déjà battu cette semaine — petit lot)'}`
+      ? `${s.playerRock.name} terrasse le boss ${s.botRock.name} ! 💀${s.bossFirstWin?' Récompense hebdomadaire débloquée 🎁':' (déjà battu cette semaine · petit lot)'}`
       : `${s.playerRock.name} écrase ${s.botRock.name} dans un nuage de poussière !`)
     :draw?'Les deux cailloux s\'effondrent simultanément. Nul !'
     :s.boss?`Le boss ${s.botRock.name} t\'a réduit en gravier... Réessaie !`
@@ -7260,7 +7260,7 @@ function combatResultScreen(){
     <div style="font-size:64px;animation:resultBounce .5s cubic-bezier(.34,1.56,.64,1);">${emoji}</div>
     <div class="result-banner ${won?'result-win':draw?'result-draw':'result-lose'}">${banner}</div>
     <p class="result-sub">${sub}</p>
-    ${ser?`<div class="series-board">🥊 Mini-tournoi — <b class="${seriesWon?'sb-win':''}">Toi ${ser.me}</b> · <b>${ser.opp} Ami</b>${seriesDecided?(seriesWon?' — 🏆 Tu remportes le mini-tournoi !':' — 😔 Mini-tournoi perdu'):` — 1er à ${ser.target}`}</div>`:''}
+    ${ser?`<div class="series-board">🥊 Mini-tournoi · <b class="${seriesWon?'sb-win':''}">Toi ${ser.me}</b> · <b>${ser.opp} Ami</b>${seriesDecided?(seriesWon?' · 🏆 Tu remportes le mini-tournoi !':' · 😔 Mini-tournoi perdu'):` · 1er à ${ser.target}`}</div>`:''}
     ${won&&s.online?`<div style="font-family:'Baloo 2',sans-serif;font-weight:800;font-size:14px;color:#9A7414;margin:-2px 0 6px;">🏆 Récompense : +${WIN_GEMS} 💎 &nbsp;+20 🪙</div>`:''}
     ${s.online&&s.stake>0?`<div style="font-family:'Baloo 2',sans-serif;font-weight:800;font-size:14px;color:${won?'#2E7D32':'#B23B3B'};margin:-2px 0 8px;">🎰 Pari ${won?'gagné':'perdu'} : ${won?'+':'-'}💎 ${s.stake}</div>`:''}
     ${won&&!s.online?(()=>{
@@ -7325,7 +7325,7 @@ function arenaNextScreen(){
       <div class="result-stat-item"><div class="result-stat-val">${r.pot.gems}</div><div class="result-stat-lbl">💎 CUMUL</div></div>
       <div class="result-stat-item"><div class="result-stat-val">${arenaBest}</div><div class="result-stat-lbl">RECORD</div></div>
     </div>
-    <button class="btn btn-gold" data-action="arenaContinue">⚔️ VAGUE ${next} — bot plus fort</button>
+    <button class="btn btn-gold" data-action="arenaContinue">⚔️ VAGUE ${next} · bot plus fort</button>
     <button class="btn btn-ghost" style="margin-top:8px;" data-action="arenaCashout">💰 Encaisser &amp; rentrer</button>
   </div>`;
 }
@@ -7390,7 +7390,7 @@ function maybeShowGender(){
 const TUTORIAL_STEPS=[
   {emoji:'👋', title:'Bienvenue sur CaillouDEX !', text:'Transforme de vrais cailloux en créatures de collection à faire combattre. Voici l\'essentiel en une minute.'},
   {emoji:'📸', title:'1 · Capture un caillou', text:'Touche « Capturer », puis prends un caillou en photo ou choisis-en un dans ta galerie. N\'importe quel caillou fait l\'affaire !'},
-  {emoji:'✨', title:'2 · L\'IA fait le reste', text:'Ton caillou devient une créature unique : un nom, un type, une illustration et des stats — ⚔️ Attaque, 🛡️ Défense, 💨 Vitesse. Sa taille reflète le vrai caillou !'},
+  {emoji:'✨', title:'2 · L\'IA fait le reste', text:'Ton caillou devient une créature unique : un nom, un type, une illustration et des stats · ⚔️ Attaque, 🛡️ Défense, 💨 Vitesse. Sa taille reflète le vrai caillou !'},
   {emoji:'📖', title:'3 · Ta collection', text:'Retrouve tous tes cailloux dans le Dex. Chacun a une rareté, de Commun à ✨ Secret. Attrape-les tous !'},
   {emoji:'⚔️', title:'4 · Au combat !', text:'Affronte des bots, l\'Arène sans fin, le Boss de la semaine et le Tournoi des cailloux… ou tes amis en ligne (avec paris de gemmes 🎰 et mini-tournois 🥊).'},
   {emoji:'🌍', title:'5 · Explore', text:'Pars en Expédition dans les Régions : capture de vrais cailloux du bon type pour conquérir une zone et décrocher son légendaire. Un Événement met un type à l\'honneur chaque semaine !'},
@@ -7457,7 +7457,7 @@ function render(){
   if(screen==='combat-fight' && battleState && document.querySelector('.cfx')){ patchCombat(); return; }
   stopSplashWater();
   // Mémorise la position de défilement de l'overlay (fiche caillou) pour la restaurer
-  // après reconstruction — évite que l'écran remonte en haut à chaque clic (+/- d'amélioration).
+  // après reconstruction · évite que l'écran remonte en haut à chaque clic (+/- d'amélioration).
   const _ovPrev=document.querySelector('.overlay');
   const _ovScroll=_ovPrev?_ovPrev.scrollTop:0;
   let mainHtml='';
@@ -7647,29 +7647,29 @@ function render(){
             </div>`;
           };
           return `<div class="upgrade-panel">
-            <div class="upgrade-panel-title">⬆️ Niveau ${upgradeAlloc.level}/${UPGRADE_MAX} — répartis tes points</div>
+            <div class="upgrade-panel-title">⬆️ Niveau ${upgradeAlloc.level}/${UPGRADE_MAX} · répartis tes points</div>
             <div class="alloc-pool">Points à placer : <b>${upgradeAlloc.pool}</b> / ${POINTS_PER_LEVEL}</div>
             ${row('atk','⚔️','ATK')}${row('def','🛡️','DEF')}${row('vit','💨','VIT')}
             <div class="btn-row" style="margin-top:10px;">
               <button class="btn btn-ghost" data-action="cancelUpgrade">Annuler</button>
-              <button class="btn-gem" data-action="confirmUpgrade" ${upgradeAlloc.pool>0?'disabled style="opacity:.45;"':''}>💎 ${upgradeAlloc.cost} — Confirmer</button>
+              <button class="btn-gem" data-action="confirmUpgrade" ${upgradeAlloc.pool>0?'disabled style="opacity:.45;"':''}>💎 ${upgradeAlloc.cost} · Confirmer</button>
             </div>
           </div>`;
         }
         if(lvl<UPGRADE_MAX){
           const cost=upgradeCost(lvl);
           return `<div class="upgrade-panel">
-            <div class="upgrade-panel-title">⬆️ Atelier d'Amélioration — Niveau ${lvl}/${UPGRADE_MAX}</div>
+            <div class="upgrade-panel-title">⬆️ Atelier d'Amélioration · Niveau ${lvl}/${UPGRADE_MAX}</div>
             <div class="upgrade-bar-bg"><div class="upgrade-bar-fill" style="width:${Math.round(lvl/UPGRADE_MAX*100)}%;"></div></div>
-            <button class="btn-gem" data-action="startUpgrade" data-id="${detailRock.id}">💎 ${cost} — Améliorer (+${POINTS_PER_LEVEL} pts au choix)</button>
+            <button class="btn-gem" data-action="startUpgrade" data-id="${detailRock.id}">💎 ${cost} · Améliorer (+${POINTS_PER_LEVEL} pts au choix)</button>
           </div>`;
         }
         if(detailRock.evolved){
           return `<div class="upgrade-panel"><div class="evolved-tag">✨ CAILLOU ÉVOLUÉ ✨</div></div>`;
         }
         return `<div class="upgrade-panel">
-          <div class="upgrade-panel-title">⬆️ Niveau ${UPGRADE_MAX} atteint — prêt à évoluer !</div>
-          <button class="btn-gem evolve" data-action="evolveRock" data-id="${detailRock.id}">💎 300 — ✨ FAIRE ÉVOLUER ✨</button>
+          <div class="upgrade-panel-title">⬆️ Niveau ${UPGRADE_MAX} atteint · prêt à évoluer !</div>
+          <button class="btn-gem evolve" data-action="evolveRock" data-id="${detailRock.id}">💎 300 · ✨ FAIRE ÉVOLUER ✨</button>
         </div>`;
       })()}
     </div>`;
@@ -7703,7 +7703,7 @@ function render(){
       </div>
       ${friendStats.h2hMe!=null?(()=>{
         const m=friendStats.h2hMe, t=friendStats.h2hThem, tot=m+t;
-        const verdict=tot===0?'Aucun duel entre vous… défie-le/la !':m>t?'🔥 Tu domines ce duel !':m<t?'😤 Il/elle mène — prends ta revanche !':'⚖️ Parfaitement à égalité !';
+        const verdict=tot===0?'Aucun duel entre vous… défie-le/la !':m>t?'🔥 Tu domines ce duel !':m<t?'😤 Il/elle mène · prends ta revanche !':'⚖️ Parfaitement à égalité !';
         return `<div class="rival-box"><div class="rival-title">⚔️ VOTRE RIVALITÉ</div>
           <div class="rival-score"><span class="rival-me">${m}</span><span class="rival-dash">—</span><span class="rival-them">${t}</span></div>
           <div class="rival-lbl"><span>toi</span><span>@${friendStats.username}</span></div>
@@ -7768,7 +7768,7 @@ function render(){
 let photoToggleState={};
 async function handleFile(file){
   if(!file) return;
-  if(getScansToday()>=DAILY_SCAN_LIMIT){ showToast(`⏱️ Limite de ${DAILY_SCAN_LIMIT} scans atteinte pour aujourd'hui — reviens demain !`); return; }
+  if(getScansToday()>=DAILY_SCAN_LIMIT){ showToast(`⏱️ Limite de ${DAILY_SCAN_LIMIT} scans atteinte pour aujourd'hui · reviens demain !`); return; }
   try{
     const dataUrl=await resizeImage(file);
     const mod=await moderateImage(dataUrl);
@@ -7909,7 +7909,7 @@ function discardReveal(){
   try{ stopCharGenTimer(); }catch(e){}
   revealRock=null; animePhoto=null; pendingPhoto=null; characterResult=null; generatingCharacter=false;
   screen='scanner'; render();
-  showToast('🪨 Caillou relâché — tu peux en scanner un autre !');
+  showToast('🪨 Caillou relâché · tu peux en scanner un autre !');
 }
 
 
@@ -8239,7 +8239,7 @@ function buildCharacterPrompt(rock){
   const kind=heroType?', radiating warmth and kindness, wholesome cute lovable and approachable, absolutely NOT scary, NOT menacing, NOT aggressive, NOT evil':'';
   const base=`${mood} one-of-a-kind rock-type creature monster named ${name}, its overall body silhouette is ${shape}, with ${face} on its carved stone face, plus ${feature}, its stone has ${extra}, expressive stubby stone limbs, brimming with personality${kind}`;
   const lighting=heroType?'warm soft cheerful bright and inviting lighting':'epic cinematic dramatic lighting';
-  return `${base}, ${typeSig}, ${pose}, ${sizeDesc}, ${rarityDesc}, its surface material and colouring: ${typeStyle} (this describes ONLY the surface texture and colour — keep the distinct body silhouette, eyes and mouth described above, do NOT collapse it into a plain round ball), ${atkDesc}, ${defDesc}, ${vitDesc}, ${personality}, give this creature a COMPLETELY UNIQUE face and silhouette — vary the eye shape, size, number and colour and the mouth so it clearly does not look like other creatures — BUT it must remain instantly recognisable as a ${typeWord} type (keep its elemental effects, colours and glow prominent), it is unmistakably a solid living creature made entirely of stone with rough grainy mineral texture and cracks, an expressive rock-type creature-collector monster in the style of an official Pokemon-style creature, each one with a distinct silhouette and unique design, captured mid-action in a dynamic energetic pose (absolutely NOT standing still, NOT facing the camera straight, NOT a stiff symmetrical portrait), dynamic composition with the creature's full body fully visible and its size clearly readable (respect the described scale — small creatures look genuinely small, large creatures look genuinely huge), set against a ${bg} background, ${lighting}, glowing energy effects and motion, highly detailed vibrant creature illustration, official monster-taming trading card game artwork style, it is NOT a human, NOT wearing a costume or armor suit, NOT an animal — it is a living rock creature`;
+  return `${base}, ${typeSig}, ${pose}, ${sizeDesc}, ${rarityDesc}, its surface material and colouring: ${typeStyle} (this describes ONLY the surface texture and colour · keep the distinct body silhouette, eyes and mouth described above, do NOT collapse it into a plain round ball), ${atkDesc}, ${defDesc}, ${vitDesc}, ${personality}, give this creature a COMPLETELY UNIQUE face and silhouette · vary the eye shape, size, number and colour and the mouth so it clearly does not look like other creatures · BUT it must remain instantly recognisable as a ${typeWord} type (keep its elemental effects, colours and glow prominent), it is unmistakably a solid living creature made entirely of stone with rough grainy mineral texture and cracks, an expressive rock-type creature-collector monster in the style of an official Pokemon-style creature, each one with a distinct silhouette and unique design, captured mid-action in a dynamic energetic pose (absolutely NOT standing still, NOT facing the camera straight, NOT a stiff symmetrical portrait), dynamic composition with the creature's full body fully visible and its size clearly readable (respect the described scale · small creatures look genuinely small, large creatures look genuinely huge), set against a ${bg} background, ${lighting}, glowing energy effects and motion, highly detailed vibrant creature illustration, official monster-taming trading card game artwork style, it is NOT a human, NOT wearing a costume or armor suit, NOT an animal · it is a living rock creature`;
 }
 
 function stopCharGenTimer(){
@@ -8298,7 +8298,7 @@ async function generateCharacterForRock(rock){
     }catch(e){ errDetail='serveur: '+(e&&e.message); console.warn('generate-character invoke', e); }
     // 2) Secours : Pollinations depuis le navigateur (prompt court)
     if(!rawUrl){ const u=await callPollinations(buildShortCharPrompt(rock)); if(u) rawUrl=u; }
-    if(!rawUrl){ showToast('❌ Génération échouée'+(errDetail?` (${errDetail.slice(0,110)})`:'')+' — réessaie'); stopCharGenTimer(); render(); return; }
+    if(!rawUrl){ showToast('❌ Génération échouée'+(errDetail?` (${errDetail.slice(0,110)})`:'')+' · réessaie'); stopCharGenTimer(); render(); return; }
     rock.charGenCount=(rock.charGenCount||0)+1;
     if(dex.find(r=>r.id===rock.id)&&session&&sb){
       sb.from('rocks').update({ char_gen_count: rock.charGenCount }).eq('id',rock.id).eq('user_id',session.user.id).then(()=>{});
@@ -8335,7 +8335,7 @@ async function recycleRock(rockId){
     dex=dex.filter(r=>r.id!==rockId);
     detailRock=null;
     addGravillons(value);
-    showToast(`💰 ${rock.name} recyclé — +${value} Gravillons`);
+    showToast(`💰 ${rock.name} recyclé · +${value} Gravillons`);
     screen='dex'; render();
   }catch(e){ showToast('❌ Erreur de recyclage: '+(e?.message||e)); }
 }
@@ -8390,7 +8390,7 @@ document.addEventListener('click',(e)=>{
   if(!t) return;
   playSfx('tap');
   if(action==='capture'){
-    if(getScansToday()>=DAILY_SCAN_LIMIT){ showToast(`⏱️ Limite de ${DAILY_SCAN_LIMIT} scans atteinte pour aujourd'hui — reviens demain !`); return; }
+    if(getScansToday()>=DAILY_SCAN_LIMIT){ showToast(`⏱️ Limite de ${DAILY_SCAN_LIMIT} scans atteinte pour aujourd'hui · reviens demain !`); return; }
     showCaptureChoice();
   }
   else if(action==='capCancel'){ closeCaptureChoice(); }
