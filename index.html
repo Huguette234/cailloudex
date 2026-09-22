@@ -793,6 +793,17 @@ nav{display:flex;gap:8px;padding:10px 14px max(14px,env(safe-area-inset-bottom))
 .tuto-dot.on{background:var(--goldd);width:22px;border-radius:999px;}
 .tuto-nav{display:flex;gap:10px;}
 .tuto-nav .btn{margin:0;}
+/* Quoi de neuf ? */
+.news-card{max-width:400px;}
+.news-scroll{max-height:46vh;overflow-y:auto;text-align:left;margin:4px 0 14px;padding:2px 2px 2px 0;-webkit-overflow-scrolling:touch;}
+.news-entry{padding:12px 0;border-bottom:1px dashed rgba(44,42,46,.14);}
+.news-entry:last-child{border-bottom:none;}
+.news-entry-head{display:flex;align-items:center;gap:8px;margin-bottom:4px;}
+.news-ver{font-family:'Baloo 2',sans-serif;font-weight:800;font-size:11px;color:rgba(44,42,46,.5);text-transform:uppercase;letter-spacing:.4px;}
+.news-new{font-family:'Baloo 2',sans-serif;font-weight:800;font-size:9px;color:#5a3b00;background:linear-gradient(135deg,#ffe08a,#ffc94d);padding:2px 8px;border-radius:999px;letter-spacing:.6px;}
+.news-entry-title{font-family:'Playfair Display',Georgia,serif;font-weight:900;font-size:16px;color:var(--accent);margin-bottom:6px;}
+.news-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:7px;}
+.news-list li{font-family:'Nunito',sans-serif;font-size:13.5px;line-height:1.4;color:rgba(44,42,46,.82);}
 /* Régions / Expéditions */
 .regions-wrap{padding:16px 12px 30px;max-width:520px;margin:0 auto;}
 .regions-title{font-family:'Playfair Display',Georgia,serif;font-size:24px;color:var(--accent);text-align:center;margin-bottom:6px;text-shadow:0 1px 3px rgba(0,0,0,.3),0 0 10px rgba(255,255,255,.5);}
@@ -5015,6 +5026,9 @@ function accountScreen(){
     <div class="sound-toggle-row" data-action="replayTutorial" style="margin-top:8px;justify-content:center;color:var(--goldd);">
       <span>📖 Revoir le tutoriel</span>
     </div>
+    <div class="sound-toggle-row" data-action="whatsNew" style="margin-top:8px;justify-content:center;color:var(--goldd);">
+      <span>✨ Quoi de neuf ?</span>
+    </div>
     <p class="setup-sub">
       🤖 IA active pour tout le monde · noms personnalisés<br>
       et détection anti-triche, sans clé à configurer.<br><br>
@@ -7427,6 +7441,50 @@ function renderTutorial(){
   </div>`;
 }
 function closeTutorial(){ const ov=document.getElementById('tutoOverlay'); if(ov){ ov.classList.remove('show'); setTimeout(()=>ov.remove(),250); } }
+
+// ===== Quoi de neuf ? (mini-journal des nouveautés, voix CaillouDEX) =====
+const APP_NEWS_VERSION='2026-09b';
+const CHANGELOG=[
+  { v:'2026-09b', title:'La grande cure de style', when:'Septembre 2026', items:[
+    "🃏 Tes cartes brillent façon holo : incline le téléphone, la lumière danse dessus.",
+    "🎁 Ouverture de pack à la Pokémon — trace ta ligne pile sur l'ouverture et déchire !",
+    "🗣️ J'ai retrouvé ma langue : des petits messages avec du peps un peu partout.",
+    "📦 Un pack différent pour chaque rareté, du commun au cosmique." ]},
+  { v:'2026-09a', title:'On refait le match', when:'Septembre 2026', items:[
+    "⚔️ Les combats entre amis remarchent au poil, même en 4G/5G.",
+    "🧬 Des créatures IA bien plus variées — fini les clones tout ronds !",
+    "🔥 Un type feu ressemble à un type feu, promis (et pareil pour les autres).",
+    "🙂 Homme ou Femme à l'inscription : tous les textes s'accordent avec toi." ]},
+];
+function whatsNewSeen(){ try{ return localStorage.getItem('cdx_news_seen')||''; }catch(e){ return ''; } }
+function markWhatsNewSeen(){ try{ localStorage.setItem('cdx_news_seen',APP_NEWS_VERSION); }catch(e){} }
+function maybeShowWhatsNew(){
+  // Pas pour les nouveaux (ils ont déjà le tuto), une seule fois par version.
+  if(typeof session==='undefined'||!session||!hasConsent()) return;
+  if(!tutorialDone()) return;
+  if(screen!=='home') return;
+  if(whatsNewSeen()===APP_NEWS_VERSION) return;
+  if(document.getElementById('tutoOverlay')) return;
+  showWhatsNew(true);
+}
+function showWhatsNew(auto){
+  markWhatsNewSeen();
+  let ov=document.getElementById('newsOverlay');
+  if(!ov){ ov=document.createElement('div'); ov.id='newsOverlay'; ov.className='tuto-ov'; document.body.appendChild(ov); requestAnimationFrame(()=>ov.classList.add('show')); }
+  const blocks=CHANGELOG.map((c,i)=>`<div class="news-entry${i===0?' latest':''}">
+      <div class="news-entry-head"><span class="news-ver">${c.when}</span>${i===0?'<span class="news-new">NOUVEAU</span>':''}</div>
+      <div class="news-entry-title">${c.title}</div>
+      <ul class="news-list">${c.items.map(it=>`<li>${it}</li>`).join('')}</ul>
+    </div>`).join('');
+  ov.innerHTML=`<div class="tuto-card news-card">
+    <button class="tuto-skip" data-action="whatsNewClose">Fermer ✕</button>
+    <div class="tuto-emoji">✨</div>
+    <div class="tuto-title">Quoi de neuf ?</div>
+    <div class="news-scroll">${blocks}</div>
+    <div class="tuto-nav"><button class="btn btn-gold" style="flex:1;" data-action="whatsNewClose">C'est parti ! 🪨</button></div>
+  </div>`;
+}
+function closeWhatsNew(){ const ov=document.getElementById('newsOverlay'); if(ov){ ov.classList.remove('show'); setTimeout(()=>ov.remove(),250); } }
 // Fonds cartoon par écran (voile clair par-dessus pour garder le contenu lisible)
 const SCREEN_BG={
   home:{img:'bg-accueil.jpg',scrim:0.28},
@@ -7537,6 +7595,7 @@ function render(){
   maybeShowGender();
   maybeShowAnnouncement();
   maybeShowTutorial();
+  maybeShowWhatsNew();
   if(screen==='splash') requestAnimationFrame(startSplashWater);
 
   if(generatingCharacter){
@@ -8471,9 +8530,11 @@ document.addEventListener('click',(e)=>{
   else if(action==='setGenderPref'){ setPlayerGender(t.dataset.g); render(); showToast(playerGender==='f'?'👩 Textes au féminin':'👨 Textes au masculin'); }
   else if(action==='tutoNext'){ if(_tutoIdx<TUTORIAL_STEPS.length-1){ _tutoIdx++; renderTutorial(); } }
   else if(action==='tutoPrev'){ if(_tutoIdx>0){ _tutoIdx--; renderTutorial(); } }
-  else if(action==='tutoSkip'){ markTutorialDone(); closeTutorial(); }
-  else if(action==='tutoDone'){ markTutorialDone(); closeTutorial(); }
+  else if(action==='tutoSkip'){ markTutorialDone(); markWhatsNewSeen(); closeTutorial(); }
+  else if(action==='tutoDone'){ markTutorialDone(); markWhatsNewSeen(); closeTutorial(); }
   else if(action==='replayTutorial'){ startTutorial(); }
+  else if(action==='whatsNew'){ showWhatsNew(false); }
+  else if(action==='whatsNewClose'){ closeWhatsNew(); }
   else if(action==='selectRegion'){
     setActiveRegion(t.dataset.key);
     // Mise à jour en place des cartes (pas de render() -> pas de saccade)
