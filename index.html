@@ -1620,6 +1620,12 @@ main.scr-enter{animation:scrEnter .26s cubic-bezier(.22,.61,.36,1);}
 button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible,[tabindex]:focus-visible{
   outline:3px solid var(--goldd);outline-offset:2px;border-radius:8px;
 }
+/* Skeletons de chargement (placeholders animés plutôt qu'un « Chargement… » brut). */
+@keyframes sklShine{0%{background-position:-180px 0;}100%{background-position:240px 0;}}
+.skl{background:linear-gradient(90deg,rgba(44,42,46,.07) 25%,rgba(44,42,46,.14) 37%,rgba(44,42,46,.07) 63%);background-size:400px 100%;animation:sklShine 1.25s ease-in-out infinite;border-radius:8px;}
+.skl-lb-row{display:flex;align-items:center;gap:12px;padding:10px 8px;}
+.skl-dot{width:30px;height:30px;border-radius:50%;flex-shrink:0;}
+.skl-line{height:11px;}
 /* Confort & accessibilité : respecte le réglage système « réduire les animations ».
    On garde les fondus courts mais on calme les mouvements/boucles pour les personnes
    sensibles au mouvement (et ça soulage aussi les vieux téléphones). */
@@ -2312,7 +2318,7 @@ function clanScreen(){
     <button class="btn btn-ghost" style="margin-top:8px;" data-action="goto" data-screen="friends">← Retour</button>
   </div>`; }
   const board=clanBoard;
-  const boardHtml = board==='loading' ? `<div class="regions-sub" style="margin-top:14px;">⏳ Chargement du classement…</div>`
+  const boardHtml = board==='loading' ? `<div class="clan-board">${Array.from({length:5},()=>`<div class="skl-lb-row"><div class="skl skl-dot"></div><div style="flex:1;"><div class="skl skl-line" style="width:48%;"></div><div class="skl skl-line" style="width:30%;margin-top:6px;"></div></div><div class="skl skl-line" style="width:40px;"></div></div>`).join('')}</div>`
     : Array.isArray(board) ? `<div class="clan-board">
         <div class="clan-board-title">🏆 CLASSEMENT DES CLANS</div>
         ${board.length?board.map((e,i)=>`<div class="clan-board-row${myClan&&e.clan.id===myClan.id?' mine':''}">
@@ -7859,7 +7865,8 @@ function render(){
     const ovL=document.createElement('div'); ovL.className='overlay'; ovL.dataset.action='closeLeaderboard';
     let inner;
     if(leaderboard==='loading'){
-      inner=`<div class="overlay-inner"><div class="combat-pick-title">🏆 CLASSEMENT</div><p style="text-align:center;font-family:'Nunito',sans-serif;font-size:13px;color:rgba(44,42,46,.6);margin-top:16px;">Chargement du classement...</p></div>`;
+      const skl=Array.from({length:6},()=>`<div class="skl-lb-row"><div class="skl skl-dot"></div><div style="flex:1;"><div class="skl skl-line" style="width:52%;"></div><div class="skl skl-line" style="width:34%;margin-top:6px;"></div></div><div class="skl skl-line" style="width:46px;"></div></div>`).join('');
+      inner=`<div class="overlay-inner"><div class="combat-pick-title">🏆 CLASSEMENT</div><div class="combat-pick-sub" style="margin-bottom:10px;">Les dresseurs classés par victoires</div><div class="lb-list">${skl}</div></div>`;
     } else {
       const medals=['🥇','🥈','🥉'];
       const rowsHtml=leaderboard.map((r,i)=>`<div class="lb-row${r.isMe?' me':''}">
