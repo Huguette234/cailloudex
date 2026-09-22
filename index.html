@@ -793,6 +793,12 @@ nav{display:flex;gap:8px;padding:10px 14px max(14px,env(safe-area-inset-bottom))
 .tuto-dot.on{background:var(--goldd);width:22px;border-radius:999px;}
 .tuto-nav{display:flex;gap:10px;}
 .tuto-nav .btn{margin:0;}
+/* Mascotte Galou (onboarding) */
+.tuto-mascot{display:inline-flex;align-items:center;gap:8px;background:rgba(255,201,77,.16);border:1px solid rgba(255,201,77,.4);border-radius:999px;padding:4px 12px 4px 5px;margin:2px auto 6px;}
+.tuto-mascot-av{width:30px;height:30px;border-radius:50%;background:linear-gradient(160deg,#fff3d6,#ffcf72);display:flex;align-items:center;justify-content:center;font-size:17px;box-shadow:0 2px 6px rgba(0,0,0,.15);animation:mascotBob 2.4s ease-in-out infinite;}
+.tuto-mascot-name{font-family:'Baloo 2',sans-serif;font-weight:800;font-size:13px;color:var(--accent);line-height:1;display:flex;flex-direction:column;gap:1px;text-align:left;}
+.tuto-mascot-name small{font-weight:700;font-size:9px;color:rgba(44,42,46,.45);text-transform:uppercase;letter-spacing:.5px;}
+@keyframes mascotBob{0%,100%{transform:translateY(0) rotate(-4deg);}50%{transform:translateY(-3px) rotate(4deg);}}
 /* Quoi de neuf ? */
 .news-card{max-width:400px;}
 .news-scroll{max-height:46vh;overflow-y:auto;text-align:left;margin:4px 0 14px;padding:2px 2px 2px 0;-webkit-overflow-scrolling:touch;}
@@ -7401,16 +7407,17 @@ function maybeShowGender(){
 }
 
 /* ===== TUTORIEL D'ACCUEIL (carrousel de bienvenue, au 1er lancement) ===== */
+const MASCOT_NAME='Galou';
 const TUTORIAL_STEPS=[
-  {emoji:'👋', title:'Bienvenue sur CaillouDEX !', text:'Transforme de vrais cailloux en créatures de collection à faire combattre. Voici l\'essentiel en une minute.'},
-  {emoji:'📸', title:'1 · Capture un caillou', text:'Touche « Capturer », puis prends un caillou en photo ou choisis-en un dans ta galerie. N\'importe quel caillou fait l\'affaire !'},
-  {emoji:'✨', title:'2 · L\'IA fait le reste', text:'Ton caillou devient une créature unique : un nom, un type, une illustration et des stats · ⚔️ Attaque, 🛡️ Défense, 💨 Vitesse. Sa taille reflète le vrai caillou !'},
-  {emoji:'📖', title:'3 · Ta collection', text:'Retrouve tous tes cailloux dans le Dex. Chacun a une rareté, de Commun à ✨ Secret. Attrape-les tous !'},
-  {emoji:'⚔️', title:'4 · Au combat !', text:'Affronte des bots, l\'Arène sans fin, le Boss de la semaine et le Tournoi des cailloux… ou tes amis en ligne (avec paris de gemmes 🎰 et mini-tournois 🥊).'},
-  {emoji:'🌍', title:'5 · Explore', text:'Pars en Expédition dans les Régions : capture de vrais cailloux du bon type pour conquérir une zone et décrocher son légendaire. Un Événement met un type à l\'honneur chaque semaine !'},
-  {emoji:'🤝', title:'6 · Entre amis', text:'Ajoute des amis pour les défier, leur offrir des Gravillons 🎁, échanger des cailloux 🔄, et rejoindre un Clan 🏰 pour grimper au classement des équipes.'},
-  {emoji:'💎', title:'7 · Progresse', text:'Gagne des 💎 Gemmes et des 🪙 Gravillons en jouant pour améliorer et faire évoluer tes cailloux à la Boutique. Pense aux 🎯 missions du jour !'},
-  {emoji:'🚀', title:'C\'est parti !', text:'Astuce : règle les 🔊 sons et la 🎵 musique dans ton Compte (et retrouve ce tuto avec « Revoir le tutoriel »). Amuse-toi bien, %ROLE% de cailloux !'},
+  {emoji:'👋', title:'Salut %NAME% !', text:'Moi c\'est <b>Galou</b>, le petit caillou qui va t\'accompagner. Je te montre l\'essentiel en une minute, promis c\'est rapide ! 🪨'},
+  {emoji:'📸', title:'On chope un caillou', text:'D\'abord, touche « Capturer » et prends n\'importe quel caillou en photo. Même le gravier tout moche de ton jardin fera l\'affaire, crois-moi.'},
+  {emoji:'✨', title:'Et là… magie !', text:'Je transforme ton caillou en créature unique : un nom, un type, une illustration et des stats (⚔️ Attaque, 🛡️ Défense, 💨 Vitesse). Plus le vrai caillou est gros, plus la créature l\'est !'},
+  {emoji:'📖', title:'Ta collection', text:'Tous tes cailloux atterrissent dans le Dex, du plus commun au ✨ Secret. Entre nous : faut tous les attraper. C\'est plus fort que moi.'},
+  {emoji:'⚔️', title:'Envie de bagarre ?', text:'Lance tes cailloux contre des bots, l\'Arène sans fin, le Boss de la semaine, le Tournoi… ou tes potes en ligne (avec paris de gemmes 🎰 et mini-tournois 🥊).'},
+  {emoji:'🌍', title:'On part explorer', text:'Boucle tes chaussures : en Expédition, tu captures de vrais cailloux du bon type pour conquérir des Régions et décrocher leur légendaire. Chaque semaine, un type est à l\'honneur !'},
+  {emoji:'🤝', title:'On est mieux à plusieurs', text:'Ajoute des amis pour les défier, leur offrir des Gravillons 🎁, troquer des cailloux 🔄 et rejoindre un Clan 🏰 pour grimper au classement.'},
+  {emoji:'💎', title:'Tu progresses', text:'Tu gagnes des 💎 Gemmes et des 🪙 Gravillons en jouant — file les dépenser à la Boutique pour muscler et faire évoluer tes cailloux. Et jette un œil aux 🎯 missions du jour !'},
+  {emoji:'🚀', title:'Voilà, tu sais tout !', text:'Tu me retrouveras dans <b>Compte → « Revoir le tutoriel »</b> si je te manque. Allez, à toi de jouer, %ROLE% de cailloux !'},
 ];
 let _tutoIdx=0, _tutoShown=false;
 function tutorialDone(){ try{ return localStorage.getItem('cdx_tutorial_done')==='1'; }catch(e){ return false; } }
@@ -7428,11 +7435,15 @@ function renderTutorial(){
   const s=TUTORIAL_STEPS[_tutoIdx];
   const last=_tutoIdx===TUTORIAL_STEPS.length-1, first=_tutoIdx===0;
   const dots=TUTORIAL_STEPS.map((_,i)=>`<span class="tuto-dot${i===_tutoIdx?' on':''}"></span>`).join('');
+  const pname=(meta&&meta.username)?meta.username:G('Dresseur','Dresseuse');
+  const txt=s.text.replace('%ROLE%', G('dresseur','dresseuse')).replace('%NAME%', pname);
+  const ttl=s.title.replace('%NAME%', pname);
   ov.innerHTML=`<div class="tuto-card">
     <button class="tuto-skip" data-action="tutoSkip">Passer ✕</button>
+    <div class="tuto-mascot"><span class="tuto-mascot-av">🪨</span><span class="tuto-mascot-name">${MASCOT_NAME}<small>ton guide</small></span></div>
     <div class="tuto-emoji">${s.emoji}</div>
-    <div class="tuto-title">${s.title}</div>
-    <div class="tuto-text">${s.text.replace('%ROLE%', G('dresseur','dresseuse'))}</div>
+    <div class="tuto-title">${ttl}</div>
+    <div class="tuto-text">${txt}</div>
     <div class="tuto-dots">${dots}</div>
     <div class="tuto-nav">
       ${first?'<span style="flex:1;"></span>':'<button class="btn btn-ghost" style="flex:1;" data-action="tutoPrev">← Précédent</button>'}
