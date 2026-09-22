@@ -1612,6 +1612,14 @@ nav{display:flex;gap:8px;padding:10px 14px max(14px,env(safe-area-inset-bottom))
 .map-pop img{width:48px;height:48px;border-radius:10px;object-fit:cover;flex-shrink:0;}
 .map-pop b{font-family:'Baloo 2',sans-serif;font-size:13px;}
 .map-pop-cta{display:inline-block;margin-top:3px;font-family:'Baloo 2',sans-serif;font-weight:800;font-size:11px;color:#8020C0;}
+/* Transition d'entrée douce quand on change d'écran (le contenu glisse/fond,
+   le header et la barre du bas restent en place → sensation d'app native). */
+@keyframes scrEnter{from{opacity:0;transform:translateY(9px);}to{opacity:1;transform:translateY(0);}}
+main.scr-enter{animation:scrEnter .26s cubic-bezier(.22,.61,.36,1);}
+/* Accessibilité : focus net au clavier / navigation assistée (invisible au tactile). */
+button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible,[tabindex]:focus-visible{
+  outline:3px solid var(--goldd);outline-offset:2px;border-radius:8px;
+}
 /* Confort & accessibilité : respecte le réglage système « réduire les animations ».
    On garde les fondus courts mais on calme les mouvements/boucles pour les personnes
    sensibles au mouvement (et ça soulage aussi les vieux téléphones). */
@@ -7573,6 +7581,7 @@ function preloadBackgrounds(){
   if(_bgsPreloaded) return; _bgsPreloaded=true;
   try{ ['loading-bg.jpg',...Object.values(SCREEN_BG).map(b=>b.img),...Object.values(PACK_IMG)].forEach(src=>{ const im=new Image(); im.src='./'+src; }); }catch(e){}
 }
+let _lastRenderedScreen=null;
 function render(){
   const app=document.getElementById('app');
   // Combat en cours : mise à jour en place (pas de reconstruction -> plus de clignotement)
@@ -7652,6 +7661,14 @@ function render(){
     else if(screen==='trade-done'){ mainHtml=tradeDoneScreen(); showNav=false; showHeader=false; }
     else if(screen==='clan'){ mainHtml=clanScreen(); showNav=false; }
     app.innerHTML=`${showHeader?header():''}<main style="overflow-y:auto;${screenBgStyle(screen)}">${mainHtml}</main>${showNav?nav():''}`;
+  }
+
+  // Transition d'entrée : seulement quand l'écran change vraiment (pas sur les
+  // re-render d'un même écran, sinon ça clignoterait à chaque interaction).
+  if(screen!==_lastRenderedScreen){
+    const _m=app.querySelector('main');
+    if(_m) _m.classList.add('scr-enter');
+    _lastRenderedScreen=screen;
   }
 
   document.querySelectorAll('.overlay').forEach(o=>o.remove());
