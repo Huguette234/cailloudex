@@ -2419,7 +2419,7 @@ function friendsScreen(){
             <button class="btn-feed" style="width:auto;padding:6px 12px;font-size:11px;background:linear-gradient(135deg,#C45CFF,#8020C0);" data-action="acceptChallengeBtn">Accepter</button>
           </div>`:''}
         </div>`;
-      }).join(''):`<p class="rd-pill" style="text-align:center;font-family:'Nunito',sans-serif;font-size:13px;color:rgba(44,42,46,.75);margin-top:10px;">Personne à défier pour l'instant 🤷<br>Ajoute un pote et viens lui mettre une raclée de gravier !</p>`}
+      }).join(''):`<div class="empty" style="padding:28px 10px;">${mascotSvg('happy')}<p class="rd-pill" style="font-family:'Nunito',sans-serif;font-size:13px;color:rgba(44,42,46,.75);margin-top:12px;">Personne à défier pour l'instant 🤷<br>Ajoute un pote et viens lui mettre une raclée de gravier !</p></div>`}
     </div>
   </div>`;
 }
@@ -5464,9 +5464,8 @@ function tradeCleanup(){
   Promise.all([loadFriendsList(),loadGifts()]).then(()=>{ if(screen==='friends') render(); });
 }
 function tradePickScreen(){
-  if(!dex.length) return `<div style="text-align:center;padding:40px 16px;">
-    <div style="font-size:52px;margin-bottom:12px;">🪨</div>
-    <div style="font-family:'Baloo 2',sans-serif;font-weight:800;font-size:16px;color:rgba(44,42,46,.86);">Rien à troquer pour l'instant !</div>
+  if(!dex.length) return `<div class="empty" style="padding:40px 16px;">${mascotSvg('happy')}
+    <div style="font-family:'Baloo 2',sans-serif;font-weight:800;font-size:16px;color:rgba(44,42,46,.86);margin-top:12px;">Rien à troquer pour l'instant !</div>
     <button class="btn btn-ghost" style="margin-top:16px;" data-action="tradeCancelBtn">Annuler</button></div>`;
   return `<div class="combat-pick-wrap">
     <div class="combat-pick-title">🔄 CAILLOU À ÉCHANGER</div>
@@ -5959,9 +5958,8 @@ function onlineWaitScreen(){
 
 function onlinePickScreen(){
   const waiting=onlineState&&onlineState.myRock;
-  if(!dex.length) return `<div style="text-align:center;padding:40px 16px;">
-    <div style="font-size:52px;margin-bottom:12px;">🪨</div>
-    <div style="font-family:'Baloo 2',sans-serif;font-weight:800;font-size:16px;color:rgba(44,42,46,.86);">Ton Dex est encore tout vide !</div>
+  if(!dex.length) return `<div class="empty" style="padding:40px 16px;">${mascotSvg('happy')}
+    <div style="font-family:'Baloo 2',sans-serif;font-weight:800;font-size:16px;color:rgba(44,42,46,.86);margin-top:12px;">Ton Dex est encore tout vide !</div>
     <p style="font-family:'Nunito',sans-serif;font-size:13px;color:rgba(44,42,46,.5);margin:8px 0 20px;">Attrape quelques cailloux avant de te lancer 🪨</p>
     <button class="btn btn-ghost" data-action="onlineCancel">Annuler</button>
   </div>`;
@@ -7106,9 +7104,8 @@ async function beginPlayerTurn(){
 function hpBarColor(pct){ return pct>0.5?'#4CAF50':pct>0.25?'#FF9800':'#F44336'; }
 
 function combatPickScreen(){
-  if(!dex.length) return `<div style="text-align:center;padding:40px 16px;">
-    <div style="font-size:52px;margin-bottom:12px;">🪨</div>
-    <div style="font-family:'Baloo 2',sans-serif;font-weight:800;font-size:16px;color:rgba(44,42,46,.86);">Ton Dex est encore tout vide !</div>
+  if(!dex.length) return `<div class="empty" style="padding:40px 16px;">${mascotSvg('happy')}
+    <div style="font-family:'Baloo 2',sans-serif;font-weight:800;font-size:16px;color:rgba(44,42,46,.86);margin-top:12px;">Ton Dex est encore tout vide !</div>
     <p style="font-family:'Nunito',sans-serif;font-size:13px;color:rgba(44,42,46,.5);margin:8px 0 20px;">Attrape quelques cailloux avant de te lancer 🪨<br>avant de les envoyer au combat.</p>
     <button class="btn btn-gold" data-action="goto" data-screen="scanner">📷 CAPTURER</button>
   </div>`;
