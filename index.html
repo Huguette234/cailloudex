@@ -141,7 +141,7 @@ header{
 .v-badge{font-family:'Baloo 2',sans-serif;font-weight:700;font-size:9px;color:var(--txt);background:rgba(255,255,255,.8);border:1.5px solid rgba(255,255,255,.9);border-radius:999px;padding:2px 8px;display:inline-block;}
 .pill-row{display:flex;gap:6px;align-items:center;}
 .count-pill{font-family:'Baloo 2',sans-serif;font-weight:800;font-size:16px;color:var(--ink);background:var(--accent);border:3px solid var(--ink);border-radius:12px;padding:4px 10px;box-shadow:0 4px 0 var(--accent2);}
-.count-pill span{display:block;font-size:8px;font-weight:700;color:#5A3B00;text-align:center;letter-spacing:.04em;}
+.count-pill .cp-lbl{display:block;font-size:8px;font-weight:700;color:#5A3B00;text-align:center;letter-spacing:.04em;}
 .flame-pill{font-family:'Baloo 2',sans-serif;font-weight:800;font-size:14px;color:var(--txt);background:#E8623C;border:3px solid #9A3A1A;border-radius:12px;padding:5px 8px;box-shadow:0 4px 0 #9A3A1A;}
 /* --- Pouvoirs actifs --- */
 .flame-pill.frozen{background:linear-gradient(135deg,#8FD4FF,#2A6FB0);border-color:#1A4E80;box-shadow:0 4px 0 #1A4E80,inset 0 0 8px rgba(255,255,255,.55);color:#eaf6ff;position:relative;overflow:hidden;}
@@ -2635,8 +2635,8 @@ function shopScreen(){
   const gemBal=meta.gems||0;
   return `<div class="shop-wrap">
     <div class="shop-balance-row">
-      <div class="shop-balance">🪙 <span>${fmtNum(bal)}</span> Gravillons</div>
-      <div class="shop-balance gem">💎 <span>${fmtNum(gemBal)}</span> Gemmes</div>
+      <div class="shop-balance">🪙 <span data-count="${bal}" data-count-key="grav">${fmtNum(bal)}</span> Gravillons</div>
+      <div class="shop-balance gem">💎 <span data-count="${gemBal}" data-count-key="gems">${fmtNum(gemBal)}</span> Gemmes</div>
     </div>
     <div style="background:rgba(253,250,242,.78);border:1px solid rgba(247,220,111,.4);border-radius:12px;padding:8px 12px;margin:6px 0 4px;font-family:'Nunito',sans-serif;font-size:11.5px;color:rgba(44,42,46,.85);line-height:1.5;box-shadow:0 2px 8px rgba(0,0,0,.1);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);">
       💎 <b>Gagne des Gemmes gratuitement</b> en jouant : <b>+${WIN_GEMS}</b> par combat gagné, <b>+${CHALLENGE_GEMS}</b> au défi du jour, et jusqu'à <b>+${GEM_BY_RARITY.galaxie}</b> sur une capture rare. Les gemmes servent à améliorer et faire évoluer tes cailloux.
@@ -3334,6 +3334,27 @@ function playSfx(name){
 function haptic(p){ try{ if(navigator.vibrate) navigator.vibrate(p); }catch(e){} }
 // Formatage français des grands nombres : 1234 -> "1 234" (espace fine insécable).
 function fmtNum(n){ n=Math.round(Number(n)||0); try{ return n.toLocaleString('fr-FR'); }catch(e){ return String(n); } }
+// Compteurs animés : les nombres « montent » vers leur nouvelle valeur après un gain.
+// Générique : tout élément [data-count][data-count-key] est animé depuis sa
+// dernière valeur connue (mémorisée par clé) jusqu'à data-count. data-count-pad
+// force un remplissage de zéros (ex. l'en-tête "007"). Respecte reduced-motion.
+const _numCache={};
+function _fmtCount(n,pad){ if(pad>0) return String(Math.round(n)).padStart(pad,'0'); return fmtNum(n); }
+function runCountUps(){
+  let reduce=false; try{ reduce=matchMedia('(prefers-reduced-motion: reduce)').matches; }catch(e){}
+  document.querySelectorAll('[data-count][data-count-key]').forEach(el=>{
+    const key=el.dataset.countKey, to=Number(el.dataset.count)||0, pad=parseInt(el.dataset.countPad||'0',10)||0;
+    const from=(_numCache[key]==null)?to:_numCache[key];
+    _numCache[key]=to;
+    if(reduce||from===to){ el.textContent=_fmtCount(to,pad); return; }
+    const diff=to-from, dur=Math.min(900,220+Math.abs(diff)*24), t0=performance.now();
+    (function step(now){
+      const p=Math.min(1,(now-t0)/dur), e=1-Math.pow(1-p,3); // easeOutCubic
+      el.textContent=_fmtCount(from+diff*e,pad);
+      if(p<1) requestAnimationFrame(step);
+    })(t0);
+  });
+}
 
 /* ===== MUSIQUE DE FOND (nappes ambient synthétisées, en boucle) ===== */
 let musicOn=(()=>{ try{ return localStorage.getItem('cdx_music')!=='off'; }catch(e){ return true; } })();
@@ -3950,7 +3971,7 @@ function header(){
     <div class="pill-row">
       ${flame}
       ${isLuckyActive()?`<div class="lucky-pill" data-action="goto" data-screen="shop" title="Porte-Bonheur actif">🍀</div>`:''}
-      <div class="count-pill">${String(dex.length).padStart(3,'0')}<span>TROUVÉS</span></div>
+      <div class="count-pill"><span data-count="${dex.length}" data-count-key="dexcount" data-count-pad="3">${String(dex.length).padStart(3,'0')}</span><span class="cp-lbl">TROUVÉS</span></div>
       <div class="friends-pill${screen==='friends'?' active':''}" data-action="goto" data-screen="friends">👥</div>
       ${ai}
     </div>
@@ -7673,6 +7694,7 @@ function render(){
     if(_m) _m.classList.add('scr-enter');
     _lastRenderedScreen=screen;
   }
+  runCountUps();
 
   document.querySelectorAll('.overlay').forEach(o=>o.remove());
   maybeShowConsent();
