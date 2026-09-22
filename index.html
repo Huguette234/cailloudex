@@ -10,6 +10,19 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="CaillouDEX">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="description" content="Le Pokédex des cailloux : prends un vrai caillou en photo, l'IA le transforme en créature unique à collectionner et à faire combattre. L'histoire d'amour entre les Z'Hommes et les roches.">
+<!-- Aperçu riche quand on partage un lien (WhatsApp, iMessage, réseaux…) -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="CaillouDEX">
+<meta property="og:locale" content="fr_FR">
+<meta property="og:title" content="CaillouDEX · Les Cailloux des Z'Hommes">
+<meta property="og:description" content="Prends un caillou en photo, l'IA le transforme en créature unique à collectionner et à faire combattre. Attrape-les tous ! 🪨">
+<meta property="og:image" content="bg-accueil.jpg">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="CaillouDEX · Les Cailloux des Z'Hommes">
+<meta name="twitter:description" content="Prends un caillou en photo, l'IA le transforme en créature unique à collectionner et à faire combattre. 🪨">
+<meta name="twitter:image" content="bg-accueil.jpg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;0,800;0,900;1,700;1,800&family=Baloo+2:wght@500;600;700;800&family=Nunito:ital,wght@0,400;0,600;0,700;0,800;1,700&display=swap" rel="stylesheet">
@@ -2608,8 +2621,8 @@ function shopScreen(){
   const gemBal=meta.gems||0;
   return `<div class="shop-wrap">
     <div class="shop-balance-row">
-      <div class="shop-balance">🪙 <span>${bal}</span> Gravillons</div>
-      <div class="shop-balance gem">💎 <span>${gemBal}</span> Gemmes</div>
+      <div class="shop-balance">🪙 <span>${fmtNum(bal)}</span> Gravillons</div>
+      <div class="shop-balance gem">💎 <span>${fmtNum(gemBal)}</span> Gemmes</div>
     </div>
     <div style="background:rgba(253,250,242,.78);border:1px solid rgba(247,220,111,.4);border-radius:12px;padding:8px 12px;margin:6px 0 4px;font-family:'Nunito',sans-serif;font-size:11.5px;color:rgba(44,42,46,.85);line-height:1.5;box-shadow:0 2px 8px rgba(0,0,0,.1);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);">
       💎 <b>Gagne des Gemmes gratuitement</b> en jouant : <b>+${WIN_GEMS}</b> par combat gagné, <b>+${CHALLENGE_GEMS}</b> au défi du jour, et jusqu'à <b>+${GEM_BY_RARITY.galaxie}</b> sur une capture rare. Les gemmes servent à améliorer et faire évoluer tes cailloux.
@@ -3305,6 +3318,8 @@ function playSfx(name){
 }
 // Retour haptique centralisé
 function haptic(p){ try{ if(navigator.vibrate) navigator.vibrate(p); }catch(e){} }
+// Formatage français des grands nombres : 1234 -> "1 234" (espace fine insécable).
+function fmtNum(n){ n=Math.round(Number(n)||0); try{ return n.toLocaleString('fr-FR'); }catch(e){ return String(n); } }
 
 /* ===== MUSIQUE DE FOND (nappes ambient synthétisées, en boucle) ===== */
 let musicOn=(()=>{ try{ return localStorage.getItem('cdx_music')!=='off'; }catch(e){ return true; } })();
@@ -3956,7 +3971,7 @@ function homeScreen(){
             <span class="trainer-gravillons" data-action="goto" data-screen="shop">🪙 ${meta.gravillons||0}</span>
           </div>
           <div class="level-bar-bg"><div class="level-bar-fill" style="width:${lvlPct}%;"></div></div>
-          <div class="level-xp-text">${lvl.xpIntoLevel} / ${lvl.xpForNext} XP</div>
+          <div class="level-xp-text">${fmtNum(lvl.xpIntoLevel)} / ${fmtNum(lvl.xpForNext)} XP</div>
         </div>
       </div>
       <div class="stat-grid">
@@ -5025,7 +5040,7 @@ function accountScreen(){
         <div class="level-info">
           <div class="level-title">${meta.customTitle||getLevelTitle(lvl.level)}</div>
           <div class="level-bar-bg"><div class="level-bar-fill" style="width:${pct}%;"></div></div>
-          <div class="level-xp-text">${lvl.xpIntoLevel} / ${lvl.xpForNext} XP · ${meta.xp||0} XP au total</div>
+          <div class="level-xp-text">${fmtNum(lvl.xpIntoLevel)} / ${fmtNum(lvl.xpForNext)} XP · ${fmtNum(meta.xp||0)} XP au total</div>
         </div>
       </div>`; })()}
     <div class="sound-toggle-row" data-action="toggleSound">
