@@ -1627,6 +1627,23 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,
 .skl-dot{width:30px;height:30px;border-radius:50%;flex-shrink:0;}
 .skl-line{height:11px;}
 .skl-card{border:2.5px solid rgba(255,255,255,.9);box-shadow:0 5px 16px rgba(0,0,0,.22);background-color:rgba(255,255,255,.55);}
+/* Célébration de montée de niveau */
+.lvlup-ov{position:fixed;inset:0;z-index:200;display:flex;align-items:center;justify-content:center;padding:24px;background:radial-gradient(circle at 50% 42%,rgba(30,20,60,.5),rgba(8,6,16,.85));opacity:0;transition:opacity .3s ease;overflow:hidden;}
+.lvlup-ov.show{opacity:1;}
+.lvlup-rays{position:absolute;left:50%;top:46%;width:640px;height:640px;transform:translate(-50%,-50%);background:repeating-conic-gradient(from 0deg,rgba(255,224,120,.26) 0deg 7deg,transparent 7deg 21deg);border-radius:50%;-webkit-mask:radial-gradient(circle,transparent 0 20%,#000 30%);mask:radial-gradient(circle,transparent 0 20%,#000 30%);animation:lvlSpin 12s linear infinite;opacity:.55;pointer-events:none;}
+@keyframes lvlSpin{to{transform:translate(-50%,-50%) rotate(360deg);}}
+.lvlup-card{position:relative;text-align:center;transform:scale(.6);opacity:0;transition:transform .5s cubic-bezier(.34,1.56,.64,1),opacity .3s ease;}
+.lvlup-ov.show .lvlup-card{transform:scale(1);opacity:1;}
+.lvlup-kicker{font-family:'Baloo 2',sans-serif;font-weight:800;font-size:14px;letter-spacing:.22em;color:#FFE08A;text-shadow:0 2px 10px rgba(255,180,0,.5);margin-bottom:2px;}
+.lvlup-num{font-family:'Playfair Display',Georgia,serif;font-weight:900;font-size:110px;line-height:1;color:#fff;text-shadow:0 4px 0 #C99700,0 8px 26px rgba(255,190,20,.6);animation:lvlPop .6s cubic-bezier(.34,1.7,.5,1) .12s both;}
+@keyframes lvlPop{0%{transform:scale(.2) rotate(-14deg);opacity:0;}60%{transform:scale(1.14) rotate(4deg);}100%{transform:scale(1) rotate(0);opacity:1;}}
+.lvlup-word{font-family:'Baloo 2',sans-serif;font-weight:800;font-size:13px;letter-spacing:.3em;color:rgba(255,255,255,.75);margin:-2px 0 12px;}
+.lvlup-title{display:inline-block;font-family:'Baloo 2',sans-serif;font-weight:800;font-size:17px;color:#3a2a00;background:linear-gradient(135deg,#ffe08a,#ffc94d);padding:8px 20px;border-radius:999px;box-shadow:0 6px 18px rgba(255,180,0,.4);animation:lvlTitleIn .5s ease .4s both;}
+@keyframes lvlTitleIn{from{transform:translateY(14px);opacity:0;}to{transform:translateY(0);opacity:1;}}
+.lvlup-mascot{width:96px;height:auto;margin:0 auto 6px;display:block;animation:lvlBob 1.6s ease-in-out infinite;}
+@keyframes lvlBob{0%,100%{transform:translateY(0) rotate(-4deg);}50%{transform:translateY(-8px) rotate(4deg);}}
+.lvlup-tap{margin-top:18px;font-family:'Nunito',sans-serif;font-size:12px;color:rgba(255,255,255,.6);animation:lvlTapPulse 1.5s ease-in-out infinite .8s;}
+@keyframes lvlTapPulse{0%,100%{opacity:.4;}50%{opacity:.85;}}
 /* Confort & accessibilité : respecte le réglage système « réduire les animations ».
    On garde les fondus courts mais on calme les mouvements/boucles pour les personnes
    sensibles au mouvement (et ça soulage aussi les vieux téléphones). */
@@ -2795,10 +2812,7 @@ function addXp(amount){
   const after=getLevelInfo(meta.xp).level;
   saveMeta();
   if(after>before){
-    setTimeout(()=>{
-      showToast(`🎉 NIVEAU ${after} ! ${getLevelTitle(after)}`);
-      if(navigator.vibrate) navigator.vibrate([30,40,30,40,60]);
-    },350);
+    setTimeout(()=>{ showLevelUp(after); },350);
   }
 }
 
@@ -3513,6 +3527,35 @@ function spawnConfetti(count,hex){
     document.body.appendChild(d);
     setTimeout(()=>d.remove(),3500);
   }
+}
+
+/* ===== CÉLÉBRATION DE MONTÉE DE NIVEAU ===== */
+let _lvlupTimer=null;
+function showLevelUp(level){
+  closeLevelUp();
+  const title=getLevelTitle(level);
+  const ov=document.createElement('div');
+  ov.className='lvlup-ov'; ov.id='lvlupOv'; ov.dataset.action='lvlupClose';
+  ov.innerHTML=`<div class="lvlup-rays"></div>
+    <div class="lvlup-card">
+      ${mascotSvg('happy','lvlup-mascot')}
+      <div class="lvlup-kicker">NIVEAU SUPÉRIEUR</div>
+      <div class="lvlup-num">${level}</div>
+      <div class="lvlup-word">NIVEAU</div>
+      <div class="lvlup-title">${title}</div>
+      <div class="lvlup-tap">Touche pour continuer</div>
+    </div>`;
+  document.body.appendChild(ov);
+  requestAnimationFrame(()=>ov.classList.add('show'));
+  try{ playSfx('success'); setTimeout(()=>playSfx('rare'),240); }catch(e){}
+  try{ spawnConfetti(46,'#FFD23F'); }catch(e){}
+  haptic([25,45,25,45,90]);
+  _lvlupTimer=setTimeout(closeLevelUp,4200);
+}
+function closeLevelUp(){
+  if(_lvlupTimer){ clearTimeout(_lvlupTimer); _lvlupTimer=null; }
+  const ov=document.getElementById('lvlupOv');
+  if(ov){ ov.classList.remove('show'); setTimeout(()=>ov.remove(),320); }
 }
 
 /* ===== STAT ANIMATION ===== */
@@ -8645,6 +8688,7 @@ document.addEventListener('click',(e)=>{
   else if(action==='tutoSkip'){ markTutorialDone(); markWhatsNewSeen(); closeTutorial(); }
   else if(action==='tutoDone'){ markTutorialDone(); markWhatsNewSeen(); closeTutorial(); }
   else if(action==='replayTutorial'){ startTutorial(); }
+  else if(action==='lvlupClose'){ closeLevelUp(); }
   else if(action==='whatsNew'){ showWhatsNew(false); }
   else if(action==='whatsNewClose'){ closeWhatsNew(); }
   else if(action==='selectRegion'){
